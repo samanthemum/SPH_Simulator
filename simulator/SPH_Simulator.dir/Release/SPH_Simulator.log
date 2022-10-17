@@ -1,37 +1,6 @@
-﻿  main.cpp
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(111,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(112,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(125,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(126,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(144,44): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(144,41): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(144,38): warning C4244: 'argument': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(303,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(331,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(372,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(398,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(426,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(750,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\src\main.cpp(776,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
-  SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\simulator\Release\SPH_Simulator.exe
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2068,5): warning : The referenced project 'C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\simulator\ZERO_CHECK.vcxproj' does not exist.
+  Building Custom Rule C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/CMakeLists.txt
+  CMake is re-running because C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/simulator/CMakeFiles/generate.stamp dependency file is missing.
+CUSTOMBUILD : CMake error : The source directory "C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator" does not appear to contain CMakeLists.txt.
+  Specify --help for usage, or press the help button on the CMake GUI.
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(242,5): error MSB8066: Custom build for 'C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\CMakeLists.txt' exited with code 1.

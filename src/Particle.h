@@ -42,7 +42,7 @@ class Particle {
 			}
 
 			// same signedness == no collisions
-			if ((newDistance >= 0 && oldDistance >= 0) || (newDistance <= 0 && oldDistance <= 0)) {
+			if ((newDistance > 0 && oldDistance > 0) || (newDistance < 0 && oldDistance < 0) || (newDistance == 0 && oldDistance == 0)) {
 				return false;
 			}
 

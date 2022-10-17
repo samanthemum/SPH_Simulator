@@ -169,7 +169,7 @@ void initSceneOriginal() {
 void initSceneDamBreak() {
 	initParticleList();
 
-	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, -.5, 0.0));
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0 - scaleParticles.x, 0.0));
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.5f));
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(-0.5, 0.0, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -.5));
@@ -521,7 +521,7 @@ void updateFluid(float time) {
 				newVelocity = velocityNormalAfter + velocityTangentAfter;
 				particleList[i].setPosition(newPosition);
 				float distance = particleList[i].getDistanceFromPlane(surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * ((distance + particleList[i].getRadius()) * (1 + 0.0f));
+				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
 				newPosition = newPosition + addedVector;
 				particleList[i].setPosition(newPosition);
 			}
@@ -762,7 +762,7 @@ int main(int argc, char **argv)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 450");
+	ImGui_ImplOpenGL3_Init("#version 460");
 
 	// glUniform3f(prog->getUniform("lightPos"), 10.0f, 10.0f, 10.0f);
 

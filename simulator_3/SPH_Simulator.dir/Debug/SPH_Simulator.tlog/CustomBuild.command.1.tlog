@@ -1,0 +1,10 @@
+^C:\USERS\SAM HALLAM\DESKTOP\CSCE 491\SIMULATOR\SPH_SIMULATOR\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator" "-BC:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_3" --check-stamp-file "C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_3/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

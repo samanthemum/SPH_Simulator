@@ -1,5 +1,0 @@
-﻿  Checking Build System
-  CMake is re-running because C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/simulator/CMakeFiles/generate.stamp dependency file is missing.
-CUSTOMBUILD : CMake error : The source directory "C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator" does not appear to contain CMakeLists.txt.
-  Specify --help for usage, or press the help button on the CMake GUI.
-C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(242,5): error MSB8066: Custom build for 'C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\simulator\CMakeFiles\f79cac663298eeb5b4276e0cc756e8dd\generate.stamp.rule' exited with code 1.

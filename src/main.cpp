@@ -39,19 +39,19 @@ glm::vec2 cameraRotations(0, 0);
 glm::vec2 mousePrev(-1, -1);
 
 
-float DENSITY_0_GUESS = 1000.0f; // density of water= 1 g/cm^3
+float DENSITY_0_GUESS = 2.0f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 10000;
 uint32_t HIGH_RES_COUNT = 100000;
-float LOW_RES_RADIUS = 2.5f;
-float MAX_RADIUS = LOW_RES_RADIUS;
-float SMOOTHING_RADIUS = LOW_RES_RADIUS;
+float LOW_RES_RADIUS = 2.0f;
+float MAX_RADIUS = 2.0f;
+float SMOOTHING_RADIUS = 2.0f;
 float VISCOSITY = 1.0f;
 float TIMESTEP = .025f;
 
 float FRICTION = .1f;
-float ELASTICITY = .3f;
+float ELASTICITY = .7f;
 
 // surface tension stuff
 float TENSION_ALPHA = 0.7f;
@@ -169,11 +169,11 @@ void initSceneOriginal() {
 void initSceneDamBreak() {
 	initParticleList();
 
-	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0 - scaleParticles.x, 0.0));
-	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.5f));
-	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(-0.5, 0.0, 0.0));
-	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -.5));
-	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(25.5f, 0.0, 0.0));
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - scaleParticles.x , 0.0));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + scaleParticles.x));
+	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - scaleParticles.x, 0.0f, 0.0));
+	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - scaleParticles.x));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(25 + scaleParticles.x, 0.0, 0.0));
 
 	// initialize surfaces
 	surfaces.push_back(ground);
@@ -220,7 +220,7 @@ static void init()
 	keyToggles[(unsigned)'l'] = true;
 
 	// initialize particles and tree
-	initSceneOriginal();
+	initSceneDamBreak();
 	initKdTree();
 	
 
@@ -306,7 +306,7 @@ float densityKernelFunction(const Particle& xi, const Particle& xj) {
 }
 
 float calculateDensityForParticle(const Particle x) {
-	float density = 0.0f;
+	float density = x.getMass() * densityKernelFunction(x, x);
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
 		density += (xj->getMass() * densityKernelFunction(x, *xj));
@@ -407,10 +407,13 @@ glm::vec3 surfaceNormalField(const Particle& xi) {
 
 	// for every Particle xj in the neighbor hood of xi
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-		Particle* xj = xi.getNeighbors().at(j);
-		float outside_term = xj->getMass() * 1 / xj->getDensity();
 
-		surfaceField += (outside_term * surfaceNormalFieldGradientKernel(xi, *xj));
+		Particle* xj = xi.getNeighbors().at(j);
+		if (xj != &xi) {
+			float outside_term = xj->getMass() * 1 / xj->getDensity();
+			surfaceField += (outside_term * surfaceNormalFieldGradientKernel(xi, *xj));
+		}
+		
 	}
 	return surfaceField;
 }
@@ -486,7 +489,7 @@ void updateFluid(float time) {
 		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
 
 		glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
-		if (length(particleList[i].getSurfaceNormal()) > TENSION_THRESHOLD) {
+		if (length(tension) > TENSION_THRESHOLD) {
 			acceleration += tension;
 		}
 		particleList[i].setAcceleration(acceleration);
@@ -504,7 +507,7 @@ void updateFluid(float time) {
 		glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
 
 		for (Plane surface : surfaces) {
-			if (particleList[i].willCollideWithPlane(newPosition, surface)) {
+			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
 				// collision stuff
 				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
 				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
@@ -519,11 +522,10 @@ void updateFluid(float time) {
 				}
 
 				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				particleList[i].setPosition(newPosition);
-				float distance = particleList[i].getDistanceFromPlane(surface);
+				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
 				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
 				newPosition = newPosition + addedVector;
-				particleList[i].setPosition(newPosition);
+				// particleList[i].setPosition(newPosition);
 			}
 		}
 
@@ -540,13 +542,11 @@ void updateFluidWithCorrectivePressure(float time) {
 	// update the kd tree
 	if (steps == steps_per_update) {
 		initKdTree();
+		// set neighbors for all particles
+		for (int i = 0; i < particleCount; i++) {
+			setNeighbors(particleList[i], i);
+		}
 		steps = 0;
-	}
-
-
-	// set neighbors for all particles
-	for (int i = 0; i < particleCount; i++) {
-		setNeighbors(particleList[i], i);
 	}
 
 	// update density
@@ -579,9 +579,9 @@ void updateFluidWithCorrectivePressure(float time) {
 		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
 
 		glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
-		if (length(particleList[i].getSurfaceNormal()) > TENSION_THRESHOLD) {
+		/*if (length(particleList[i].getSurfaceNormal()) > TENSION_THRESHOLD) {
 			acceleration += tension;
-		}
+		}*/
 		particleList[i].setAcceleration(acceleration);
 	}
 
@@ -597,7 +597,7 @@ void updateFluidWithCorrectivePressure(float time) {
 		glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
 
 		for (Plane surface : surfaces) {
-			if (particleList[i].willCollideWithPlane(newPosition, surface)) {
+			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
 				// collision stuff
 				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
 				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
@@ -612,11 +612,10 @@ void updateFluidWithCorrectivePressure(float time) {
 				}
 
 				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				particleList[i].setPosition(newPosition);
-				float distance = particleList[i].getDistanceFromPlane(surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * ((distance + particleList[i].getRadius()) * (1 + 0.0f));
+				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
 				newPosition = newPosition + addedVector;
-				particleList[i].setPosition(newPosition);
+				// particleList[i].setPosition(newPosition);
 			}
 		}
 
@@ -668,7 +667,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		ImGui::Text("Simulation Parameters");
 		if (ImGui::BeginCombo("  ", NULL)) {
 			ImGui::SliderFloat("Time Per Step", &TIMESTEP, 0.0f, 0.05f);
-			ImGui::SliderInt("Steps Per Kd-Tree Update", &steps_per_update, 1, 5);
+			ImGui::SliderInt("Steps Per Kd-Tree Update", &steps_per_update, 1, 10);
 			ImGui::EndCombo();
 		}
 
@@ -687,6 +686,16 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			isPaused = true;
 			initParticleList();
 			initKdTree();
+			for (int i = 0; i < particleCount; i++) {
+				setNeighbors(particleList[i], i);
+			}
+
+			float averageDensity = 0;
+			for (int i = 0; i < particleCount; i++) {
+				averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
+			}
+			// density_constant = DENSITY_0_GUESS / averageDensity;
+			// DENSITY_0_GUESS = averageDensity;
 		}
 		ImGui::End();
 		ImGui::Render();
@@ -740,22 +749,8 @@ int main(int argc, char **argv)
 		setNeighbors(particleList[i], i);
 	}
 
-	float averageDensity = 0;
-	for (int i = 0; i < particleCount; i++) {
-		averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
-	}
-	density_constant = DENSITY_0_GUESS / averageDensity;
-
-
 	float timeStart = glfwGetTime();
 	float timePassed = 0.0f;
-
-	// create GUI window
-	// TODO: make this an actually useful GUI later
-	/*ImGui::Text("Hello, world %d", 123);
-	if (ImGui::Button("Save"))
-		cout << "Button pressed!" << endl;
-	ImGui::SliderFloat("float", &VISCOSITY, 0.0f, 1.0f);*/
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -763,8 +758,6 @@ int main(int argc, char **argv)
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 460");
-
-	// glUniform3f(prog->getUniform("lightPos"), 10.0f, 10.0f, 10.0f);
 
 	std::string buttonText = "Play";
 	bool isPaused = true;

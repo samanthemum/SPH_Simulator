@@ -24,7 +24,7 @@ class Particle {
 		void setVolume(float v) { this->volume = v; };
 		void setRadius(float r) { this->radius = r; }
 		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
-		bool willCollideWithPlane(glm::vec3 newPos, const Plane& p) const {
+		static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;
@@ -41,6 +41,14 @@ class Particle {
 				newDistance = glm::dot((newPos - p.getPoint()), p.getNormal()) + radius;
 			}
 
+			if (glm::dot((newPos - p.getPoint()), p.getNormal()) > 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) <= 0.0f) {
+				return true;
+			}
+
+			if (glm::dot((newPos - p.getPoint()), p.getNormal()) < 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
+				return true;
+			}
+
 			// same signedness == no collisions
 			if ((newDistance > 0 && oldDistance > 0) || (newDistance < 0 && oldDistance < 0) || (newDistance == 0 && oldDistance == 0)) {
 				return false;
@@ -49,7 +57,7 @@ class Particle {
 			return true;
 		}
 
-		float getDistanceFromPlane(const Plane& p) const {
+		static float getDistanceFromPlane(glm::vec3 position, float radius, const Plane& p) {
 			float distance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				distance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;

@@ -12,6 +12,12 @@ class Particle {
 		Particle() {};
 		~Particle() {};
 
+		struct Forces {
+			glm::vec3 pressure{ 0, 0, 0 };
+			glm::vec3 diffusion{ 0 };
+			glm::vec3 external{ 0 };
+		};
+
 		// setter functions
 		void setPosition(glm::vec3 pos) { this->position = pos; };
 		void setVelocity(glm::vec3 v) { this->velocity = v; };
@@ -19,6 +25,7 @@ class Particle {
 		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
 		void setColorFieldLaplacian(glm::vec3 newColor) { this->colorFieldLaplacian = newColor; };
 		void setDensity(float density) { this->density = density; };
+		void setDensityError(float density_e) { this->density_error = density_e; };
 		void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
 		void setVolume(float v) { this->volume = v; };
@@ -76,11 +83,17 @@ class Particle {
 		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
 		glm::vec3 getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		float getDensity() const { return density; };
+		float getDensityError() const { return density_error; };
 		float getPressure() const { return pressure; };
 		float getMass() const { return mass; };
 		float getVolume() const { return volume; };
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
+
+		// refactor later
+		Forces forces;
+		glm::vec3 position_predicted;
+		glm::vec3 velocity_predicted = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	private:
 		glm::vec3 position;
@@ -90,9 +103,11 @@ class Particle {
 		glm::vec3 colorFieldLaplacian;
 		std::vector<Particle*> neighbors;
 		float density;
+		float density_error = 0.0f;
 		float mass;
 		float radius;
 		float volume;
 		float pressure;
+		
 };
 #endif

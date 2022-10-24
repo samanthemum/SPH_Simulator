@@ -51,7 +51,7 @@ float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 10000;
 uint32_t HIGH_RES_COUNT = 100000;
-float LOW_RES_RADIUS = 3.0f;
+float LOW_RES_RADIUS = 2.0f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = 1.0f;
@@ -80,9 +80,9 @@ std::vector<Plane> surfaces;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f, .5f, .5f);
 
-Scene selected_scene = Scene::DAM_BREAK;
+Scene selected_scene = Scene::DEFAULT;
 
-const int N_THREADS = 4;
+const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
 std::thread threads[N_THREADS];
 
@@ -275,7 +275,14 @@ static void init()
 	keyToggles[(unsigned)'l'] = true;
 
 	// initialize particles and tree
-	initSceneDamBreak();
+	switch (selected_scene) {
+		case Scene::DAM_BREAK:
+			initSceneDamBreak();
+			break;
+		default:
+			initSceneOriginal();
+	}
+	
 	initKdTree();
 	
 
@@ -526,9 +533,13 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 void updateFluid(float time) {
 
 	// update the kd tree
+	//std::thread kdTree_thread;
+	//kdTree_thread = thread(initKdTree);
+
 	if (steps == steps_per_update) {
 		initKdTree();
 		steps = 0;
+
 		// set neighbors for all particles
 		for (int i = 0; i < N_THREADS; i++) {
 			threads[i] = thread(setNeighborsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
@@ -589,6 +600,8 @@ void updateFluid(float time) {
 		threads[i].join();
 	}
 
+	//kdTree_thread.join();
+
 	for (int i = 0; i < N_THREADS; i++) {
 		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
 		threads[i] = thread(updatePositionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
@@ -597,63 +610,6 @@ void updateFluid(float time) {
 	for (int i = 0; i < N_THREADS; i++) {
 		threads[i].join();
 	}
-
-	// Calculate forces to calculate acceleration
-	//for (int i = 0; i < particleCount; i++) {
-	//	glm::vec3 pressureForce = pressureGradient(particleList[i]);
-	//	glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
-	//	glm::vec3 externalForce = glm::vec3(0.0, -9.8f, 0.0f);
-
-	//	// calculate surface pressure/tension
-	//	glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
-	//	glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
-
-	//	glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
-	//	if (length(tension) > TENSION_THRESHOLD) {
-	//		acceleration += tension;
-	//	}
-	//	particleList[i].setAcceleration(acceleration);
-	//}
-
-	// Collision detection stuff here
-	// TODO: enter time simulation
-
-	// time integration
-	//for (int i = 0; i < particleCount; i++) {
-	//	float timeStepRemaining = time;
-
-	//	glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
-	//	glm::vec3 averageVelocity = (newVelocity + particleList[i].getVelocity()) / 2.0f;
-	//	glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
-
-	//	for (Plane surface : surfaces) {
-	//		if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-	//			// collision stuff
-	//			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-	//			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-	//			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-	//			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-	//			glm::vec3 velocityTangentAfter;
-	//			if (glm::length(velocityTangentBefore) == 0) {
-	//				velocityTangentAfter = velocityTangentBefore;
-	//			}
-	//			else {
-	//				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-	//			}
-
-	//			newVelocity = velocityNormalAfter + velocityTangentAfter;
-	//			float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-	//			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-	//			newPosition = newPosition + addedVector;
-	//			// particleList[i].setPosition(newPosition);
-	//		}
-	//	}
-
-	//	particleList[i].setVelocity(newVelocity);
-	//	particleList[i].setPosition(newPosition);
-	//	particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
-
-	//}
 
 	steps++;
 }
@@ -808,7 +764,7 @@ int main(int argc, char **argv)
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;
-				if (timePassed >= 4 && surfaces.size() == 5) {
+				if (timePassed >= 4 && surfaces.size() == 5 && selected_scene == Scene::DAM_BREAK) {
 					cout << "Release the kracken!" << endl;
 					surfaces.resize(4);
 				}

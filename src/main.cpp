@@ -26,6 +26,7 @@
 #include "imgui-master/imgui.h"
 #include "imgui-master/backends/imgui_impl_glfw.h"
 #include "imgui-master/backends/imgui_impl_opengl3.h"
+#include "Kernel.h"
 
 using namespace std;
 using cy::Vec3f;
@@ -239,6 +240,8 @@ void initKdTree() {
 static void init()
 {
 	GLSL::checkVersion();
+
+	Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
 	
 	// Set background color
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -340,23 +343,11 @@ void render()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
-float densityKernelFunction(const Particle& xi, const Particle& xj) {
-	// if we're less than the max radius, don't do anything
-	if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
-		return 0;
-	}
-
-	// otherwise
-	float outsideTerm = 315.0f / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 64.0f);
-	float insideTerm = powf(powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 3.0f);
-	return outsideTerm * insideTerm;
-}
-
 float calculateDensityForParticle(const Particle x) {
-	float density = x.getMass() * densityKernelFunction(x, x);
+	float density = x.getMass() * Kernel::polyKernelFunction(x, x);
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * densityKernelFunction(x, *xj));
+		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj));
 	}
 
 	return (density * density_constant);
@@ -365,19 +356,6 @@ float calculateDensityForParticle(const Particle x) {
 float calculatePressureForParticle(const Particle x) {
 	float pressure = ((STIFFNESS_PARAM * DENSITY_0_GUESS) / Y_PARAM) *(powf((x.getDensity() / DENSITY_0_GUESS), Y_PARAM) - 1.0f);
 	return pressure;
-}
-
-float pressureKernelGradient(const Particle& xi, const Particle& xj) {
-	// if we're less than the max radius, don't do anything
-	if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
-		return 0;
-	}
-
-	// otherwise
-	// TODO: Check gradient calculation
-	float outsideTerm = -45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
-	float insideTerm = powf(SMOOTHING_RADIUS - length(xi.getPosition() - xj.getPosition()), 2.0f);
-	return outsideTerm * insideTerm;
 }
 
 glm::vec3 pressureGradient(const Particle& xi) {
@@ -390,7 +368,7 @@ glm::vec3 pressureGradient(const Particle& xi) {
 
 		float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
 		glm::vec3 pressureField = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
-		pressureGradient += (xj->getMass() * pressureTerm * pressureKernelGradient(xi, *xj) * pressureField);
+		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj) * pressureField);
 	}
 	return pressureGradient;
 }
@@ -410,17 +388,6 @@ void setNeighbors(Particle& x, int xIndex) {
 	delete[] info;
 }
 
-float diffusionKernelFunction(const Particle& xi, const Particle& xj) {
-	// if we're less than the max radius, don't do anything
-	if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
-		return 0;
-	}
-
-	float outsideTerm = 45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
-	float insideTerm = SMOOTHING_RADIUS - length(xi.getPosition() - xj.getPosition());
-	return outsideTerm * insideTerm;
-}
-
 glm::vec3 diffusionTerm(const Particle& xi) {
 	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -429,23 +396,9 @@ glm::vec3 diffusionTerm(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
 
-		diffusionLaplacian += (xj->getMass() * velocityTerm * diffusionKernelFunction(xi, *xj));
+		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
 	}
 	return diffusionLaplacian;
-}
-
-glm::vec3 surfaceNormalFieldGradientKernel(const Particle& xi, const Particle& xj) {
-	// if we're less than the max radius, don't do anything
-	if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
-		return glm::vec3(0.0f, 0.0f, 0.0f);
-	}
-
-	// otherwise
-	glm::vec3 r = xi.getPosition() - xj.getPosition();
-	float outsideTerm = -3.0f * 315.0f * length(xi.getPosition() - xj.getPosition()) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 32.0f);
-	float insideTerm = powf(powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 2.0f);
-	glm::vec3 vectorTerm = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
-	return outsideTerm * insideTerm * vectorTerm;
 }
 
 // surface tension functions
@@ -458,25 +411,11 @@ glm::vec3 surfaceNormalField(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		if (xj != &xi) {
 			float outside_term = xj->getMass() * 1 / xj->getDensity();
-			surfaceField += (outside_term * surfaceNormalFieldGradientKernel(xi, *xj));
+			surfaceField += (outside_term * Kernel::polyKernelGradient(xi, *xj));
 		}
 		
 	}
 	return surfaceField;
-}
-
-glm::vec3 colorFieldLaplacianKernel(const Particle& xi, const Particle& xj) {
-	// if we're less than the max radius, don't do anything
-	if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
-		return glm::vec3(0.0f, 0.0f, 0.0f);
-	}
-
-	// otherwise
-	glm::vec3 r = xi.getPosition() - xj.getPosition();
-	float outsideTerm = 3.0f * 315.0f * length(r) * length(r) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 8.0f);
-	float insideTerm = powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f);
-	glm::vec3 vectorTerm = glm::vec3((powf(r.y, 2.0f) + powf(r.z, 2.0f)) / powf(length(r), 3.0f), (powf(r.x, 2.0f) + powf(r.z, 2.0f)) / powf(length(r), 3.0f), (powf(r.y, 2.0f) + powf(r.x, 2.0f)) / powf(length(r), 3.0f));
-	return outsideTerm * insideTerm * vectorTerm;
 }
 
 // surface tension functions
@@ -488,7 +427,7 @@ glm::vec3 colorFieldLaplacian(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		float outside_term = xj->getMass() * 1 / xj->getDensity();
 
-		surfaceField += (outside_term * colorFieldLaplacianKernel(xi, *xj));
+		surfaceField += (outside_term * Kernel::polyKernelLaplacian(xi, *xj));
 	}
 	return surfaceField;
 }

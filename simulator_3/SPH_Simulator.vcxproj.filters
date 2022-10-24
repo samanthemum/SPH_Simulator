@@ -42,6 +42,9 @@
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\GLSL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\MatrixStack.h">
       <Filter>Header Files</Filter>
     </ClInclude>

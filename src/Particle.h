@@ -27,6 +27,7 @@ class Particle {
 		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
 		void setColorFieldLaplacian(glm::vec3 newColor) { this->colorFieldLaplacian = newColor; };
 		void setDensity(float density) { this->density = density; };
+		void setPredictedDensity(float density) { this->predicted_density = density; };
 		void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
 		void setVolume(float v) { this->volume = v; };
@@ -86,6 +87,7 @@ class Particle {
 		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
 		glm::vec3 getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		float getDensity() const { return density; };
+		float getPredictedDensity() const { return predicted_density; };
 		float getPressure() const { return pressure; };
 		float getMass() const { return mass; };
 		float getVolume() const { return volume; };
@@ -103,6 +105,7 @@ class Particle {
 		glm::vec3 colorFieldLaplacian;
 		std::vector<Particle*> neighbors;
 		float density;
+		float predicted_density;
 		float mass;
 		float radius;
 		float volume;

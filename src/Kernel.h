@@ -23,7 +23,7 @@ class Kernel {
 				r = xi.getPosition() - xj.getPosition();
 			}
 
-			if (length(r) > SMOOTHING_RADIUS) {
+			if (glm::length(r) > SMOOTHING_RADIUS) {
 				return 0;
 			}
 
@@ -33,8 +33,7 @@ class Kernel {
 			return outsideTerm * insideTerm;
 		}
 
-
-		static float spikyKernelGradient(const Particle& xi, const Particle& xj, bool predicted = false) {
+		static float spikyKernel(const Particle& xi, const Particle& xj, bool predicted = false) {
 			// if we're less than the max radius, don't do anything
 			glm::vec3 r;
 			if (predicted) {
@@ -49,9 +48,30 @@ class Kernel {
 			}
 
 			// otherwise
+			float outsideTerm = 15.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
+			float insideTerm = powf(SMOOTHING_RADIUS - length(r), 3.0f);
+			return outsideTerm * insideTerm;
+		}
+
+		static glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj, bool predicted = false) {
+			// if we're less than the max radius, don't do anything
+			glm::vec3 r;
+			if (predicted) {
+				r = xi.getPredictedPosition() - xj.getPredictedPosition();
+			}
+			else {
+				r = xi.getPosition() - xj.getPosition();
+			}
+
+			if (length(r) > SMOOTHING_RADIUS) {
+				return glm::vec3(0, 0, 0);
+			}
+
+			// otherwise
 			float outsideTerm = -45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
 			float insideTerm = powf(SMOOTHING_RADIUS - length(r), 2.0f);
-			return outsideTerm * insideTerm;
+			glm::vec3 vectorTerm = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
+			return outsideTerm * insideTerm * vectorTerm;
 		}
 
 		static glm::vec3 polyKernelLaplacian(const Particle& xi, const Particle& xj, bool predicted = false) {

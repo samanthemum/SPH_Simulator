@@ -51,11 +51,11 @@ float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 10000;
 uint32_t HIGH_RES_COUNT = 100000;
-float LOW_RES_RADIUS = 2.0f;
+float LOW_RES_RADIUS = 3.0f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = 1.0f;
-float TIMESTEP = .025f;
+float TIMESTEP = .05f;
 
 float FRICTION = .1f;
 float ELASTICITY = .7f;
@@ -63,12 +63,11 @@ float ELASTICITY = .7f;
 // surface tension stuff
 float TENSION_ALPHA = 0.3f;
 float TENSION_THRESHOLD = .5f;
-float SIGMA = 0;
+float DELTA_ERROR = 0;
 
 float totalTime = 0.0f;
 
 int particleCount = LOW_RES_COUNT;
-float density_constant = 1.0;
 int steps = 0;
 int steps_per_update = 3;
 Particle* particleList;
@@ -84,7 +83,7 @@ glm::vec3 scaleParticles = glm::vec3(.5f, .5f, .5f);
 Scene selected_scene = Scene::DEFAULT;
 
 const int N_THREADS = 10;
-int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
+int PARTICLES_PER_THREAD = particleCount / N_THREADS;
 std::thread threads[N_THREADS];
 
 const float MAX_DENSITY_ERROR = .01f;
@@ -133,22 +132,22 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-float calculateDensityForParticle(const Particle x, bool predicted = false) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x);
+float calculateDensityForParticle(const Particle& x, bool predicted = false) {
+	float density = DENSITY_0_GUESS;
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj));
+		density += (xj->getMass() * Kernel::spikyKernel(x, *xj, predicted));
 	}
 
-	return (density * density_constant);
+	return density;
 }
 
-float calculatePressureForParticle(const Particle x) {
+float calculatePressureForParticle(const Particle& x) {
 	float pressure = ((STIFFNESS_PARAM * DENSITY_0_GUESS) / Y_PARAM) * (powf((x.getDensity() / DENSITY_0_GUESS), Y_PARAM) - 1.0f);
 	return pressure;
 }
 
-glm::vec3 pressureGradient(const Particle& xi) {
+glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 	glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// for every Particle xj in the neighbor hood of xi
@@ -157,15 +156,14 @@ glm::vec3 pressureGradient(const Particle& xi) {
 		glm::vec3 r = xi.getPosition() - xj->getPosition();
 
 		float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
-		glm::vec3 pressureField = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
-		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj) * pressureField);
+		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj, predicted));
 	}
-	return pressureGradient;
+	return -1.0f * pressureGradient;
 }
 
 void setNeighbors(Particle& x, int xIndex) {
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[50];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 50, info);
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[100];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 100, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -178,7 +176,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	delete[] info;
 }
 
-glm::vec3 diffusionTerm(const Particle& xi) {
+glm::vec3 diffusionTerm(const Particle& xi, bool predicted = false) {
 	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// for every Particle xj in the neighbor hood of xi
@@ -186,7 +184,7 @@ glm::vec3 diffusionTerm(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
 
-		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
+		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj, predicted));
 	}
 	return diffusionLaplacian;
 }
@@ -268,13 +266,13 @@ void setAccelerationForParticles_updated(int start_index, int end_index) {
 		glm::vec3 externalForce = particleList[i].forces.external;
 
 		// calculate surface pressure/tension
-		glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
-		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
+		/*glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
+		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();*/
 
-		glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
-		if (length(tension) > TENSION_THRESHOLD) {
+		glm::vec3 acceleration = pressureForce + VISCOSITY * diffusionForce + externalForce;
+		/*if (length(tension) > TENSION_THRESHOLD) {
 			acceleration += tension;
-		}
+		}*/
 		particleList[i].setAcceleration(acceleration);
 	}
 }
@@ -297,39 +295,43 @@ void setAccelerationForParticles(int start_index, int end_index) {
 	}
 }
 
+void updatePredictedPositionForParticle(Particle& xi, double time) {
+	float timeStepRemaining = time;
+
+	glm::vec3 newVelocity = xi.getVelocity() + xi.getAcceleration() * timeStepRemaining;
+	glm::vec3 averageVelocity = (newVelocity + xi.getVelocity()) / 2.0f;
+	glm::vec3 newPosition = xi.getPosition() + newVelocity * timeStepRemaining;
+
+	for (Plane surface : surfaces) {
+		if (Particle::willCollideWithPlane(xi.getPosition(), newPosition, xi.getRadius(), surface)) {
+			// collision stuff
+			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+			glm::vec3 velocityTangentAfter;
+			if (glm::length(velocityTangentBefore) == 0) {
+				velocityTangentAfter = velocityTangentBefore;
+			}
+			else {
+				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+			}
+
+			newVelocity = velocityNormalAfter + velocityTangentAfter;
+			float distance = xi.getDistanceFromPlane(newPosition, xi.getRadius(), surface);
+			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+			newPosition = newPosition + addedVector;
+			// particleList[i].setPosition(newPosition);
+		}
+	}
+
+	xi.setPredictedVelocity(newVelocity);
+	xi.setPredictedPosition(newPosition);
+}
+
 void updatePredictedPositionsForParticles(int start_index, int end_index, double time) {
 	for (int i = start_index; i < end_index; i++) {
-		float timeStepRemaining = time;
-
-		glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
-		glm::vec3 averageVelocity = (newVelocity + particleList[i].getVelocity()) / 2.0f;
-		glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
-
-		for (Plane surface : surfaces) {
-			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-				// collision stuff
-				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-				glm::vec3 velocityTangentAfter;
-				if (glm::length(velocityTangentBefore) == 0) {
-					velocityTangentAfter = velocityTangentBefore;
-				}
-				else {
-					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-				}
-
-				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-				newPosition = newPosition + addedVector;
-				// particleList[i].setPosition(newPosition);
-			}
-		}
-
-		particleList[i].setPredictedVelocity(newVelocity);
-		particleList[i].setPredictedPosition(newPosition);
+		updatePredictedPositionForParticle(particleList[i], time);
 	}
 }
 
@@ -339,7 +341,7 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 
 		glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
 		glm::vec3 averageVelocity = (newVelocity + particleList[i].getVelocity()) / 2.0f;
-		glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
+		glm::vec3 newPosition = particleList[i].getPosition() + newVelocity * timeStepRemaining;
 
 		for (Plane surface : surfaces) {
 			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
@@ -451,12 +453,12 @@ void initSceneOriginal() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(26.0f, 0.0, 0.0));
 
 	// initialize surfaces
-	surfaces.clear();
+	/*surfaces.clear();
 	surfaces.push_back(ground);
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);
+	surfaces.push_back(wall_4);*/
 
 }
 
@@ -484,7 +486,7 @@ void initKdTree() {
 	kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
 }
 
-void initSigma() {
+void initDeltaError() {
 	initParticleList_atRest();
 	initKdTree();
 
@@ -525,7 +527,37 @@ void initSigma() {
 		threads[i].join();
 	}
 
+	// update position for given particle
+	/*for (int i = 0; i < N_THREADS; i++) {
+		threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, TIMESTEP);
+	}
 
+	for (int i = 0; i < N_THREADS; i++) {
+		threads[i].join();
+	}*/
+
+	glm::vec3 densityKernelGradientSum = glm::vec3(0, 0, 0);
+	glm::vec3 pressureKernelGradientSum = glm::vec3(0, 0, 0);
+	float dotSum = 0.0f;
+	for (int i = 0; i < mostFilled->getNeighbors().size(); i++) {
+		Particle* xj = mostFilled->getNeighbors()[i];
+		glm::vec3 densityGradient = Kernel::spikyKernelGradient(*mostFilled, *xj);
+		glm::vec3 pressureGradient = Kernel::spikyKernelGradient(*mostFilled, *xj);
+		densityKernelGradientSum += Kernel::spikyKernelGradient(*mostFilled, *xj);
+		pressureKernelGradientSum += Kernel::spikyKernelGradient(*mostFilled, *xj);
+		dotSum += glm::dot(densityGradient, pressureGradient);
+	}
+
+	float beta = powf(TIMESTEP, 2.0) * powf(mostFilled->getMass(), 2.0f) * 2 / powf(DENSITY_0_GUESS, 2.0f);
+	float denominator = beta * (glm::dot(-1.0f * pressureKernelGradientSum, densityKernelGradientSum) - dotSum);
+	DELTA_ERROR = -1.0f / denominator;
+	cout << "DELTA ERROR IS " << DELTA_ERROR << endl << endl;
+
+	// also make this multithreaded
+	// reset all densities
+	for (int i = 0; i < particleCount; i++) {
+		particleList[i].setDensity(DENSITY_0_GUESS);
+	}
 }
 
 static void init()
@@ -559,7 +591,7 @@ static void init()
 	glfwSetTime(0.0);
 
 	// Initialize sigma
-	initSigma();
+	initDeltaError();
 	
 	keyToggles[(unsigned)'l'] = true;
 
@@ -573,6 +605,14 @@ static void init()
 	}
 	
 	initKdTree();
+	// update neighbors
+	for (int i = 0; i < N_THREADS; i++) {
+		threads[i] = thread(setNeighborsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	}
+
+	for (int i = 0; i < N_THREADS; i++) {
+		threads[i].join();
+	}
 	
 
 	// initialize shape for sphere
@@ -664,10 +704,10 @@ void updateFluid(float time) {
 		}
 	}
 
-	// update density
+	 //update density
 	for (int i = 0; i < N_THREADS; i++) {
 		// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-		threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+		threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, false);
 	} 
 
 	for (int i = 0; i < N_THREADS; i++) {
@@ -768,8 +808,9 @@ void updateFluidPCISPH(float time) {
 	while (max_density_error > MAX_DENSITY_ERROR || iter < MIN_ITERATIONS) {
 
 		// update predicted velocities and positions
+		max_density_error = 0;
 		for (int i = 0; i < N_THREADS; i++) {
-			threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+			threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
 		}
 
 		for (int i = 0; i < N_THREADS; i++) {
@@ -786,21 +827,24 @@ void updateFluidPCISPH(float time) {
 		}
 
 		// TODO: make this step threaded
+		int max_index = 0;
 		for (int i = 0; i < particleCount; i++) {
 			float density_error = particleList[i].getDensity() - DENSITY_0_GUESS;
 
 			// set the error, if needed
-			if (density_error > max_density_error) {
-				max_density_error = density_error;
+			if (abs(density_error / DENSITY_0_GUESS) > max_density_error) {
+				max_index = i;
+				max_density_error = abs(density_error / DENSITY_0_GUESS);
 			}
 
 			// update pressure
-			particleList[i].setPressure(particleList[i].getPressure() + SIGMA * density_error);
+			particleList[i].setPressure(particleList[i].getPressure() + (DELTA_ERROR * density_error));
 		}
 
 		// TODO: make this step threaded
 		for (int i = 0; i < particleCount; i++) {
-			particleList[i].forces.pressure = pressureGradient(particleList[i]);
+			// QUESTION: is kernel with predictions or no?
+			particleList[i].forces.pressure = pressureGradient(particleList[i], false);
 		}
 
 		// recalculate accelerations
@@ -813,6 +857,12 @@ void updateFluidPCISPH(float time) {
 		}
 
 		iter++;
+		cout << "Iteration " << iter << endl;
+		cout << "Error: " << max_density_error << endl;
+		cout << "Max index " << max_index << endl;
+		cout << "Density @ max index " << particleList[max_index].getDensity() << endl;
+		cout << "Pressure @ max index " << particleList[max_index].getPressure() << endl;
+		cout << "Pressure force @ max index " << particleList[max_index].forces.pressure.x << ", "<< particleList[max_index].forces.pressure.y << ", " << particleList[max_index].forces.pressure.z << endl << endl;
 	}
 
 	// update actual positions and velocities
@@ -825,6 +875,7 @@ void updateFluidPCISPH(float time) {
 		threads[i].join();
 	}
 	steps++;
+	cout << "Finished step " << steps << endl;
 }
 
 void renderGui(bool& isPaused, std::string& buttonText) {
@@ -964,7 +1015,7 @@ int main(int argc, char **argv)
 	ImGui_ImplOpenGL3_Init("#version 460");
 
 	std::string buttonText = "Play";
-	bool isPaused = true;
+	bool isPaused = false;
 	cout << "Number of surfaces: " << surfaces.size() << endl;
 	while(!glfwWindowShouldClose(window)) {
 		if(!glfwGetWindowAttrib(window, GLFW_ICONIFIED)) {
@@ -973,7 +1024,7 @@ int main(int argc, char **argv)
 			if (!isPaused) {
 				float timeEnd = glfwGetTime();
 				// Integrate partices
-				updateFluid(TIMESTEP);
+				updateFluidPCISPH(TIMESTEP);
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;
@@ -986,7 +1037,7 @@ int main(int argc, char **argv)
 			
 			render();
 
-			renderGui(isPaused, buttonText);
+			// renderGui(isPaused, buttonText);
 			
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);

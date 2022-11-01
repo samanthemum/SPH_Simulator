@@ -6,13 +6,17 @@
 #include "Plane.h"
 #include <glm/common.hpp>
 #include <glm/fwd.hpp>
+#include <iostream>
 
 class Kernel {
 	private:
 		static float SMOOTHING_RADIUS;
 
 	public:
-		static void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
+		static void setSmoothingRadius(float radius) {
+			SMOOTHING_RADIUS = radius;
+			std::cout << "The smoothing radius is " << SMOOTHING_RADIUS << std::endl;
+		}
 		static float polyKernelFunction(const Particle& xi, const Particle& xj, bool predicted = false) {
 			// if we're less than the max radius, don't do anything
 			glm::vec3 r;
@@ -70,7 +74,7 @@ class Kernel {
 			// otherwise
 			float outsideTerm = -45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
 			float insideTerm = powf(SMOOTHING_RADIUS - length(r), 2.0f);
-			glm::vec3 vectorTerm = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
+			glm::vec3 vectorTerm = r;
 			return outsideTerm * insideTerm * vectorTerm;
 		}
 
@@ -129,9 +133,9 @@ class Kernel {
 			}
 
 			// otherwise
-			float outsideTerm = -3.0f * 315.0f * length(r) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 32.0f);
+			float outsideTerm = (- 3.0f * 315.0f * length(r)) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 32.0f);
 			float insideTerm = powf(powf(SMOOTHING_RADIUS, 2.0f) - powf(length(r), 2.0f), 2.0f);
-			glm::vec3 vectorTerm = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
+			glm::vec3 vectorTerm = r;
 			return outsideTerm * insideTerm * vectorTerm;
 		}
 

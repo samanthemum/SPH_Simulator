@@ -55,7 +55,7 @@ float LOW_RES_RADIUS = 3.0f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = 1.0f;
-float TIMESTEP = .05f;
+float TIMESTEP = .01f;
 
 float FRICTION = .1f;
 float ELASTICITY = .7f;
@@ -80,7 +80,7 @@ std::vector<Plane> surfaces;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f, .5f, .5f);
 
-Scene selected_scene = Scene::DEFAULT;
+Scene selected_scene = Scene::DAM_BREAK;
 
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = particleCount / N_THREADS;
@@ -133,10 +133,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 float calculateDensityForParticle(const Particle& x, bool predicted = false) {
-	float density = DENSITY_0_GUESS;
+	float density = x.getMass() * Kernel::polyKernelFunction(x, x, predicted);
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::spikyKernel(x, *xj, predicted));
+		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, predicted));
 	}
 
 	return density;
@@ -148,7 +148,7 @@ float calculatePressureForParticle(const Particle& x) {
 }
 
 glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
-	glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 pressureGradient = glm::vec3(0, 0, 0);
 
 	// for every Particle xj in the neighbor hood of xi
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
@@ -162,8 +162,8 @@ glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 }
 
 void setNeighbors(Particle& x, int xIndex) {
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[100];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 100, info);
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -287,7 +287,7 @@ void setAccelerationForParticles(int start_index, int end_index) {
 		glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
 		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
 
-		glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
+		glm::vec3 acceleration = pressureForce + VISCOSITY * diffusionForce + externalForce;
 		if (length(tension) > TENSION_THRESHOLD) {
 			acceleration += tension;
 		}
@@ -383,7 +383,7 @@ void initParticleList_atRest() {
 	int width = slice / 20.0f;
 	int height = slice / width;
 
-	float volume = (height * width * depth);
+	float volume = (height * width * depth * .25);
 	float volumePerParticle = volume / particleCount;
 	float mass = volumePerParticle * DENSITY_0_GUESS;
 	for (int i = 0; i < depth; i++) {
@@ -453,12 +453,12 @@ void initSceneOriginal() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(26.0f, 0.0, 0.0));
 
 	// initialize surfaces
-	/*surfaces.clear();
+	surfaces.clear();
 	surfaces.push_back(ground);
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);*/
+	surfaces.push_back(wall_4);
 
 }
 
@@ -528,27 +528,28 @@ void initDeltaError() {
 	}
 
 	// update position for given particle
-	/*for (int i = 0; i < N_THREADS; i++) {
+	for (int i = 0; i < N_THREADS; i++) {
 		threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, TIMESTEP);
 	}
 
 	for (int i = 0; i < N_THREADS; i++) {
 		threads[i].join();
-	}*/
+	}
 
 	glm::vec3 densityKernelGradientSum = glm::vec3(0, 0, 0);
 	glm::vec3 pressureKernelGradientSum = glm::vec3(0, 0, 0);
 	float dotSum = 0.0f;
+	cout << "Number of neighbors " << mostFilled->getNeighbors().size() << endl;
 	for (int i = 0; i < mostFilled->getNeighbors().size(); i++) {
 		Particle* xj = mostFilled->getNeighbors()[i];
-		glm::vec3 densityGradient = Kernel::spikyKernelGradient(*mostFilled, *xj);
-		glm::vec3 pressureGradient = Kernel::spikyKernelGradient(*mostFilled, *xj);
-		densityKernelGradientSum += Kernel::spikyKernelGradient(*mostFilled, *xj);
-		pressureKernelGradientSum += Kernel::spikyKernelGradient(*mostFilled, *xj);
+		glm::vec3 densityGradient = Kernel::polyKernelGradient(*mostFilled, *xj, true);
+		glm::vec3 pressureGradient = Kernel::spikyKernelGradient(*mostFilled, *xj, true);
+		densityKernelGradientSum += densityGradient;
+		pressureKernelGradientSum += pressureGradient;
 		dotSum += glm::dot(densityGradient, pressureGradient);
 	}
 
-	float beta = powf(TIMESTEP, 2.0) * powf(mostFilled->getMass(), 2.0f) * 2 / powf(DENSITY_0_GUESS, 2.0f);
+	float beta = powf(TIMESTEP, 2.0) * powf(mostFilled->getMass(), 2.0f) * 2.0f / powf(DENSITY_0_GUESS, 2.0f);
 	float denominator = beta * (glm::dot(-1.0f * pressureKernelGradientSum, densityKernelGradientSum) - dotSum);
 	DELTA_ERROR = -1.0f / denominator;
 	cout << "DELTA ERROR IS " << DELTA_ERROR << endl << endl;
@@ -862,6 +863,7 @@ void updateFluidPCISPH(float time) {
 		cout << "Max index " << max_index << endl;
 		cout << "Density @ max index " << particleList[max_index].getDensity() << endl;
 		cout << "Pressure @ max index " << particleList[max_index].getPressure() << endl;
+		cout << "Predicted Position @ max index " << particleList[max_index].getPredictedPosition().x << ", " << particleList[max_index].getPredictedPosition().y << ", " << particleList[max_index].getPredictedPosition().z << endl;
 		cout << "Pressure force @ max index " << particleList[max_index].forces.pressure.x << ", "<< particleList[max_index].forces.pressure.y << ", " << particleList[max_index].forces.pressure.z << endl << endl;
 	}
 
@@ -1015,7 +1017,7 @@ int main(int argc, char **argv)
 	ImGui_ImplOpenGL3_Init("#version 460");
 
 	std::string buttonText = "Play";
-	bool isPaused = false;
+	bool isPaused = true;
 	cout << "Number of surfaces: " << surfaces.size() << endl;
 	while(!glfwWindowShouldClose(window)) {
 		if(!glfwGetWindowAttrib(window, GLFW_ICONIFIED)) {
@@ -1037,7 +1039,7 @@ int main(int argc, char **argv)
 			
 			render();
 
-			// renderGui(isPaused, buttonText);
+			renderGui(isPaused, buttonText);
 			
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);

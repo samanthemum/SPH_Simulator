@@ -46,12 +46,15 @@ glm::vec2 cameraRotations(0, 0);
 glm::vec2 mousePrev(-1, -1);
 
 
+
+float resolutionConstant = 10000;
 float DENSITY_0_GUESS = 1.0f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
-uint32_t LOW_RES_COUNT = 10000;
+uint32_t LOW_RES_COUNT = 5000;
 uint32_t HIGH_RES_COUNT = 100000;
-float LOW_RES_RADIUS = 1.25f;
+int particleCount = LOW_RES_COUNT;
+float LOW_RES_RADIUS = 2.00f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = 3.0f;
@@ -67,7 +70,7 @@ float TENSION_THRESHOLD = .5f;
 
 float totalTime = 0.0f;
 
-int particleCount = LOW_RES_COUNT;
+
 float density_constant = 1.0;
 int steps = 0;
 int steps_per_update = 3;
@@ -78,10 +81,11 @@ shared_ptr<cy::PointCloud<Vec3f, float, 3>> kdTree;
 shared_ptr<Shape> lowResSphere;
 std::vector<Plane> surfaces;
 
-glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
-glm::vec3 scaleParticles = glm::vec3(.5f, .5f, .5f);
 
-Scene selected_scene = Scene::DAM_BREAK;
+glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
+glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
+
+Scene selected_scene = Scene::DEFAULT;
 
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
@@ -185,7 +189,10 @@ void initParticleList() {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
 				Particle p;
-				p.setPosition(glm::vec3(j, k, i));
+				float x = j; // +(2 * scaleParticles.x - 1);
+				float y = k;
+				float z = i; // +(2 * scaleParticles.z - 1);
+				p.setPosition(glm::vec3(x, y, z));
 				p.setDensity(DENSITY_0_GUESS);
 				p.setMass(mass);
 				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -193,7 +200,7 @@ void initParticleList() {
 
 				int index = (slice * i) + (height * j) + k;
 				particleList[index] = p;
-				particlePositions[index] = Vec3f(j, k, i);
+				particlePositions[index] = Vec3f(x, y, z);
 
 			}
 		}
@@ -203,7 +210,7 @@ void initParticleList() {
 void initSceneOriginal() {
 	initParticleList();
 
-	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, -2.0 * scaleParticles.x, 0.0));
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 26.0f));
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(-1.0, 0.0, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -1.0));

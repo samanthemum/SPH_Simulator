@@ -51,17 +51,18 @@ float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 10000;
 uint32_t HIGH_RES_COUNT = 100000;
-float LOW_RES_RADIUS = 2.0f;
+float LOW_RES_RADIUS = 1.25f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
-float VISCOSITY = 1.0f;
+float VISCOSITY = 3.0f;
 float TIMESTEP = .025f;
 
 float FRICTION = .1f;
 float ELASTICITY = .7f;
+float timePassed = 0.0f;
 
 // surface tension stuff
-float TENSION_ALPHA = 0.3f;
+float TENSION_ALPHA = 0.0f;
 float TENSION_THRESHOLD = .5f;
 
 float totalTime = 0.0f;
@@ -80,7 +81,7 @@ std::vector<Plane> surfaces;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f, .5f, .5f);
 
-Scene selected_scene = Scene::DEFAULT;
+Scene selected_scene = Scene::DAM_BREAK;
 
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
@@ -147,7 +148,7 @@ void initParticleList_atRest() {
 			for (int k = 0; k < height; k++) {
 				Particle p;
 				float x_position = (float)j;
-				float y_position = (float)k * .25;
+				float y_position = (float)k * .5;
 				float z_position = (float)i;
 				if (k % 2 == 1) {
 					x_position += .5;
@@ -225,6 +226,7 @@ void initSceneDamBreak() {
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + scaleParticles.x));
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - scaleParticles.x, 0.0f, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - scaleParticles.x));
+	Plane wall_5(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(40 + scaleParticles.x, 0.0, 0.0));
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(25 + scaleParticles.x, 0.0, 0.0));
 
 	// initialize surfaces
@@ -233,13 +235,19 @@ void initSceneDamBreak() {
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
+	surfaces.push_back(wall_5);
 	surfaces.push_back(wall_4);
 
 }
 
 void initKdTree() {
 	// Should automatically build the tree?
-	kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
+	if (!kdTree) {
+		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
+	}
+	else {
+		kdTree->Build(particleCount, particlePositions);
+	}
 }
 
 static void init()
@@ -376,18 +384,16 @@ glm::vec3 pressureGradient(const Particle& xi) {
 	// for every Particle xj in the neighbor hood of xi
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
 		Particle* xj = xi.getNeighbors().at(j);
-		glm::vec3 r = xi.getPosition() - xj->getPosition();
 
 		float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
-		glm::vec3 pressureField = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
-		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj) * pressureField);
+		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj));
 	}
-	return pressureGradient;
+	return -1.0f * pressureGradient;
 }
 
 void setNeighbors(Particle& x, int xIndex) {
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo [50];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 50, info);
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo [500];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -410,7 +416,7 @@ glm::vec3 diffusionTerm(const Particle& xi) {
 
 		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
 	}
-	return diffusionLaplacian;
+	return diffusionLaplacian * VISCOSITY;
 }
 
 // surface tension functions
@@ -478,16 +484,21 @@ void setAccelerationForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
 		glm::vec3 pressureForce = pressureGradient(particleList[i]);
 		glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
-		glm::vec3 externalForce = glm::vec3(0.0, -9.8f, 0.0f);
+		glm::vec3 externalForce = glm::vec3(0.0, -9.8f * particleList[i].getDensity(), 0.0f);
 
 		// calculate surface pressure/tension
-		glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
-		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
+		
+		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
 
-		glm::vec3 acceleration = -1.0f * pressureForce + VISCOSITY * diffusionForce + externalForce;
-		if (length(tension) > TENSION_THRESHOLD) {
-			acceleration += tension;
+		if (TENSION_ALPHA > 0.0){
+			glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
+			glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
+			if (length(tension) > TENSION_THRESHOLD) {
+				acceleration += tension;
+			}
 		}
+
+		acceleration /= particleList[i].getDensity();
 		particleList[i].setAcceleration(acceleration);
 	}
 }
@@ -495,10 +506,8 @@ void setAccelerationForParticles(int start_index, int end_index) {
 void updatePositionForParticles(int start_index, int end_index, double time) {
 	for (int i = start_index; i < end_index; i++) {
 		float timeStepRemaining = time;
-
 		glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
-		glm::vec3 averageVelocity = (newVelocity + particleList[i].getVelocity()) / 2.0f;
-		glm::vec3 newPosition = particleList[i].getPosition() + averageVelocity * timeStepRemaining;
+		glm::vec3 newPosition = particleList[i].getPosition() + newVelocity * timeStepRemaining;
 
 		for (Plane surface : surfaces) {
 			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
@@ -670,6 +679,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		if (ImGui::Button("Reset")) {
 			buttonText = "Play";
 			isPaused = true;
+			timePassed = 0.0f;
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
 			}
@@ -741,7 +751,6 @@ int main(int argc, char **argv)
 	}
 
 	float timeStart = glfwGetTime();
-	float timePassed = 0.0f;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -764,9 +773,9 @@ int main(int argc, char **argv)
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;
-				if (timePassed >= 4 && surfaces.size() == 5 && selected_scene == Scene::DAM_BREAK) {
+				if (timePassed >= 6 && surfaces.size() == 6 && selected_scene == Scene::DAM_BREAK) {
 					cout << "Release the kracken!" << endl;
-					surfaces.resize(4);
+					surfaces.resize(5);
 				}
 				GLSL::checkError(GET_FILE_LINE);
 			}

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <stdio.h>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -23,9 +24,13 @@
 #include "Shape.h"
 #include "cyVector.h"
 #include "Plane.h"
+
+// GUI Creation
 #include "imgui-master/imgui.h"
 #include "imgui-master/backends/imgui_impl_glfw.h"
 #include "imgui-master/backends/imgui_impl_opengl3.h"
+
+// Creating PNGs
 #include "Kernel.h"
 #include <thread>
 
@@ -90,6 +95,15 @@ Scene selected_scene = Scene::DEFAULT;
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
 std::thread threads[N_THREADS];
+
+int width = 1280;
+int height = 960;
+
+const char* cmd = "\"C:\\Users\\Sam Hallam\\Desktop\\Art Stuff\\ffmpeg-2021-11-10-git-44c65c6cc0-essentials_build\\bin\\ffmpeg\" -r 60 -f rawvideo -pix_fmt rgba -s 1280x960 -i - "
+"-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip output.mp4";
+
+FILE* ffmpeg = _popen(cmd, "wb");
+int* buffer = new int[width * height];
 
 static void error_callback(int error, const char *description)
 {
@@ -335,7 +349,6 @@ void render()
 	// Update time.
 	double t = glfwGetTime();
 	// Get current frame buffer size.
-	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 	
@@ -793,6 +806,9 @@ int main(int argc, char **argv)
 			
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);
+			glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+
+			fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
 		}
 		// Poll for and process events.
 		glfwPollEvents();
@@ -801,6 +817,9 @@ int main(int argc, char **argv)
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+
+	// close video stream
+	_pclose(ffmpeg);
 
 	// clean up memory
 	delete[] particleList;

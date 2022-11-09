@@ -47,17 +47,17 @@ glm::vec2 mousePrev(-1, -1);
 
 
 
-float resolutionConstant = 10000;
+float resolutionConstant = 8000;
 float DENSITY_0_GUESS = 1.0f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
-uint32_t LOW_RES_COUNT = 5000;
+uint32_t LOW_RES_COUNT = 8000;
 uint32_t HIGH_RES_COUNT = 100000;
 int particleCount = LOW_RES_COUNT;
-float LOW_RES_RADIUS = 2.00f;
+float LOW_RES_RADIUS = 1.125;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
-float VISCOSITY = 3.0f;
+float VISCOSITY = .50f;
 float TIMESTEP = .025f;
 
 float FRICTION = .1f;
@@ -65,8 +65,8 @@ float ELASTICITY = .7f;
 float timePassed = 0.0f;
 
 // surface tension stuff
-float TENSION_ALPHA = 0.0f;
-float TENSION_THRESHOLD = .5f;
+float TENSION_ALPHA = .25f;
+float TENSION_THRESHOLD = 1.0f;
 
 float totalTime = 0.0f;
 
@@ -194,7 +194,7 @@ void initParticleList() {
 				float z = i; // +(2 * scaleParticles.z - 1);
 				p.setPosition(glm::vec3(x, y, z));
 				p.setDensity(DENSITY_0_GUESS);
-				p.setMass(mass);
+				p.setMass(1.25);
 				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 				p.setRadius(scaleParticles.x);
 
@@ -211,10 +211,10 @@ void initSceneOriginal() {
 	initParticleList();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, -2.0 * scaleParticles.x, 0.0));
-	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 26.0f));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 21.0f));
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(-1.0, 0.0, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -1.0));
-	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(26.0f, 0.0, 0.0));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(21.0f, 0.0, 0.0));
 
 	// initialize surfaces
 	surfaces.clear();
@@ -234,7 +234,7 @@ void initSceneDamBreak() {
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - scaleParticles.x, 0.0f, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - scaleParticles.x));
 	Plane wall_5(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(40 + scaleParticles.x, 0.0, 0.0));
-	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(25 + scaleParticles.x, 0.0, 0.0));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + scaleParticles.x, 0.0, 0.0));
 
 	// initialize surfaces
 	surfaces.clear();
@@ -249,9 +249,9 @@ void initSceneDamBreak() {
 
 void initKdTree() {
 	// Should automatically build the tree?
-	if (!kdTree) {
+	 if (!kdTree) {
 		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
-	}
+	 }
 	else {
 		kdTree->Build(particleCount, particlePositions);
 	}

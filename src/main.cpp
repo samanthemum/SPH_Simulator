@@ -57,9 +57,10 @@ float DENSITY_0_GUESS = 1.0f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
-uint32_t HIGH_RES_COUNT = 100000;
+uint32_t HIGH_RES_COUNT = 64000;
 int particleCount = LOW_RES_COUNT;
 float LOW_RES_RADIUS = 1.125;
+float HIGH_RES_RADIUS = .5f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .50f;
@@ -90,7 +91,7 @@ std::vector<Plane> surfaces;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
 
-Scene selected_scene = Scene::DEFAULT;
+Scene selected_scene = Scene::DAM_BREAK;
 
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
@@ -99,11 +100,14 @@ std::thread threads[N_THREADS];
 int width = 1280;
 int height = 960;
 
-const char* cmd = "\"C:\\Users\\Sam Hallam\\Desktop\\Art Stuff\\ffmpeg-2021-11-10-git-44c65c6cc0-essentials_build\\bin\\ffmpeg\" -r 60 -f rawvideo -pix_fmt rgba -s 1280x960 -i - "
+const char* cmd = "\"C:\\Users\\Sam Hallam\\Desktop\\Art Stuff\\ffmpeg-2021-11-10-git-44c65c6cc0-essentials_build\\bin\\ffmpeg\" -r 30 -f rawvideo -pix_fmt rgba -s 1280x960 -i - "
 "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip output.mp4";
 
 FILE* ffmpeg = _popen(cmd, "wb");
 int* buffer = new int[width * height];
+
+bool recording = false;
+float end_time = 0.0f;
 
 static void error_callback(int error, const char *description)
 {
@@ -149,27 +153,36 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 }
 
 void initParticleList_atRest() {
+	if (particleList != nullptr) {
+		delete[] particleList;
+	}
+	if (particlePositions != nullptr) {
+		delete[] particlePositions;
+	}
 	particleList = new Particle[particleCount];
 	particlePositions = new Vec3f[particleCount];
 
 	// put them in a cube shape for ease of access
-	float depth = 20.0f;
+	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+	cout << "The scale factor is " << scaleFactor << endl;
+	float depth = 20.0f * (1.0f / scaleFactor);
 	int slice = particleCount / depth;
-	int width = slice / 20.0f;
+	int width = slice / depth;
 	int height = slice / width;
 
-	float volume = (height * width * depth);
+	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
 	float mass = volumePerParticle * DENSITY_0_GUESS;
 	for (int i = 0; i < depth; i++) {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
 				Particle p;
-				float x_position = (float)j;
-				float y_position = (float)k * .5;
-				float z_position = (float)i;
+				
+				float x_position = ((float)j) * scaleFactor;
+				float y_position = ((float)k * .5) * scaleFactor;
+				float z_position = (float)i * scaleFactor;
 				if (k % 2 == 1) {
-					x_position += .5;
+					x_position += (.5* scaleFactor);
 				}
 				p.setPosition(glm::vec3(x_position, y_position, z_position));
 				p.setDensity(DENSITY_0_GUESS);
@@ -208,7 +221,7 @@ void initParticleList() {
 				float z = i; // +(2 * scaleParticles.z - 1);
 				p.setPosition(glm::vec3(x, y, z));
 				p.setDensity(DENSITY_0_GUESS);
-				p.setMass(1.25);
+				p.setMass(2.00);
 				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 				p.setRadius(scaleParticles.x);
 
@@ -564,7 +577,6 @@ void updateFluid(float time) {
 	// update the kd tree
 	//std::thread kdTree_thread;
 	//kdTree_thread = thread(initKdTree);
-
 	if (steps == steps_per_update) {
 		initKdTree();
 		steps = 0;
@@ -718,6 +730,38 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
 		}
+		if (ImGui::Button("Record in High Resolution")) {
+			recording = true;
+			
+			end_time = timePassed;
+			timePassed = 0.0f;
+			// FIXME: leftover particles after switch
+			kdTree = nullptr;
+			particleCount = HIGH_RES_COUNT;
+			SMOOTHING_RADIUS = HIGH_RES_RADIUS;
+			MAX_RADIUS = HIGH_RES_RADIUS;
+			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
+			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
+			TIMESTEP = .01f;
+
+			if (selected_scene == Scene::DAM_BREAK) {
+				initSceneDamBreak();
+			}
+			else {
+				initSceneOriginal();
+			}
+			initKdTree();
+			for (int i = 0; i < particleCount; i++) {
+				setNeighbors(particleList[i], i);
+			}
+			
+			isPaused = false;
+
+			cout << "Recording... please be patient :)" << endl;
+			// density_constant = DENSITY_0_GUESS / averageDensity;
+			// DENSITY_0_GUESS = averageDensity;
+		}
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -782,7 +826,7 @@ int main(int argc, char **argv)
 	std::string buttonText = "Play";
 	bool isPaused = true;
 	cout << "Number of surfaces: " << surfaces.size() << endl;
-	while(!glfwWindowShouldClose(window)) {
+	while(!glfwWindowShouldClose(window) || (recording && timePassed <= end_time)) {
 		if(!glfwGetWindowAttrib(window, GLFW_ICONIFIED)) {
 			
 			// Simulate and draw water
@@ -801,14 +845,21 @@ int main(int argc, char **argv)
 			}
 			
 			render();
-
-			renderGui(isPaused, buttonText);
+			if (!(recording && timePassed <= end_time)) {
+				renderGui(isPaused, buttonText);
+			}
+			if (recording && timePassed > end_time) {
+				cout << "Recording finished" << endl;
+				break;
+			}
 			
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);
-			glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 
-			fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
+			if (recording) {
+				glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+				fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
+			}
 		}
 		// Poll for and process events.
 		glfwPollEvents();

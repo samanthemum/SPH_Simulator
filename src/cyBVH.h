@@ -33,6 +33,8 @@
 // 
 //-------------------------------------------------------------------------------
 
+#include "cyTriMesh.h"
+
 #ifndef _CY_BVH_H_INCLUDED_
 #define _CY_BVH_H_INCLUDED_
 

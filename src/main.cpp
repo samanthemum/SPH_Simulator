@@ -15,13 +15,16 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+// CY classes
+#include "cyPointCloud.h"
+#include "cyVector.h"
+#include "cyBVH.h"
+
 #include "GLSL.h"
 #include "Program.h"
 #include "MatrixStack.h"
 #include "Particle.h"
-#include "cyPointCloud.h"
 #include "Shape.h"
-#include "cyVector.h"
 #include "Plane.h"
 #include "imgui-master/imgui.h"
 #include "imgui-master/backends/imgui_impl_glfw.h"
@@ -75,6 +78,9 @@ Particle* particleList;
 Vec3f* particlePositions;
 
 shared_ptr<cy::PointCloud<Vec3f, float, 3>> kdTree;
+shared_ptr<cy::TriMesh> shapeMesh;
+shared_ptr<cy::BVHTriMesh> bvh;
+
 shared_ptr<Shape> lowResSphere;
 std::vector<Plane> surfaces;
 
@@ -128,6 +134,34 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		mousePrev[0] = -1;
 		mousePrev[1] = -1;
 	}
+}
+
+bool isInBounds(const Vec3f& point, const float* bounds) {
+	if (bounds[0] <= point.x && bounds[1] <= point.y && bounds[2] <= point.z) {
+		if (bounds[3] >= point.x && bounds[4] >= point.y && bounds[5] >= point.z) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool isInBoundingVolume(const Vec3f& point, unsigned int currentNode) {
+	if (!isInBounds(point, bvh->GetNodeBounds(currentNode))) {
+		return false;
+	}
+	else if (bvh->IsLeafNode(currentNode)) {
+		return true;
+	}
+
+	unsigned int child1, child2;
+	bvh->GetChildNodes(currentNode, child1, child2);
+	return isInBoundingVolume(point, child1) || isInBoundingVolume(point, child2);
+}
+
+bool isInBoundingVolume(const Vec3f& point) {
+	unsigned int rootNode = bvh->GetRootNodeID();
+	return isInBoundingVolume(point, rootNode);
 }
 
 void initParticleList_atRest() {
@@ -282,6 +316,18 @@ static void init()
 	
 	keyToggles[(unsigned)'l'] = true;
 
+	// initialize shape for extra mesh, if desired
+	// TODO: can add other shapes later. for now spheres only baby
+	shapeMesh = make_shared<cy::TriMesh>();
+	std::string mesh_location = RESOURCE_DIR + "low_res_sphere.obj";
+	if (!shapeMesh->LoadFromFileObj(mesh_location.c_str(), false)) {
+		cout << "Error loading mesh into triangle mesh" << endl;
+	}
+
+	// initializes bounding volume with shape
+	bvh = make_shared<cy::BVH>(shapeMesh);
+
+
 	// initialize particles and tree
 	switch (selected_scene) {
 		case Scene::DAM_BREAK:
@@ -299,11 +345,14 @@ static void init()
 	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
 	lowResSphere->init();
 
+
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location
 	// of your OpenGL error.
 	GLSL::checkError(GET_FILE_LINE);
 }
+
+
 
 void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->pushMatrix();

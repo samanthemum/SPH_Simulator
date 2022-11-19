@@ -42,7 +42,8 @@ using cy::Vec3f;
 
 enum class Scene {
 	DEFAULT,
-	DAM_BREAK
+	DAM_BREAK,
+	SPLASH
 };
 
 GLFWwindow *window; // Main application window
@@ -56,18 +57,22 @@ glm::vec2 mousePrev(-1, -1);
 
 
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = 1.0f; // density of water= 1 g/cm^3
+float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 7.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
 uint32_t HIGH_RES_COUNT = 64000;
+uint32_t LOW_RES_COUNT_SHAPE = 250;
+uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
-float LOW_RES_RADIUS = 1.125;
-float HIGH_RES_RADIUS = .5f;
+int particleForShape = LOW_RES_COUNT_SHAPE;
+float LOW_RES_RADIUS = 1.0f;
+float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
-float VISCOSITY = .50f;
+float VISCOSITY = .250f;
 float TIMESTEP = .025f;
+float MASS = 1.0f;
 
 float FRICTION = .1f;
 float ELASTICITY = .7f;
@@ -76,7 +81,6 @@ float timePassed = 0.0f;
 // surface tension stuff
 float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
-
 float totalTime = 0.0f;
 
 
@@ -98,6 +102,8 @@ glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
 
 Scene selected_scene = Scene::DAM_BREAK;
+
+// TODO: fix high resolution transfer
 
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
@@ -206,7 +212,8 @@ void initParticleList_atRest() {
 
 	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
-	float mass = volumePerParticle * DENSITY_0_GUESS;
+	cout << "The particle count is " << particleCount << endl;
+	MASS = volumePerParticle * DENSITY_0_GUESS;
 	for (int i = 0; i < depth; i++) {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
@@ -220,7 +227,7 @@ void initParticleList_atRest() {
 				}
 				p.setPosition(glm::vec3(x_position, y_position, z_position));
 				p.setDensity(DENSITY_0_GUESS);
-				p.setMass(mass);
+				p.setMass(MASS);
 				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 				p.setRadius(scaleParticles.x);
 
@@ -231,6 +238,71 @@ void initParticleList_atRest() {
 			}
 		}
 	}
+}
+
+void initParticleShape() {
+	Particle* shapeParticles = new Particle[particleCount + particleForShape];
+	Vec3f* newPositions = new Vec3f[particleCount + particleForShape];
+
+	for (int i = 0; i < particleCount; i++) {
+		shapeParticles[i] = particleList[i];
+		newPositions[i] = particlePositions[i];
+	}
+
+	delete[] particleList;
+	delete[] particlePositions;
+
+	// idea: random numbers inside shape
+	shapeMesh->ComputeBoundingBox();
+	Vec3f min = shapeMesh->GetBoundMin();
+	Vec3f max = shapeMesh->GetBoundMax();
+
+	float x_range = max.x - min.x;
+	float y_range = max.y - min.y;
+	float z_range = max.z - min.z;
+	
+	float remainingParticles = particleForShape;
+	int currentIndex = particleCount;
+
+	while(remainingParticles > 0) {
+		float rand_x = (float)((rand() % 100) + 1.0f) / 100.0f;
+		float rand_y = (float)((rand() % 100) + 1.0f) / 100.0f;
+		float rand_z = (float)((rand() % 100) + 1.0f) / 100.0f;
+
+		float x = min.x + rand_x * x_range;
+		float y = min.y + rand_y * y_range;
+		float z = min.z + rand_z * z_range;
+		Vec3f potentialParticle = Vec3f(x, y, z);
+		
+		if (isInBoundingVolume(potentialParticle)) {
+
+			// translate x, y, and z
+			x = 3 * x + 10;
+			y = 3 * y + 20;
+			z = 3 * z + 10;
+
+			Particle p;
+			p.setPosition(glm::vec3(x, y, z));
+			p.setDensity(DENSITY_0_GUESS);
+			p.setMass(MASS);
+			p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
+			p.setRadius(scaleParticles.x);
+			potentialParticle.x = x;
+			potentialParticle.y = y;
+			potentialParticle.z = z;
+
+			shapeParticles[currentIndex] = p;
+			newPositions[currentIndex] = potentialParticle;
+
+			remainingParticles--;
+			currentIndex++;
+		}
+	}
+
+	particleList = shapeParticles;
+	particlePositions = newPositions;
+	particleCount += particleForShape;
+	PARTICLES_PER_THREAD = particleCount / N_THREADS;
 }
 
 void initParticleList() {
@@ -290,12 +362,12 @@ void initSceneOriginal() {
 void initSceneDamBreak() {
 	initParticleList_atRest();
 
-	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - scaleParticles.x , 0.0));
-	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + scaleParticles.x));
-	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - scaleParticles.x, 0.0f, 0.0));
-	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - scaleParticles.x));
-	Plane wall_5(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(40 + scaleParticles.x, 0.0, 0.0));
-	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + scaleParticles.x, 0.0, 0.0));
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5 , 0.0));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5));
+	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - .5, 0.0f, 0.0));
+	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - .5));
+	Plane wall_5(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(40 + .5, 0.0, 0.0));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5, 0.0, 0.0));
 
 	// initialize surfaces
 	surfaces.clear();
@@ -308,9 +380,31 @@ void initSceneDamBreak() {
 
 }
 
+void initSceneSplash() {
+	initParticleList_atRest();
+	// HINT: unnatural behavior only occurs when the shape is created for some reason
+	// my guess is something wrong with neighbors or something maybe
+	initParticleShape();
+
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5f, 0.0));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5f));
+	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - .5f, 0.0f, 0.0));
+	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - .5f));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
+
+	// initialize surfaces
+	surfaces.clear();
+	surfaces.push_back(ground);
+	surfaces.push_back(wall_1);
+	surfaces.push_back(wall_2);
+	surfaces.push_back(wall_3);
+	surfaces.push_back(wall_4);
+}
+
 void initKdTree() {
 	// Should automatically build the tree?
 	 if (!kdTree) {
+		cout << "Making new kd tree!" << endl;
 		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
 	 }
 	else {
@@ -357,15 +451,19 @@ static void init()
 	if (!shapeMesh->LoadFromFileObj(mesh_location.c_str(), false)) {
 		cout << "Error loading mesh into triangle mesh" << endl;
 	}
+	shapeMesh->ComputeBoundingBox();
 
 	// initializes bounding volume with shape
-	bvh = make_shared<cy::BVH>(shapeMesh);
+	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());
 
 
 	// initialize particles and tree
 	switch (selected_scene) {
 		case Scene::DAM_BREAK:
 			initSceneDamBreak();
+			break;
+		case Scene::SPLASH:
+			initSceneSplash();
 			break;
 		default:
 			initSceneOriginal();
@@ -386,19 +484,18 @@ static void init()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
-
-
 void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->pushMatrix();
 	glUniform3f(prog->getUniform("kd"), 0.0f, 0.3f, .7f);
 	glUniform3f(prog->getUniform("ka"), 0.0f, 0.3f, .7f);
 	glUniform3f(prog->getUniform("ks"), 0.0f, 0.3f, .7f);
-	glUniform3f(prog->getUniform("lightPos"), 10.0f, 10.0f, -3.0f);
+	glUniform3f(prog->getUniform("lightPos"), 20.0f, 20.0f, -20.0f);
 	MV->scale(scaleStructure);
 	for (int i = 0; i < particleCount; i++) {
 		MV->pushMatrix();
 		MV->translate(particleList[i].getPosition());
 		MV->scale(scaleParticles);
+		// calculate blue and green based on particle velocity
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		lowResSphere->draw(prog);
 		MV->popMatrix();
@@ -456,7 +553,8 @@ float calculateDensityForParticle(const Particle x) {
 }
 
 float calculatePressureForParticle(const Particle x) {
-	float pressure = ((STIFFNESS_PARAM * DENSITY_0_GUESS) / Y_PARAM) *(powf((x.getDensity() / DENSITY_0_GUESS), Y_PARAM) - 1.0f);
+	//float pressure = ((STIFFNESS_PARAM * DENSITY_0_GUESS) / Y_PARAM) *(powf((x.getDensity() / DENSITY_0_GUESS), Y_PARAM) - 1.0f);
+	float pressure = STIFFNESS_PARAM * (x.getDensity() - DENSITY_0_GUESS);
 	return pressure;
 }
 
@@ -468,6 +566,8 @@ glm::vec3 pressureGradient(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 
 		float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
+		
+		//float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
 		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj));
 	}
 	return -1.0f * pressureGradient;
@@ -475,7 +575,7 @@ glm::vec3 pressureGradient(const Particle& xi) {
 
 void setNeighbors(Particle& x, int xIndex) {
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo [500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], LOW_RES_RADIUS, 500, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -484,6 +584,7 @@ void setNeighbors(Particle& x, int xIndex) {
 			neighbors.push_back(&particleList[info[i].index]);
 		}
 	}
+	
 	x.setNeighbors(neighbors);
 	delete[] info;
 }
@@ -519,8 +620,8 @@ glm::vec3 surfaceNormalField(const Particle& xi) {
 }
 
 // surface tension functions
-glm::vec3 colorFieldLaplacian(const Particle& xi) {
-	glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
+float colorFieldLaplacian(const Particle& xi) {
+	float surfaceField = 0;
 
 	// for every Particle xj in the neighbor hood of xi
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
@@ -573,7 +674,7 @@ void setAccelerationForParticles(int start_index, int end_index) {
 		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
 
 		if (TENSION_ALPHA > 0.0){
-			glm::vec3 k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
+			float k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
 			glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
 			if (length(tension) > TENSION_THRESHOLD) {
 				acceleration += tension;
@@ -735,7 +836,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		ImGui::Text("Surface Tension Parameters");
 		if (ImGui::BeginCombo(" ", NULL)) {
 			ImGui::SliderFloat("Tension Threshold", &TENSION_THRESHOLD, 0.0f, MAX_RADIUS);
-			ImGui::SliderFloat("Alpha", &TENSION_ALPHA, 0.0f, 1.0f);
+			ImGui::SliderFloat("Alpha", &TENSION_ALPHA, 0.0f, 5.0f);
 			ImGui::EndCombo();
 		}
 
@@ -761,8 +862,12 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			buttonText = "Play";
 			isPaused = true;
 			timePassed = 0.0f;
+			particleCount = LOW_RES_COUNT;
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
+			}
+			else if (selected_scene == Scene::SPLASH) {
+				initSceneSplash();
 			}
 			else {
 				initSceneOriginal();
@@ -787,19 +892,26 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			// FIXME: leftover particles after switch
 			kdTree = nullptr;
 			particleCount = HIGH_RES_COUNT;
+			particleForShape = HIGH_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = HIGH_RES_RADIUS;
+			Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
 			MAX_RADIUS = HIGH_RES_RADIUS;
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
 			TIMESTEP = .01f;
+			DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
 			}
+			else if (selected_scene == Scene::SPLASH) {
+				initSceneSplash();
+			}
 			else {
 				initSceneOriginal();
 			}
+			cout << "Updated particle count is " << particleCount << endl;
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);

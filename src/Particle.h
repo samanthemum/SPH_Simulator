@@ -17,7 +17,7 @@ class Particle {
 		void setVelocity(glm::vec3 v) { this->velocity = v; };
 		void setAcceleration(glm::vec3 a) { this->acceleration = a; };
 		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
-		void setColorFieldLaplacian(glm::vec3 newColor) { this->colorFieldLaplacian = newColor; };
+		void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
 		void setDensity(float density) { this->density = density; };
 		void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
@@ -74,7 +74,7 @@ class Particle {
 		glm::vec3 getVelocity() const { return velocity; };
 		glm::vec3 getAcceleration() const { return acceleration; };
 		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
-		glm::vec3 getColorFieldLaplacian() const { return colorFieldLaplacian; }
+		float getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		float getDensity() const { return density; };
 		float getPressure() const { return pressure; };
 		float getMass() const { return mass; };
@@ -87,7 +87,7 @@ class Particle {
 		glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 acceleration;
 		glm::vec3 surfaceNormal;
-		glm::vec3 colorFieldLaplacian;
+		float colorFieldLaplacian;
 		std::vector<Particle*> neighbors;
 		float density;
 		float mass;

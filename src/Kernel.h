@@ -32,6 +32,11 @@ class Kernel {
 				return glm::vec3(0,0,0);
 			}
 
+			// TODO: find out why we're self including to begin with
+			if (length(xi.getPosition() - xj.getPosition()) == 0.0f) {
+				return glm::vec3(0, 0, 0);
+			}
+
 			// otherwise
 			float outsideTerm = -45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
 			float insideTerm = powf(SMOOTHING_RADIUS - length(xi.getPosition() - xj.getPosition()), 2.0f);

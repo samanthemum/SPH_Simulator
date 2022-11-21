@@ -58,7 +58,7 @@ glm::vec2 mousePrev(-1, -1);
 
 float resolutionConstant = 8000;
 float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
-float STIFFNESS_PARAM = 7.0f;
+float STIFFNESS_PARAM = 5.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
 uint32_t HIGH_RES_COUNT = 64000;

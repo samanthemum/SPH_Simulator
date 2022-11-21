@@ -58,15 +58,18 @@ glm::vec2 mousePrev(-1, -1);
 
 float resolutionConstant = 8000;
 float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
-float STIFFNESS_PARAM = 7.0f;
+float STIFFNESS_PARAM = 5.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
+uint32_t MID_RES_COUNT = 27000;
 uint32_t HIGH_RES_COUNT = 64000;
 uint32_t LOW_RES_COUNT_SHAPE = 250;
+uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
 float LOW_RES_RADIUS = 1.0f;
+float MID_RES_RADIUS = (2.0f / 3.0f);
 float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
@@ -205,10 +208,14 @@ void initParticleList_atRest() {
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 	cout << "The scale factor is " << scaleFactor << endl;
-	float depth = 20.0f * (1.0f / scaleFactor);
-	int slice = particleCount / depth;
-	int width = slice / depth;
-	int height = slice / width;
+	int depth = 20.0f * (1.0f / scaleFactor);
+	cout << "The depth is " << depth << endl;
+	int slice = roundf((float)particleCount / depth);
+	cout << "Value of slice: " << slice << endl;
+	int width = roundf((float)slice / (float)depth);
+	cout << "The width is " << width << endl;
+	int height = roundf((float)slice / (float)width);
+	cout << "The height is " << height << endl;
 
 	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
@@ -232,12 +239,17 @@ void initParticleList_atRest() {
 				p.setRadius(scaleParticles.x);
 
 				int index = (slice * i) + (height * j) + k;
+				if (index >= particleCount) {
+					cout << "value of i: " << i << endl;
+					cout << "Index too large: " << index << endl;
+				}
 				particleList[index] = p;
 				particlePositions[index] = Vec3f(x_position, y_position, z_position);
 
 			}
 		}
 	}
+	cout << "Finished particle initialization" << endl;
 }
 
 void initParticleShape() {
@@ -814,7 +826,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 	// hides the GUI if space is pressed
 	if (!keyToggles[(unsigned)' ']) {
 
-		ImGui::SetNextWindowSize(ImVec2(840, 480));
+		ImGui::SetNextWindowSize(ImVec2(840, 600));
 		ImGui::Begin("Control Window");
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text("Press space to hide window\n");
@@ -827,7 +839,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			ImGui::SliderFloat("Elasticity", &ELASTICITY, 0.0f, 1.0f);
 			ImGui::InputFloat("At Rest Density", &DENSITY_0_GUESS);
 			ImGui::SliderFloat("Friction", &FRICTION, 0.0f, 1.0f);
-			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 10.0f);
+			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 20.0f);
 			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 10.0f);
 			ImGui::EndCombo();
 		}
@@ -917,6 +929,45 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				setNeighbors(particleList[i], i);
 			}
 			
+			isPaused = false;
+
+			cout << "Recording... please be patient :)" << endl;
+			// density_constant = DENSITY_0_GUESS / averageDensity;
+			// DENSITY_0_GUESS = averageDensity;
+		}
+		if (ImGui::Button("Record in Mid Resolution")) {
+			recording = true;
+
+			end_time = timePassed;
+			timePassed = 0.0f;
+			// FIXME: leftover particles after switch
+			kdTree = nullptr;
+			particleCount = MID_RES_COUNT;
+			particleForShape = MID_RES_COUNT_SHAPE;
+			SMOOTHING_RADIUS = MID_RES_RADIUS;
+			Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
+			MAX_RADIUS = MID_RES_RADIUS;
+			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
+			PARTICLES_PER_THREAD = particleCount / N_THREADS;
+			TIMESTEP = .01f;
+			DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
+
+			if (selected_scene == Scene::DAM_BREAK) {
+				initSceneDamBreak();
+			}
+			else if (selected_scene == Scene::SPLASH) {
+				initSceneSplash();
+			}
+			else {
+				initSceneOriginal();
+			}
+			cout << "Updated particle count is " << particleCount << endl;
+			initKdTree();
+			for (int i = 0; i < particleCount; i++) {
+				setNeighbors(particleList[i], i);
+			}
+
 			isPaused = false;
 
 			cout << "Recording... please be patient :)" << endl;

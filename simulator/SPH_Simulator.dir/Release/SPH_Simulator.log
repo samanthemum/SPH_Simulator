@@ -1,33 +1,49 @@
-﻿  main.cpp
+﻿  Building Custom Rule C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/CMakeLists.txt
+  GLSL.cpp
+  MatrixStack.cpp
+  Program.cpp
+  Shape.cpp
+  imgui_impl_glfw.cpp
+  imgui_impl_opengl3.cpp
+  imgui.cpp
+  imgui_draw.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  imgui_stdlib.cpp
+  main.cpp
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(23,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(41,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(55,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(68,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(81,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(159,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(162,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(160,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(163,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(206,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(209,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(210,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(223,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(226,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(264,27): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(314,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(315,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(325,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(326,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(327,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(691,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(899,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(978,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(995,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(209,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(211,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(213,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(215,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(217,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(230,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(233,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(276,27): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(326,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(327,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(337,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(338,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(339,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(703,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(911,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(950,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1029,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1046,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator\Release\SPH_Simulator.exe

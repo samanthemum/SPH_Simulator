@@ -58,7 +58,7 @@ glm::vec2 mousePrev(-1, -1);
 
 float resolutionConstant = 8000;
 float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
-float STIFFNESS_PARAM = 5.0f;
+float STIFFNESS_PARAM = 60.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
 uint32_t MID_RES_COUNT = 27000;
@@ -577,9 +577,9 @@ glm::vec3 pressureGradient(const Particle& xi) {
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
 		Particle* xj = xi.getNeighbors().at(j);
 
-		float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
+		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
 		
-		//float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
+		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
 		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj));
 	}
 	return -1.0f * pressureGradient;
@@ -839,7 +839,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			ImGui::SliderFloat("Elasticity", &ELASTICITY, 0.0f, 1.0f);
 			ImGui::InputFloat("At Rest Density", &DENSITY_0_GUESS);
 			ImGui::SliderFloat("Friction", &FRICTION, 0.0f, 1.0f);
-			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 20.0f);
+			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 100.0f);
 			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 10.0f);
 			ImGui::EndCombo();
 		}

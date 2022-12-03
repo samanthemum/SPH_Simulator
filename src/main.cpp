@@ -104,7 +104,7 @@ std::vector<Plane> surfaces;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
 
-Scene selected_scene = Scene::DAM_BREAK;
+Scene selected_scene = Scene::SPLASH;
 
 // TODO: fix high resolution transfer
 
@@ -276,6 +276,11 @@ void initParticleShape() {
 	float remainingParticles = particleForShape;
 	int currentIndex = particleCount;
 
+	// approximate density
+	float volume = (4.0 / 3.0) * M_PI * powf(1.75f, 3.0f);
+	float density_estimate = (MASS * remainingParticles) / volume;
+	//density_estimate *= 100000.f;
+
 	while(remainingParticles > 0) {
 		float rand_x = (float)((rand() % 100) + 1.0f) / 100.0f;
 		float rand_y = (float)((rand() % 100) + 1.0f) / 100.0f;
@@ -289,13 +294,13 @@ void initParticleShape() {
 		if (isInBoundingVolume(potentialParticle)) {
 
 			// translate x, y, and z
-			x = 3 * x + 10;
-			y = 3 * y + 20;
-			z = 3 * z + 10;
+			x = 3.5 * x + 10;
+			y = 3.5 * y + 25;
+			z = 3.5 * z + 10;
 
 			Particle p;
 			p.setPosition(glm::vec3(x, y, z));
-			p.setDensity(DENSITY_0_GUESS);
+			p.setDensity(density_estimate);
 			p.setMass(MASS);
 			p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 			p.setRadius(scaleParticles.x);

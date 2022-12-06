@@ -46,6 +46,11 @@ enum class Scene {
 	SPLASH
 };
 
+struct Keyframe {
+	std::vector<Particle> matchpoints;
+	float time;
+};
+
 GLFWwindow *window; // Main application window
 string RESOURCE_DIR = "..\\resources\\"; // Where the resources are loaded from
 shared_ptr<Program> prog;
@@ -85,6 +90,18 @@ float timePassed = 0.0f;
 float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
+
+// matchpoint system
+vector<Keyframe> keyframes;
+vector<Particle> defaultMatchpoints;
+const int matchpointNumber = 5;
+unsigned int nextKeyframe = 0;
+const float permittedError = .01f;
+
+// TODO:
+// 1. generate matchpoints (position and radius) at initialization
+// 2. Update keyframes at the end of each run
+// 3. If recording in mid or high res, do matchpoint error correction
 
 
 float density_constant = 1.0;
@@ -203,7 +220,7 @@ void initParticleList_atRest() {
 		delete[] particlePositions;
 	}
 	particleList = new Particle[particleCount];
-	particlePositions = new Vec3f[particleCount];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -254,7 +271,7 @@ void initParticleList_atRest() {
 
 void initParticleShape() {
 	Particle* shapeParticles = new Particle[particleCount + particleForShape];
-	Vec3f* newPositions = new Vec3f[particleCount + particleForShape];
+	Vec3f* newPositions = new Vec3f[particleCount + particleForShape + matchpointNumber];
 
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
@@ -324,7 +341,7 @@ void initParticleShape() {
 
 void initParticleList() {
 	particleList = new Particle[particleCount];
-	particlePositions = new Vec3f[particleCount];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
 	// put them in a cube shape for ease of access
 	float depth = 20.0f;
@@ -422,10 +439,27 @@ void initKdTree() {
 	// Should automatically build the tree?
 	 if (!kdTree) {
 		cout << "Making new kd tree!" << endl;
-		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
+		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
 	 }
 	else {
 		kdTree->Build(particleCount, particlePositions);
+	}
+}
+
+void initMatchPoints() {
+	for (int i = 0; i < matchpointNumber; i++) {
+		int particleIndex = rand() % particleCount;
+
+		Particle matchPoint;
+		matchPoint.setPosition(particleList[particleIndex].getPosition());
+		float radius = rand() % 3 + 1;
+		matchPoint.setRadius(radius);
+		matchPoint.setMass(MASS);
+		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+		particlePositions[particleCount + i] = matchpointPosition;
+		matchPoint.setIsMatchpoint(true);
+
+		defaultMatchpoints.push_back(matchPoint);
 	}
 }
 
@@ -485,7 +519,7 @@ static void init()
 		default:
 			initSceneOriginal();
 	}
-	
+	initMatchPoints();
 	initKdTree();
 	
 
@@ -560,13 +594,24 @@ void render()
 }
 
 float calculateDensityForParticle(const Particle x) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x);
+	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint());
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj));
+		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint()));
 	}
 
 	return (density * density_constant);
+}
+
+float sampleDensityForMatchpoint(const Particle x) {
+	float sample = 0;
+	for (int j = 0; j < x.getNeighbors().size(); j++) {
+		Particle* xj = x.getNeighbors().at(j);
+		sample += (xj->getDensity() * Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
+	}
+	// TODO: division???
+
+	return sample;
 }
 
 float calculatePressureForParticle(const Particle x) {
@@ -591,13 +636,14 @@ glm::vec3 pressureGradient(const Particle& xi) {
 }
 
 void setNeighbors(Particle& x, int xIndex) {
+	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo [500];
 	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
 	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index) {
+		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
 			neighbors.push_back(&particleList[info[i].index]);
 		}
 	}
@@ -739,6 +785,24 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 	}
 }
 
+void updateMatchPoints(float time) {
+	Keyframe k;
+	k.time = time + timePassed;
+
+	// TODO: add the matchpoints to tree and calculate each trait of match point
+	for (int i = 0; i < matchpointNumber; i++) {
+		particlePositions[particleCount + i] = Vec3f(defaultMatchpoints.at(i).getPosition().x, defaultMatchpoints.at(i).getPosition().y, defaultMatchpoints.at(i).getPosition().z);
+		// set the neighbors for match point
+		setNeighbors(defaultMatchpoints.at(i), particleCount + i);
+
+		// calculate density for matchpoint
+		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(defaultMatchpoints.at(i)));
+
+		// add the match point to the keyframe
+		k.matchpoints.push_back(defaultMatchpoints.at(i));
+	}
+}
+
 void updateFluid(float time) {
 
 	// update the kd tree
@@ -817,6 +881,66 @@ void updateFluid(float time) {
 
 	for (int i = 0; i < N_THREADS; i++) {
 		threads[i].join();
+	}
+
+	// do key frame stuff
+	if (!recording) {
+		updateMatchPoints(time);
+	}
+	else {
+		// apply match point control
+		// 0. Figure out if we're at a keyframe time
+		if (keyframes.at(nextKeyframe).time = timePassed + time) {
+			// loop through matchpoints
+			for (int i = 0; i < matchpointNumber; i++) {
+				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
+
+				// 1. Sample high resolution model at point
+				Particle highResSample;
+				highResSample.setPosition(keyframes.at(nextKeyframe).matchpoints.at(i).getPosition());
+				highResSample.setRadius(keyframes.at(nextKeyframe).matchpoints.at(i).getRadius());
+				highResSample.setMass(keyframes.at(nextKeyframe).matchpoints.at(i).getMass());
+
+				// get high res sample neighbors
+				particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
+				setNeighbors(highResSample, particleCount + i);
+
+				// calculate high res density
+				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+				// 2. Calculate error between high and low res value
+				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+				float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+
+				while (absError > permittedError) {
+					// 3. Calcuate G'(r, x)
+					float totalError = 0;
+					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
+						Particle* xj = highResSample.getNeighbors().at(j);
+						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						totalError += powf(kernel, 2.0f);
+					}
+
+					// 4. Apply control for each neighbor
+					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
+						Particle* xj = highResSample.getNeighbors().at(j);
+						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						
+						float newDensity = xj->getDensity() + densityError * (kernel / totalError);
+						xj->setDensity(newDensity);
+					}
+					
+					// update sampled density and error
+					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+					// update error
+					float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+					float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+				}
+			}
+
+			nextKeyframe++;
+		}
 	}
 
 	steps++;

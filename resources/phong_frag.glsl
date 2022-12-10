@@ -15,8 +15,8 @@ void main()
 	vec3 h = normalize(l + v);
 	vec3 colorA = ka;
 	vec3 colorD = max(dot(l, n), 0.0) * kd;
-	vec3 colorS = pow(max(dot(h, n), 0.0), s) * ks;
-	vec3 color = colorA + colorD + colorS;
+	//vec3 colorS = pow(max(dot(h, n), 0.0), s) * ks;
+	vec3 color = colorA + colorD; // + colorS;
 //	vec3 n = normalize(vNor);
 //	vec3 color = 0.5 * (n + 1.0);
 	gl_FragColor = vec4(color.r, color.g, color.b, 1.0);

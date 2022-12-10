@@ -91,6 +91,8 @@ float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
+bool CONTROL = true;
+
 // matchpoint system
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
@@ -605,13 +607,15 @@ float calculateDensityForParticle(const Particle x) {
 
 float sampleDensityForMatchpoint(const Particle x) {
 	float sample = 0;
+	float normalizer = 0;
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
 		sample += (xj->getDensity() * Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
+		normalizer += (Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
 	}
 	// TODO: division???
 
-	return sample;
+	return sample / normalizer;
 }
 
 float calculatePressureForParticle(const Particle x) {
@@ -801,6 +805,8 @@ void updateMatchPoints(float time) {
 		// add the match point to the keyframe
 		k.matchpoints.push_back(defaultMatchpoints.at(i));
 	}
+
+	keyframes.push_back(k);
 }
 
 void updateFluid(float time) {
@@ -887,11 +893,12 @@ void updateFluid(float time) {
 	if (!recording) {
 		updateMatchPoints(time);
 	}
-	else {
+	else if(CONTROL) {
 		// apply match point control
 		// 0. Figure out if we're at a keyframe time
-		if (keyframes.at(nextKeyframe).time = timePassed + time) {
+		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
 			// loop through matchpoints
+			int iterations = 0;
 			for (int i = 0; i < matchpointNumber; i++) {
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
 
@@ -912,7 +919,7 @@ void updateFluid(float time) {
 				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
 				float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
-				while (absError > permittedError) {
+				while (absError > permittedError || iterations < 6) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
@@ -936,6 +943,7 @@ void updateFluid(float time) {
 					// update error
 					float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
 					float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+					iterations++;
 				}
 			}
 
@@ -1004,6 +1012,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			isPaused = true;
 			timePassed = 0.0f;
 			particleCount = LOW_RES_COUNT;
+			keyframes.clear();
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
 			}

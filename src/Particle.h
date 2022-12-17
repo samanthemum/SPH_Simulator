@@ -11,14 +11,22 @@ class Particle {
 	public:
 		Particle() {};
 		~Particle() {};
+		struct Forces {
+			glm::vec3 pressure;
+			glm::vec3 external;
+			glm::vec3 viscosity;
+		};
 
 		// setter functions
 		void setPosition(glm::vec3 pos) { this->position = pos; };
 		void setVelocity(glm::vec3 v) { this->velocity = v; };
+		void setPredictedPosition(glm::vec3 pos) { this->predicted_position = pos; };
+		void setPredictedVelocity(glm::vec3 v) { this->predicted_velocity = v; };
 		void setAcceleration(glm::vec3 a) { this->acceleration = a; };
 		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
 		void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
 		void setDensity(float density) { this->density = density; };
+		void setPredictedDensity(float density) { this->predicted_density = density; };
 		void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
 		void setVolume(float v) { this->volume = v; };
@@ -72,24 +80,31 @@ class Particle {
 		// getter functions
 		glm::vec3 getPosition() const { return position; };
 		glm::vec3 getVelocity() const { return velocity; };
+		glm::vec3 getPredictedPosition() const { return predicted_position; };
+		glm::vec3 getPredictedVelocity() const { return predicted_velocity; };
 		glm::vec3 getAcceleration() const { return acceleration; };
 		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
 		float getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		float getDensity() const { return density; };
+		float getPredictedDensity() const { return predicted_density; };
 		float getPressure() const { return pressure; };
 		float getMass() const { return mass; };
 		float getVolume() const { return volume; };
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
+		Forces forces;
 
 	private:
 		glm::vec3 position;
 		glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 predicted_position;
+		glm::vec3 predicted_velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 acceleration;
 		glm::vec3 surfaceNormal;
 		float colorFieldLaplacian;
 		std::vector<Particle*> neighbors;
 		float density;
+		float predicted_density;
 		float mass;
 		float radius;
 		float volume;

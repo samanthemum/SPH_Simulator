@@ -13,18 +13,32 @@ class Kernel {
 
 	public:
 		static void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
-		static float polyKernelFunction(const Particle& xi, const Particle& xj) {
+		static float polyKernelFunction(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
-			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
+			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+
+			if (length(xi.getPosition() - xj.getPosition()) > radius) {
 				return 0;
 			}
 
 			// otherwise
-			float outsideTerm = 315.0f / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 64.0f);
-			float insideTerm = powf(powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 3.0f);
+			float outsideTerm = 315.0f / (M_PI * powf(radius, 9.0f) * 64.0f);
+			float insideTerm = powf(powf(radius, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 3.0f);
 			return outsideTerm * insideTerm;
 		}
 
+		static float samplingKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
+			// if we're less than the max radius, don't do anything
+			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+
+			if (length(xi.getPosition() - xj.getPosition()) > radius) {
+				return 0;
+			}
+
+			// otherwise
+			float kernelValue = exp(-1 * radius * powf(length(xi.getPosition() - xj.getPosition()), 2.0f));
+			return kernelValue;
+		}
 
 		static glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything

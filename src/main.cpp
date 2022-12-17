@@ -37,6 +37,10 @@
 #include "Kernel.h"
 #include <thread>
 
+// Volume Sampling
+#include "../../Leaven/lib/src/volumeSampler.h"
+#include "../../Leaven/lib/src/surfaceSampler.h"
+
 using namespace std;
 using cy::Vec3f;
 

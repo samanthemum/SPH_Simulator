@@ -35,6 +35,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("C:/glfw-3.3.6/glfw-3.3.6/debug/cmake_install.cmake")
+  include("C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator/Leaven/lib/cmake_install.cmake")
 
 endif()
 

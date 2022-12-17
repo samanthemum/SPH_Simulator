@@ -106,8 +106,34 @@ ELSE()
 	TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} ${GLEW_DIR}/lib/libGLEW.a)
 ENDIF()
 
+# Get the EIGEN environment variable. Since EIGEN is a header-only library, we
+# just need to add it to the include directory.
+SET(EIGEN3_INCLUDE_DIR "$ENV{EIGEN3_INCLUDE_DIR}")
+IF(NOT EIGEN3_INCLUDE_DIR)
+	# The environment variable was not set
+	SET(ERR_MSG "Please point the environment variable EIGEN3_INCLUDE_DIR to the root directory of your EIGEN installation.")
+	IF(WIN32)
+		# On Windows, try the default location
+		MESSAGE(STATUS "Looking for EIGEN in ${DEF_DIR_EIGEN}")
+		IF(IS_DIRECTORY ${DEF_DIR_EIGEN})
+			MESSAGE(STATUS "Found!")
+			SET(EIGEN3_INCLUDE_DIR ${DEF_DIR_EIGEN})
+		ELSE()
+			MESSAGE(FATAL_ERROR ${ERR_MSG})
+		ENDIF()
+	ELSE()
+		MESSAGE(FATAL_ERROR ${ERR_MSG})
+	ENDIF()
+ENDIF()
+INCLUDE_DIRECTORIES(${EIGEN3_INCLUDE_DIR})
+
 # Use c++17
 SET_TARGET_PROPERTIES(${CMAKE_PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
+
+# Add LEAVEN integration
+ADD_SUBDIRECTORY(Leaven/lib)
+INCLUDE_DIRECTORIES(Leaven/lib)
+TARGET_LINK_LIBRARIES(LeavenLib)
 
 # OS specific options and libraries
 IF(WIN32)

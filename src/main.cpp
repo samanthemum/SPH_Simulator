@@ -276,72 +276,51 @@ void initParticleList_atRest() {
 }
 
 void initParticleShape() {
-	Particle* shapeParticles = new Particle[particleCount + particleForShape];
-	Vec3f* newPositions = new Vec3f[particleCount + particleForShape + matchpointNumber];
-
+	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (5.0f * 2.0f));
+	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
+	
+	// update the size of particles
+	Particle* shapeParticles = new Particle[particleCount + usedParticles];
+	Vec3f* newPositions = new Vec3f[particleCount + usedParticles + matchpointNumber];
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
 		newPositions[i] = particlePositions[i];
 	}
 
-	delete[] particleList;
-	delete[] particlePositions;
-
-	// idea: random numbers inside shape
-	shapeMesh->ComputeBoundingBox();
-	Vec3f min = shapeMesh->GetBoundMin();
-	Vec3f max = shapeMesh->GetBoundMax();
-
-	float x_range = max.x - min.x;
-	float y_range = max.y - min.y;
-	float z_range = max.z - min.z;
-	
-	float remainingParticles = particleForShape;
-	int currentIndex = particleCount;
-
-	// approximate density
+	//// approximate density
 	float volume = (4.0 / 3.0) * M_PI * powf(1.75f, 3.0f);
-	float density_estimate = (MASS * remainingParticles) / volume;
+	float density_estimate = (MASS * usedParticles) / volume;
 	//density_estimate *= 100000.f;
 
-	while(remainingParticles > 0) {
-		float rand_x = (float)((rand() % 100) + 1.0f) / 100.0f;
-		float rand_y = (float)((rand() % 100) + 1.0f) / 100.0f;
-		float rand_z = (float)((rand() % 100) + 1.0f) / 100.0f;
+	for (int i = 0; i < usedParticles; i++) {
+		//		// translate x, y, and z
+		float x = meshParticles.at(i)[0];
+		float y = meshParticles.at(i)[1];
+		float z = meshParticles.at(i)[2];
 
-		float x = min.x + rand_x * x_range;
-		float y = min.y + rand_y * y_range;
-		float z = min.z + rand_z * z_range;
-		Vec3f potentialParticle = Vec3f(x, y, z);
-		
-		if (isInBoundingVolume(potentialParticle)) {
+		x = 5.0 * x + 10;
+		y = 5.0 * y + 25;
+		z = 5.0 * z + 10;
 
-			// translate x, y, and z
-			x = 3.5 * x + 10;
-			y = 3.5 * y + 25;
-			z = 3.5 * z + 10;
+		Particle p;
+		p.setPosition(glm::vec3(x, y, z));
+		p.setDensity(density_estimate);
+		p.setMass(MASS);
+		p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
+		p.setRadius(scaleParticles.x);
 
-			Particle p;
-			p.setPosition(glm::vec3(x, y, z));
-			p.setDensity(density_estimate);
-			p.setMass(MASS);
-			p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
-			p.setRadius(scaleParticles.x);
-			potentialParticle.x = x;
-			potentialParticle.y = y;
-			potentialParticle.z = z;
+		Vec3f potentialParticle;
+		potentialParticle.x = x;
+		potentialParticle.y = y;
+		potentialParticle.z = z;
 
-			shapeParticles[currentIndex] = p;
-			newPositions[currentIndex] = potentialParticle;
-
-			remainingParticles--;
-			currentIndex++;
-		}
+		shapeParticles[particleCount + i] = p;
+		newPositions[particleCount + i] = potentialParticle;
 	}
 
 	particleList = shapeParticles;
 	particlePositions = newPositions;
-	particleCount += particleForShape;
+	particleCount += usedParticles;
 	PARTICLES_PER_THREAD = particleCount / N_THREADS;
 }
 
@@ -513,6 +492,11 @@ static void init()
 	// initializes bounding volume with shape
 	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());
 
+	// initialize shape for sphere
+	lowResSphere = make_shared<Shape>();
+	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
+	lowResSphere->init();
+
 
 	// initialize particles and tree
 	switch (selected_scene) {
@@ -527,13 +511,6 @@ static void init()
 	}
 	initMatchPoints();
 	initKdTree();
-	
-
-	// initialize shape for sphere
-	lowResSphere = make_shared<Shape>();
-	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
-	lowResSphere->init();
-
 
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location
@@ -617,7 +594,6 @@ float sampleDensityForMatchpoint(const Particle x) {
 		sample += (xj->getDensity() * Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
 		normalizer += (Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
 	}
-	// TODO: division???
 
 	return sample / normalizer;
 }
@@ -981,7 +957,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			ImGui::InputFloat("At Rest Density", &DENSITY_0_GUESS);
 			ImGui::SliderFloat("Friction", &FRICTION, 0.0f, 1.0f);
 			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 100.0f);
-			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 10.0f);
+			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 50.0f);
 			ImGui::EndCombo();
 		}
 

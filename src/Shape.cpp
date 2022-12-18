@@ -10,6 +10,7 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+#include "../../Leaven/lib/src/volumeSampler.h"
 
 using namespace std;
 
@@ -30,6 +31,8 @@ void Shape::loadMesh(const string &meshName)
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
 	std::vector<tinyobj::material_t> materials;
+	std::vector<unsigned int> indexBuf;
+	std::vector<float> vertexBuf;
 	string warnStr, errStr;
 	bool rc = tinyobj::LoadObj(&attrib, &shapes, &materials, &warnStr, &errStr, meshName.c_str());
 	if(!rc) {
@@ -40,18 +43,22 @@ void Shape::loadMesh(const string &meshName)
 		// three different normals. Here, we are going to duplicate all such
 		// vertices.
 		// Loop over shapes
+		unsigned int index = 0;
 		for(size_t s = 0; s < shapes.size(); s++) {
 			// Loop over faces (polygons)
 			size_t index_offset = 0;
+			
 			for(size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
 				size_t fv = shapes[s].mesh.num_face_vertices[f];
 				// Loop over vertices in the face.
+				
 				for(size_t v = 0; v < fv; v++) {
 					// access to vertex
 					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
 					posBuf.push_back(attrib.vertices[3*idx.vertex_index+0]);
 					posBuf.push_back(attrib.vertices[3*idx.vertex_index+1]);
 					posBuf.push_back(attrib.vertices[3*idx.vertex_index+2]);
+
 					if(!attrib.normals.empty()) {
 						norBuf.push_back(attrib.normals[3*idx.normal_index+0]);
 						norBuf.push_back(attrib.normals[3*idx.normal_index+1]);
@@ -68,6 +75,49 @@ void Shape::loadMesh(const string &meshName)
 			}
 		}
 	}
+
+	// vertex buf
+	for (int i = 0; i < attrib.vertices.size(); i++) {
+		vertexBuf.push_back(attrib.vertices[i]);
+	}
+
+	// face buf
+	for (size_t s = 0; s < shapes.size(); s++) {
+		// Loop over faces (polygons)
+		size_t index_offset = 0;
+
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
+			size_t fv = shapes[s].mesh.num_face_vertices[f];
+			// Loop over vertices in the face.
+
+			for (size_t v = 0; v < fv; v++) {
+				// access to vertex
+				tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+
+				indexBuf.push_back(idx.vertex_index + 1);
+			}
+			index_offset += fv;
+		}
+	}
+
+	faceBuf = Eigen::Matrix3X<unsigned int>::Zero(3, indexBuf.size() / 3);
+	posBuf_eigen = Eigen::Matrix3X<float>::Zero(3, vertexBuf.size() / 3);
+
+	for (int i = 0; i < vertexBuf.size(); i += 3) {
+		for (int c = 0; c < 3; c++) {
+			posBuf_eigen.col(i / 3)[c] = vertexBuf[i + c];
+		}
+	}
+
+	for (int i = 0; i < indexBuf.size(); i += 3) {
+		for (int c = 0; c < 3; c++) {
+			faceBuf.col(i / 3)[c] = indexBuf[i + c] - 1;
+		}
+	}
+}
+
+std::vector<Eigen::Matrix<float, 3, 1>> Shape::sampleMesh(float particleRadius) {
+	return VolumeSampler::sampleMeshRandom(posBuf_eigen, faceBuf, particleRadius, 20, 200, false);
 }
 
 void Shape::init()

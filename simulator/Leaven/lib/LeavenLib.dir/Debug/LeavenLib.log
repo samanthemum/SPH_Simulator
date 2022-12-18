@@ -1,0 +1,7 @@
+﻿  volumeSampler.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\common.h(166,38): warning C4244: '/=': conversion from 'double' to 'Common::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(85,21): warning C4244: 'initializing': conversion from 'double' to 'VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(99,31): warning C4244: 'initializing': conversion from 'double' to 'VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(99,25): warning C4244: 'initializing': conversion from 'double' to 'const VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(171,23): warning C4018: '<': signed/unsigned mismatch
+  LeavenLib.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator\Leaven\lib\Debug\LeavenLib.lib

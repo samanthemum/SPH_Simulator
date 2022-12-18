@@ -225,7 +225,7 @@ void initParticleList_atRest() {
 	if (particlePositions != nullptr) {
 		delete[] particlePositions;
 	}
-	particleList = new Particle[particleCount];
+	particleList = new Particle[particleCount + matchpointNumber];
 	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
 	// put them in a cube shape for ease of access
@@ -280,7 +280,7 @@ void initParticleShape() {
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 	
 	// update the size of particles
-	Particle* shapeParticles = new Particle[particleCount + usedParticles];
+	Particle* shapeParticles = new Particle[particleCount + usedParticles + matchpointNumber];
 	Vec3f* newPositions = new Vec3f[particleCount + usedParticles + matchpointNumber];
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
@@ -299,7 +299,7 @@ void initParticleShape() {
 		float z = meshParticles.at(i)[2];
 
 		x = 5.0 * x + 10;
-		y = 5.0 * y + 25;
+		y = 5.0 * y + 45;
 		z = 5.0 * z + 10;
 
 		Particle p;
@@ -427,11 +427,14 @@ void initKdTree() {
 		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
 	 }
 	else {
-		kdTree->Build(particleCount, particlePositions);
+		kdTree->Build(particleCount + matchpointNumber, particlePositions);
 	}
 }
 
 void initMatchPoints() {
+	keyframes.clear();
+	defaultMatchpoints.clear();
+
 	for (int i = 0; i < matchpointNumber; i++) {
 		int particleIndex = rand() % particleCount;
 
@@ -445,7 +448,26 @@ void initMatchPoints() {
 		matchPoint.setIsMatchpoint(true);
 
 		defaultMatchpoints.push_back(matchPoint);
+		particleList[particleCount + i] = matchPoint;
 	}
+}
+
+
+void setNeighbors(Particle& x, int xIndex) {
+	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+
+	// create a vector for the new neighbors
+	std::vector<Particle*> neighbors;
+	for (int i = 0; i < numPointsInRadius; i++) {
+		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+			neighbors.push_back(&particleList[info[i].index]);
+		}
+	}
+
+	x.setNeighbors(neighbors);
+	delete[] info;
 }
 
 static void init()
@@ -497,8 +519,8 @@ static void init()
 	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
 	lowResSphere->init();
 
-
 	// initialize particles and tree
+	keyframes.clear();
 	switch (selected_scene) {
 		case Scene::DAM_BREAK:
 			initSceneDamBreak();
@@ -509,8 +531,12 @@ static void init()
 		default:
 			initSceneOriginal();
 	}
+
 	initMatchPoints();
 	initKdTree();
+	for (int i = 0; i < particleCount; i++) {
+		setNeighbors(particleList[i], i);
+	}
 
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location
@@ -617,23 +643,6 @@ glm::vec3 pressureGradient(const Particle& xi) {
 		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj));
 	}
 	return -1.0f * pressureGradient;
-}
-
-void setNeighbors(Particle& x, int xIndex) {
-	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo [500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
-
-	// create a vector for the new neighbors
-	std::vector<Particle*> neighbors;
-	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
-			neighbors.push_back(&particleList[info[i].index]);
-		}
-	}
-	
-	x.setNeighbors(neighbors);
-	delete[] info;
 }
 
 glm::vec3 diffusionTerm(const Particle& xi) {
@@ -1002,6 +1011,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
+			initMatchPoints();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
@@ -1012,7 +1022,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
 			}
 			// density_constant = DENSITY_0_GUESS / averageDensity;
-			// DENSITY_0_GUESS = averageDensity;
+			//DENSITY_0_GUESS = averageDensity;
 		}
 		if (ImGui::Button("Record in High Resolution")) {
 			recording = true;
@@ -1135,6 +1145,7 @@ int main(int argc, char **argv)
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	// Initialize scene.
 	init();
+
 	// Loop until the user closes the window.
 
 	// initialize guess density;

@@ -145,6 +145,7 @@ FILE* ffmpeg = _popen(cmd, "wb");
 int* buffer = new int[width * height];
 
 bool recording = false;
+bool recording_low_res = false;
 float end_time = 0.0f;
 
 static void error_callback(int error, const char *description)
@@ -1062,6 +1063,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			cout << "Recording... please be patient :)" << endl;
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
+			keyToggles[(unsigned)' '] = true;
 		}
 		if (ImGui::Button("Record in Mid Resolution")) {
 			recording = true;
@@ -1101,6 +1103,11 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			cout << "Recording... please be patient :)" << endl;
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
+			keyToggles[(unsigned)' '] = true;
+		}
+		if (ImGui::Button("Record in Low Resolution")) {
+			recording_low_res = true;
+			keyToggles[(unsigned)' '] = true;
 		}
 		ImGui::End();
 		ImGui::Render();
@@ -1186,9 +1193,7 @@ int main(int argc, char **argv)
 			}
 			
 			render();
-			if (!(recording && timePassed <= end_time)) {
-				renderGui(isPaused, buttonText);
-			}
+			renderGui(isPaused, buttonText);
 			if (recording && timePassed > end_time) {
 				cout << "Recording finished" << endl;
 				break;
@@ -1197,7 +1202,7 @@ int main(int argc, char **argv)
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);
 
-			if (recording) {
+			if (recording || recording_low_res) {
 				glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 				fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
 			}

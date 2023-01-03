@@ -47,7 +47,8 @@ using cy::Vec3f;
 enum class Scene {
 	DEFAULT,
 	DAM_BREAK,
-	SPLASH
+	SPLASH,
+	DROP
 };
 
 struct Keyframe {
@@ -421,6 +422,25 @@ void initSceneSplash() {
 	surfaces.push_back(wall_4);
 }
 
+void initSceneDrop() {
+	particleCount = 0;
+	initParticleShape();
+
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5f, 0.0));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5f));
+	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - .5f, 0.0f, 0.0));
+	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - .5f));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
+
+	// initialize surfaces
+	surfaces.clear();
+	surfaces.push_back(ground);
+	surfaces.push_back(wall_1);
+	surfaces.push_back(wall_2);
+	surfaces.push_back(wall_3);
+	surfaces.push_back(wall_4);
+}
+
 void initKdTree() {
 	// Should automatically build the tree?
 	 if (!kdTree) {
@@ -528,6 +548,9 @@ static void init()
 			break;
 		case Scene::SPLASH:
 			initSceneSplash();
+			break;
+		case Scene::DROP:
+			initSceneDrop();
 			break;
 		default:
 			initSceneOriginal();

@@ -277,6 +277,66 @@ void initParticleList_atRest() {
 	cout << "Finished particle initialization" << endl;
 }
 
+void initParticleList_atRest_Uniform() {
+	if (particleList != nullptr) {
+		delete[] particleList;
+	}
+	if (particlePositions != nullptr) {
+		delete[] particlePositions;
+	}
+	particleList = new Particle[particleCount + matchpointNumber];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
+
+	// put them in a cube shape for ease of access
+	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+	cout << "The scale factor is " << scaleFactor << endl;
+	int depth = 20.0f * (1.0f / scaleFactor);
+	cout << "The depth is " << depth << endl;
+	int slice = roundf((float)particleCount / depth);
+	cout << "Value of slice: " << slice << endl;
+	int width = roundf((float)slice / (float)depth);
+	cout << "The width is " << width << endl;
+	int height = roundf((float)slice / (float)width);
+	cout << "The height is " << height << endl;
+
+	float volume = (20 * 20 * 10);
+	float volumePerParticle = volume / particleCount;
+	cout << "The particle count is " << particleCount << endl;
+	MASS = volumePerParticle * DENSITY_0_GUESS;
+	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
+	std::default_random_engine generator;
+
+	for (int i = 0; i < depth; i++) {
+		for (int j = 0; j < width; j++) {
+			for (int k = 0; k < height; k++) {
+				Particle p;
+
+				float x_position = ((float)distribution(generator)) * scaleFactor;
+				float y_position = ((float)distribution(generator) * .5) * scaleFactor;
+				float z_position = ((float)distribution(generator)) * scaleFactor;
+				if (k % 2 == 1) {
+					x_position += (.5 * scaleFactor);
+				}
+				p.setPosition(glm::vec3(x_position, y_position, z_position));
+				p.setDensity(DENSITY_0_GUESS);
+				p.setMass(MASS);
+				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
+				p.setRadius(scaleParticles.x);
+
+				int index = (slice * i) + (height * j) + k;
+				if (index >= particleCount) {
+					cout << "value of i: " << i << endl;
+					cout << "Index too large: " << index << endl;
+				}
+				particleList[index] = p;
+				particlePositions[index] = Vec3f(x_position, y_position, z_position);
+
+			}
+		}
+	}
+	cout << "Finished particle initialization" << endl;
+}
+
 void initParticleShape() {
 	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (5.0f * 2.0f));
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
@@ -301,7 +361,7 @@ void initParticleShape() {
 		float z = meshParticles.at(i)[2];
 
 		x = 5.0 * x + 10;
-		y = 5.0 * y + 45;
+		y = 5.0 * y + 60;
 		z = 5.0 * z + 10;
 
 		Particle p;
@@ -381,7 +441,7 @@ void initSceneOriginal() {
 }
 
 void initSceneDamBreak() {
-	initParticleList_atRest();
+	initParticleList_atRest_Uniform();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5 , 0.0));
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5));
@@ -402,7 +462,7 @@ void initSceneDamBreak() {
 }
 
 void initSceneSplash() {
-	initParticleList_atRest();
+	initParticleList_atRest_Uniform();
 	// HINT: unnatural behavior only occurs when the shape is created for some reason
 	// my guess is something wrong with neighbors or something maybe
 	initParticleShape();

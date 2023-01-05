@@ -84,7 +84,7 @@ float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .250f;
-float TIMESTEP = .025f;
+float TIMESTEP = .05f;
 float MASS = 1.0f;
 
 float FRICTION = .1f;
@@ -96,7 +96,7 @@ float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
-bool CONTROL = true;
+bool CONTROL = false;
 
 // matchpoint system
 vector<Keyframe> keyframes;
@@ -299,21 +299,21 @@ void initParticleList_atRest_Uniform() {
 	int height = roundf((float)slice / (float)width);
 	cout << "The height is " << height << endl;
 
-	float volume = (20 * 20 * 10);
+	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
 	MASS = volumePerParticle * DENSITY_0_GUESS;
 	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
 	std::default_random_engine generator;
-
+	
 	for (int i = 0; i < depth; i++) {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
 				Particle p;
 
-				float x_position = ((float)distribution(generator)) * scaleFactor;
-				float y_position = ((float)distribution(generator) * .5) * scaleFactor;
-				float z_position = ((float)distribution(generator)) * scaleFactor;
+				float x_position = ((float)distribution(generator));
+				float y_position = ((float)distribution(generator) * .4);
+				float z_position = ((float)distribution(generator));
 				if (k % 2 == 1) {
 					x_position += (.5 * scaleFactor);
 				}
@@ -338,7 +338,7 @@ void initParticleList_atRest_Uniform() {
 }
 
 void initParticleShape() {
-	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (5.0f * 2.0f));
+	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (4.0f * 2.0f));
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 	
 	// update the size of particles
@@ -360,9 +360,9 @@ void initParticleShape() {
 		float y = meshParticles.at(i)[1];
 		float z = meshParticles.at(i)[2];
 
-		x = 5.0 * x + 10;
-		y = 5.0 * y + 60;
-		z = 5.0 * z + 10;
+		x = 4.0 * x + 10;
+		y = 4.0 * y + 100;
+		z = 4.0 * z + 10;
 
 		Particle p;
 		p.setPosition(glm::vec3(x, y, z));

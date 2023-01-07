@@ -248,6 +248,12 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=OFF
 
+//The directory containing a CMake configuration file for EIGEN3.
+EIGEN3_DIR:PATH=EIGEN3_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for Eigen3.
+Eigen3_DIR:PATH=Eigen3_DIR-NOTFOUND
+
 //Value Computed by CMake
 GLFW_BINARY_DIR:STATIC=C:/glfw-3.3.6/glfw-3.3.6/debug
 
@@ -274,6 +280,15 @@ GLFW_USE_HYBRID_HPG:BOOL=OFF
 
 //Assume the Vulkan loader is linked with the application
 GLFW_VULKAN_STATIC:BOOL=OFF
+
+//Value Computed by CMake
+LeavenLib_BINARY_DIR:STATIC=C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator/Leaven/lib
+
+//Value Computed by CMake
+LeavenLib_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+LeavenLib_SOURCE_DIR:STATIC=C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/Leaven/lib
 
 //Solution
 SOL:BOOL=OFF
@@ -409,7 +424,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=3
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib

@@ -37,13 +37,23 @@
 #include "Kernel.h"
 #include <thread>
 
+// Volume Sampling
+#include "../../Leaven/lib/src/volumeSampler.h"
+#include "../../Leaven/lib/src/surfaceSampler.h"
+
 using namespace std;
 using cy::Vec3f;
 
 enum class Scene {
 	DEFAULT,
 	DAM_BREAK,
-	SPLASH
+	SPLASH,
+	DROP
+};
+
+struct Keyframe {
+	std::vector<Particle> matchpoints;
+	float time;
 };
 
 GLFWwindow *window; // Main application window
@@ -74,7 +84,7 @@ float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .250f;
-float TIMESTEP = .025f;
+float TIMESTEP = .05f;
 float MASS = 1.0f;
 
 float FRICTION = .1f;
@@ -85,6 +95,20 @@ float timePassed = 0.0f;
 float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
+
+bool CONTROL = false;
+
+// matchpoint system
+vector<Keyframe> keyframes;
+vector<Particle> defaultMatchpoints;
+const int matchpointNumber = 5;
+unsigned int nextKeyframe = 0;
+const float permittedError = .01f;
+
+// TODO:
+// 1. generate matchpoints (position and radius) at initialization
+// 2. Update keyframes at the end of each run
+// 3. If recording in mid or high res, do matchpoint error correction
 
 
 float density_constant = 1.0;
@@ -125,6 +149,7 @@ FILE* ffmpeg = _popen(cmd, "wb");
 int* buffer = new int[width * height];
 
 bool recording = false;
+bool recording_low_res = false;
 float end_time = 0.0f;
 
 static void error_callback(int error, const char *description)
@@ -310,8 +335,8 @@ void initParticleList_atRest() {
 	if (particlePositions != nullptr) {
 		delete[] particlePositions;
 	}
-	particleList = new Particle[particleCount];
-	particlePositions = new Vec3f[particleCount];
+	particleList = new Particle[particleCount + matchpointNumber];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -360,79 +385,118 @@ void initParticleList_atRest() {
 	cout << "Finished particle initialization" << endl;
 }
 
-void initParticleShape() {
-	Particle* shapeParticles = new Particle[particleCount + particleForShape];
-	Vec3f* newPositions = new Vec3f[particleCount + particleForShape];
+void initParticleList_atRest_Uniform() {
+	if (particleList != nullptr) {
+		delete[] particleList;
+	}
+	if (particlePositions != nullptr) {
+		delete[] particlePositions;
+	}
+	particleList = new Particle[particleCount + matchpointNumber];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
+	// put them in a cube shape for ease of access
+	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+	cout << "The scale factor is " << scaleFactor << endl;
+	int depth = 20.0f * (1.0f / scaleFactor);
+	cout << "The depth is " << depth << endl;
+	int slice = roundf((float)particleCount / depth);
+	cout << "Value of slice: " << slice << endl;
+	int width = roundf((float)slice / (float)depth);
+	cout << "The width is " << width << endl;
+	int height = roundf((float)slice / (float)width);
+	cout << "The height is " << height << endl;
+
+	float volume = (20 * 20 * 20);
+	float volumePerParticle = volume / particleCount;
+	cout << "The particle count is " << particleCount << endl;
+	MASS = volumePerParticle * DENSITY_0_GUESS;
+	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
+	std::default_random_engine generator;
+	
+	for (int i = 0; i < depth; i++) {
+		for (int j = 0; j < width; j++) {
+			for (int k = 0; k < height; k++) {
+				Particle p;
+
+				float x_position = ((float)distribution(generator));
+				float y_position = ((float)distribution(generator) * .4);
+				float z_position = ((float)distribution(generator));
+				if (k % 2 == 1) {
+					x_position += (.5 * scaleFactor);
+				}
+				p.setPosition(glm::vec3(x_position, y_position, z_position));
+				p.setDensity(DENSITY_0_GUESS);
+				p.setMass(MASS);
+				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
+				p.setRadius(scaleParticles.x);
+
+				int index = (slice * i) + (height * j) + k;
+				if (index >= particleCount) {
+					cout << "value of i: " << i << endl;
+					cout << "Index too large: " << index << endl;
+				}
+				particleList[index] = p;
+				particlePositions[index] = Vec3f(x_position, y_position, z_position);
+
+			}
+		}
+	}
+	cout << "Finished particle initialization" << endl;
+}
+
+void initParticleShape() {
+	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (4.0f * 2.0f));
+	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
+	
+	// update the size of particles
+	Particle* shapeParticles = new Particle[particleCount + usedParticles + matchpointNumber];
+	Vec3f* newPositions = new Vec3f[particleCount + usedParticles + matchpointNumber];
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
 		newPositions[i] = particlePositions[i];
 	}
 
-	delete[] particleList;
-	delete[] particlePositions;
-
-	// idea: random numbers inside shape
-	shapeMesh->ComputeBoundingBox();
-	Vec3f min = shapeMesh->GetBoundMin();
-	Vec3f max = shapeMesh->GetBoundMax();
-
-	float x_range = max.x - min.x;
-	float y_range = max.y - min.y;
-	float z_range = max.z - min.z;
-	
-	float remainingParticles = particleForShape;
-	int currentIndex = particleCount;
-
-	// approximate density
+	//// approximate density
 	float volume = (4.0 / 3.0) * M_PI * powf(1.75f, 3.0f);
-	float density_estimate = (MASS * remainingParticles) / volume;
+	float density_estimate = (MASS * usedParticles) / volume;
 	//density_estimate *= 100000.f;
 
-	while(remainingParticles > 0) {
-		float rand_x = (float)((rand() % 100) + 1.0f) / 100.0f;
-		float rand_y = (float)((rand() % 100) + 1.0f) / 100.0f;
-		float rand_z = (float)((rand() % 100) + 1.0f) / 100.0f;
+	for (int i = 0; i < usedParticles; i++) {
+		//		// translate x, y, and z
+		float x = meshParticles.at(i)[0];
+		float y = meshParticles.at(i)[1];
+		float z = meshParticles.at(i)[2];
 
-		float x = min.x + rand_x * x_range;
-		float y = min.y + rand_y * y_range;
-		float z = min.z + rand_z * z_range;
-		Vec3f potentialParticle = Vec3f(x, y, z);
-		
-		if (isInBoundingVolume(potentialParticle)) {
+		x = 4.0 * x + 10;
+		y = 4.0 * y + 100;
+		z = 4.0 * z + 10;
 
-			// translate x, y, and z
-			x = 3.5 * x + 10;
-			y = 3.5 * y + 25;
-			z = 3.5 * z + 10;
+		Particle p;
+		p.setPosition(glm::vec3(x, y, z));
+		p.setDensity(density_estimate);
+		p.setMass(MASS);
+		p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
+		p.setRadius(scaleParticles.x);
 
-			Particle p;
-			p.setPosition(glm::vec3(x, y, z));
-			p.setDensity(density_estimate);
-			p.setMass(MASS);
-			p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
-			p.setRadius(scaleParticles.x);
-			potentialParticle.x = x;
-			potentialParticle.y = y;
-			potentialParticle.z = z;
+		Vec3f potentialParticle;
+		potentialParticle.x = x;
+		potentialParticle.y = y;
+		potentialParticle.z = z;
 
-			shapeParticles[currentIndex] = p;
-			newPositions[currentIndex] = potentialParticle;
-
-			remainingParticles--;
-			currentIndex++;
-		}
+		shapeParticles[particleCount + i] = p;
+		newPositions[particleCount + i] = potentialParticle;
 	}
 
 	particleList = shapeParticles;
 	particlePositions = newPositions;
-	particleCount += particleForShape;
+	particleCount += usedParticles;
 	PARTICLES_PER_THREAD = particleCount / N_THREADS;
 }
 
 void initParticleList() {
 	particleList = new Particle[particleCount];
-	particlePositions = new Vec3f[particleCount];
+	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
 	// put them in a cube shape for ease of access
 	float depth = 20.0f;
@@ -487,7 +551,7 @@ void initSceneOriginal() {
 }
 
 void initSceneDamBreak() {
-	initParticleList_atRest();
+	initParticleList_atRest_Uniform();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5 , 0.0));
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5));
@@ -508,9 +572,28 @@ void initSceneDamBreak() {
 }
 
 void initSceneSplash() {
-	initParticleList_atRest();
+	initParticleList_atRest_Uniform();
 	// HINT: unnatural behavior only occurs when the shape is created for some reason
 	// my guess is something wrong with neighbors or something maybe
+	initParticleShape();
+
+	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5f, 0.0));
+	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5f));
+	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(0.0 - .5f, 0.0f, 0.0));
+	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - .5f));
+	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
+
+	// initialize surfaces
+	surfaces.clear();
+	surfaces.push_back(ground);
+	surfaces.push_back(wall_1);
+	surfaces.push_back(wall_2);
+	surfaces.push_back(wall_3);
+	surfaces.push_back(wall_4);
+}
+
+void initSceneDrop() {
+	particleCount = 0;
 	initParticleShape();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5f, 0.0));
@@ -532,10 +615,10 @@ void initKdTree() {
 	// Should automatically build the tree?
 	 if (!kdTree) {
 		cout << "Making new kd tree!" << endl;
-		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount, particlePositions);
+		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
 	 }
 	else {
-		kdTree->Build(particleCount, particlePositions);
+		kdTree->Build(particleCount + matchpointNumber, particlePositions);
 	}
 }
 
@@ -614,6 +697,46 @@ void initDeltaError() {
 	}
 }
 
+
+void initMatchPoints() {
+	keyframes.clear();
+	defaultMatchpoints.clear();
+
+	for (int i = 0; i < matchpointNumber; i++) {
+		int particleIndex = rand() % particleCount;
+
+		Particle matchPoint;
+		matchPoint.setPosition(particleList[particleIndex].getPosition());
+		float radius = rand() % 3 + 1;
+		matchPoint.setRadius(radius);
+		matchPoint.setMass(MASS);
+		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+		particlePositions[particleCount + i] = matchpointPosition;
+		matchPoint.setIsMatchpoint(true);
+
+		defaultMatchpoints.push_back(matchPoint);
+		particleList[particleCount + i] = matchPoint;
+	}
+}
+
+
+void setNeighbors(Particle& x, int xIndex) {
+	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+
+	// create a vector for the new neighbors
+	std::vector<Particle*> neighbors;
+	for (int i = 0; i < numPointsInRadius; i++) {
+		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+			neighbors.push_back(&particleList[info[i].index]);
+		}
+	}
+
+	x.setNeighbors(neighbors);
+	delete[] info;
+}
+
 static void init()
 {
 	GLSL::checkVersion();
@@ -656,11 +779,17 @@ static void init()
 	shapeMesh->ComputeBoundingBox();
 
 	// initializes bounding volume with shape
-	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());
-		
+	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());	
 	initDeltaError();
 
+
+	// initialize shape for sphere
+	lowResSphere = make_shared<Shape>();
+	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
+	lowResSphere->init();
+
 	// initialize particles and tree
+	keyframes.clear();
 	switch (selected_scene) {
 		case Scene::DAM_BREAK:
 			initSceneDamBreak();
@@ -668,18 +797,18 @@ static void init()
 		case Scene::SPLASH:
 			initSceneSplash();
 			break;
+		case Scene::DROP:
+			initSceneDrop();
+			break;
 		default:
 			initSceneOriginal();
 	}
-	
+
+	initMatchPoints();
 	initKdTree();
-	
-
-	// initialize shape for sphere
-	lowResSphere = make_shared<Shape>();
-	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
-	lowResSphere->init();
-
+	for (int i = 0; i < particleCount; i++) {
+		setNeighbors(particleList[i], i);
+	}
 
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location
@@ -746,13 +875,25 @@ void render()
 }
 
 float calculateDensityForParticle(const Particle x, bool predicted = false) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x, predicted);
+	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint(), predicted);
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, predicted));
+		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint(), predicted));
 	}
 
 	return (density * density_constant);
+}
+
+float sampleDensityForMatchpoint(const Particle x) {
+	float sample = 0;
+	float normalizer = 0;
+	for (int j = 0; j < x.getNeighbors().size(); j++) {
+		Particle* xj = x.getNeighbors().at(j);
+		sample += (xj->getDensity() * Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
+		normalizer += (Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
+	}
+
+	return sample / normalizer;
 }
 
 float calculatePressureForParticle(const Particle x) {
@@ -776,7 +917,18 @@ glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 	return -1.0f * pressureGradient;
 }
 
+glm::vec3 diffusionTerm(const Particle& xi) {
+	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
 
+	// for every Particle xj in the neighbor hood of xi
+	for (int j = 0; j < xi.getNeighbors().size(); j++) {
+		Particle* xj = xi.getNeighbors().at(j);
+		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
+
+		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
+	}
+	return diffusionLaplacian * VISCOSITY;
+}
 
 // surface tension functions
 glm::vec3 surfaceNormalField(const Particle& xi) {
@@ -1005,6 +1157,26 @@ void updateFluidPCISPH(float time) {
 	cout << "Finished step " << steps << endl;
 }
 
+void updateMatchPoints(float time) {
+	Keyframe k;
+	k.time = time + timePassed;
+
+	// TODO: add the matchpoints to tree and calculate each trait of match point
+	for (int i = 0; i < matchpointNumber; i++) {
+		particlePositions[particleCount + i] = Vec3f(defaultMatchpoints.at(i).getPosition().x, defaultMatchpoints.at(i).getPosition().y, defaultMatchpoints.at(i).getPosition().z);
+		// set the neighbors for match point
+		setNeighbors(defaultMatchpoints.at(i), particleCount + i);
+
+		// calculate density for matchpoint
+		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(defaultMatchpoints.at(i)));
+
+		// add the match point to the keyframe
+		k.matchpoints.push_back(defaultMatchpoints.at(i));
+	}
+
+	keyframes.push_back(k);
+}
+
 void updateFluid(float time) {
 
 	// update the kd tree
@@ -1085,6 +1257,68 @@ void updateFluid(float time) {
 		threads[i].join();
 	}
 
+	// do key frame stuff
+	if (!recording) {
+		updateMatchPoints(time);
+	}
+	else if(CONTROL) {
+		// apply match point control
+		// 0. Figure out if we're at a keyframe time
+		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
+			// loop through matchpoints
+			int iterations = 0;
+			for (int i = 0; i < matchpointNumber; i++) {
+				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
+
+				// 1. Sample high resolution model at point
+				Particle highResSample;
+				highResSample.setPosition(keyframes.at(nextKeyframe).matchpoints.at(i).getPosition());
+				highResSample.setRadius(keyframes.at(nextKeyframe).matchpoints.at(i).getRadius());
+				highResSample.setMass(keyframes.at(nextKeyframe).matchpoints.at(i).getMass());
+
+				// get high res sample neighbors
+				particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
+				setNeighbors(highResSample, particleCount + i);
+
+				// calculate high res density
+				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+				// 2. Calculate error between high and low res value
+				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+				float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+
+				while (absError > permittedError || iterations < 6) {
+					// 3. Calcuate G'(r, x)
+					float totalError = 0;
+					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
+						Particle* xj = highResSample.getNeighbors().at(j);
+						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						totalError += powf(kernel, 2.0f);
+					}
+
+					// 4. Apply control for each neighbor
+					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
+						Particle* xj = highResSample.getNeighbors().at(j);
+						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						
+						float newDensity = xj->getDensity() + densityError * (kernel / totalError);
+						xj->setDensity(newDensity);
+					}
+					
+					// update sampled density and error
+					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+					// update error
+					float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+					float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+					iterations++;
+				}
+			}
+
+			nextKeyframe++;
+		}
+	}
+
 	steps++;
 }
 
@@ -1111,7 +1345,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			ImGui::InputFloat("At Rest Density", &DENSITY_0_GUESS);
 			ImGui::SliderFloat("Friction", &FRICTION, 0.0f, 1.0f);
 			ImGui::SliderFloat("Stiffness", &STIFFNESS_PARAM, 0.0f, 100.0f);
-			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 10.0f);
+			ImGui::SliderFloat("\"Y\" Parameter", &Y_PARAM, 0.0f, 50.0f);
 			ImGui::EndCombo();
 		}
 
@@ -1146,6 +1380,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			isPaused = true;
 			timePassed = 0.0f;
 			particleCount = LOW_RES_COUNT;
+			keyframes.clear();
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
 			}
@@ -1155,6 +1390,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
+			initMatchPoints();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
@@ -1165,7 +1401,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
 			}
 			// density_constant = DENSITY_0_GUESS / averageDensity;
-			// DENSITY_0_GUESS = averageDensity;
+			//DENSITY_0_GUESS = averageDensity;
 		}
 		if (ImGui::Button("Record in High Resolution")) {
 			recording = true;
@@ -1205,6 +1441,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			cout << "Recording... please be patient :)" << endl;
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
+			keyToggles[(unsigned)' '] = true;
 		}
 		if (ImGui::Button("Record in Mid Resolution")) {
 			recording = true;
@@ -1244,6 +1481,11 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			cout << "Recording... please be patient :)" << endl;
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
+			keyToggles[(unsigned)' '] = true;
+		}
+		if (ImGui::Button("Record in Low Resolution")) {
+			recording_low_res = true;
+			keyToggles[(unsigned)' '] = true;
 		}
 		ImGui::End();
 		ImGui::Render();
@@ -1288,6 +1530,7 @@ int main(int argc, char **argv)
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	// Initialize scene.
 	init();
+
 	// Loop until the user closes the window.
 
 	// initialize guess density;
@@ -1328,9 +1571,7 @@ int main(int argc, char **argv)
 			}
 			
 			render();
-			if (!(recording && timePassed <= end_time)) {
-				renderGui(isPaused, buttonText);
-			}
+			renderGui(isPaused, buttonText);
 			if (recording && timePassed > end_time) {
 				cout << "Recording finished" << endl;
 				break;
@@ -1339,7 +1580,7 @@ int main(int argc, char **argv)
 			// Swap front and back buffers.
 			glfwSwapBuffers(window);
 
-			if (recording) {
+			if (recording || recording_low_res) {
 				glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
 				fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
 			}

@@ -32,6 +32,7 @@ class Particle {
 		void setVolume(float v) { this->volume = v; };
 		void setRadius(float r) { this->radius = r; }
 		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
+		void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
 		static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
@@ -93,6 +94,7 @@ class Particle {
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
 		Forces forces;
+		bool getIsMatchPoint() const { return isMatchPoint; }
 
 	private:
 		glm::vec3 position;
@@ -109,5 +111,6 @@ class Particle {
 		float radius;
 		float volume;
 		float pressure;
+		bool isMatchPoint = false;
 };
 #endif

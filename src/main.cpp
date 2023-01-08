@@ -67,8 +67,8 @@ glm::vec2 mousePrev(-1, -1);
 
 
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
-float STIFFNESS_PARAM = 60.0f;
+float DENSITY_0_GUESS = .01f; // density of water= 1 g/cm^3
+float STIFFNESS_PARAM = 0.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
 uint32_t MID_RES_COUNT = 27000;
@@ -78,13 +78,13 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = 1.0f;
+float LOW_RES_RADIUS = 1.25f;
 float MID_RES_RADIUS = (2.0f / 3.0f);
 float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .250f;
-float TIMESTEP = .05f;
+float TIMESTEP = .025f;
 float MASS = 1.0f;
 
 float FRICTION = .1f;
@@ -195,22 +195,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-void setNeighbors(Particle& x, int xIndex) {
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
-
-	// create a vector for the new neighbors
-	std::vector<Particle*> neighbors;
-	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index) {
-			neighbors.push_back(&particleList[info[i].index]);
-		}
-	}
-
-	x.setNeighbors(neighbors);
-	delete[] info;
-}
-
 glm::vec3 diffusionTerm(const Particle& xi) {
 	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -252,6 +236,24 @@ void setAccelerationForParticles_updated(int start_index, int end_index) {
 		particleList[i].setAcceleration(acceleration);
 	}
 }
+
+void setNeighbors(Particle& x, int xIndex) {
+	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+
+	// create a vector for the new neighbors
+	std::vector<Particle*> neighbors;
+	for (int i = 0; i < numPointsInRadius; i++) {
+		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+			neighbors.push_back(&particleList[info[i].index]);
+		}
+	}
+
+	x.setNeighbors(neighbors);
+	delete[] info;
+}
+
 
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
@@ -335,6 +337,8 @@ void initParticleList_atRest() {
 	if (particlePositions != nullptr) {
 		delete[] particlePositions;
 	}
+	kdTree = nullptr;
+
 	particleList = new Particle[particleCount + matchpointNumber];
 	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
@@ -353,7 +357,7 @@ void initParticleList_atRest() {
 	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
-	MASS = volumePerParticle * DENSITY_0_GUESS;
+	// MASS = volumePerParticle * DENSITY_0_GUESS;
 	for (int i = 0; i < depth; i++) {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
@@ -392,6 +396,8 @@ void initParticleList_atRest_Uniform() {
 	if (particlePositions != nullptr) {
 		delete[] particlePositions;
 	}
+	kdTree = nullptr;
+
 	particleList = new Particle[particleCount + matchpointNumber];
 	particlePositions = new Vec3f[particleCount + matchpointNumber];
 
@@ -407,10 +413,10 @@ void initParticleList_atRest_Uniform() {
 	int height = roundf((float)slice / (float)width);
 	cout << "The height is " << height << endl;
 
-	float volume = (20 * 20 * 20);
+	float volume = (20 * 20 * 10);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
-	MASS = volumePerParticle * DENSITY_0_GUESS;
+	// MASS = volumePerParticle * DENSITY_0_GUESS;
 	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
 	std::default_random_engine generator;
 	
@@ -444,6 +450,17 @@ void initParticleList_atRest_Uniform() {
 	}
 	cout << "Finished particle initialization" << endl;
 }
+
+float calculateDensityForParticle(const Particle x, bool predicted = false) {
+	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint(), predicted);
+	for (int j = 0; j < x.getNeighbors().size(); j++) {
+		Particle* xj = x.getNeighbors().at(j);
+		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint(), predicted));
+	}
+
+	return (density * density_constant);
+}
+
 
 void initParticleShape() {
 	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (4.0f * 2.0f));
@@ -622,8 +639,23 @@ void initKdTree() {
 	}
 }
 
+
+void initReferenceDensity() {
+	initParticleList_atRest_Uniform();
+	initKdTree();
+	float referenceDensity = 0.0f;
+	int mostNeighbors = 0;
+	for (int i = 0; i < particleCount; i++) {
+		setNeighbors(particleList[i], i);
+	}
+	for (int i = 0; i < particleCount; i++) {
+		referenceDensity += (calculateDensityForParticle(particleList[i]) / particleCount);
+	}
+	DENSITY_0_GUESS = referenceDensity;
+}
+
 void initDeltaError() {
-	initParticleList_atRest();
+	initParticleList_atRest_Uniform();
 	initKdTree();
 
 	// set neighbors
@@ -643,8 +675,6 @@ void initDeltaError() {
 		}
 	}
 
-	// TODO: calculate sigma
-	// TODO: make faster by not calculating things about particles we don't care about smh
 	// initialize the forces and pressures
 	for (int i = 0; i < N_THREADS; i++) {
 		threads[i] = thread(initializeForcesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
@@ -692,9 +722,8 @@ void initDeltaError() {
 
 	// also make this multithreaded
 	// reset all densities
-	for (int i = 0; i < particleCount; i++) {
-		particleList[i].setDensity(DENSITY_0_GUESS);
-	}
+	//delete[] particleList;
+	//delete[] particlePositions;
 }
 
 
@@ -717,24 +746,6 @@ void initMatchPoints() {
 		defaultMatchpoints.push_back(matchPoint);
 		particleList[particleCount + i] = matchPoint;
 	}
-}
-
-
-void setNeighbors(Particle& x, int xIndex) {
-	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
-
-	// create a vector for the new neighbors
-	std::vector<Particle*> neighbors;
-	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
-			neighbors.push_back(&particleList[info[i].index]);
-		}
-	}
-
-	x.setNeighbors(neighbors);
-	delete[] info;
 }
 
 static void init()
@@ -779,7 +790,8 @@ static void init()
 	shapeMesh->ComputeBoundingBox();
 
 	// initializes bounding volume with shape
-	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());	
+	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get()); 
+	initReferenceDensity();
 	initDeltaError();
 
 
@@ -874,16 +886,6 @@ void render()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
-float calculateDensityForParticle(const Particle x, bool predicted = false) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint(), predicted);
-	for (int j = 0; j < x.getNeighbors().size(); j++) {
-		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint(), predicted));
-	}
-
-	return (density * density_constant);
-}
-
 float sampleDensityForMatchpoint(const Particle x) {
 	float sample = 0;
 	float normalizer = 0;
@@ -915,19 +917,6 @@ glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj, predicted));
 	}
 	return -1.0f * pressureGradient;
-}
-
-glm::vec3 diffusionTerm(const Particle& xi) {
-	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
-
-	// for every Particle xj in the neighbor hood of xi
-	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-		Particle* xj = xi.getNeighbors().at(j);
-		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
-
-		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
-	}
-	return diffusionLaplacian * VISCOSITY;
 }
 
 // surface tension functions
@@ -1559,7 +1548,7 @@ int main(int argc, char **argv)
 			if (!isPaused) {
 				float timeEnd = glfwGetTime();
 				// Integrate partices
-				updateFluidPCISPH(TIMESTEP);
+				updateFluid(TIMESTEP);
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;

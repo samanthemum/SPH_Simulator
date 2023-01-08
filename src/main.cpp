@@ -67,7 +67,7 @@ glm::vec2 mousePrev(-1, -1);
 
 
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = .01f; // density of water= 1 g/cm^3
+float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 0.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
@@ -78,7 +78,7 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = 1.25f;
+float LOW_RES_RADIUS = 1.0f;
 float MID_RES_RADIUS = (2.0f / 3.0f);
 float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
@@ -413,10 +413,10 @@ void initParticleList_atRest_Uniform() {
 	int height = roundf((float)slice / (float)width);
 	cout << "The height is " << height << endl;
 
-	float volume = (20 * 20 * 10);
+	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
-	// MASS = volumePerParticle * DENSITY_0_GUESS;
+	MASS = volumePerParticle * DENSITY_0_GUESS;
 	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
 	std::default_random_engine generator;
 	
@@ -791,8 +791,8 @@ static void init()
 
 	// initializes bounding volume with shape
 	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get()); 
-	initReferenceDensity();
-	initDeltaError();
+	//initReferenceDensity();
+	// initDeltaError();
 
 
 	// initialize shape for sphere

@@ -143,6 +143,7 @@ class Kernel {
 				r = xi.getPosition() - xj.getPosition();
 			}
 
+
 			if (length(r) > 2 * radius) {
 				return 0;
 			}
@@ -213,8 +214,6 @@ class Kernel {
 			// otherwise
 			return outsideTerm * insideTerm;
 		}
-
-		// TODO: add monaghan kernel laplacian
 };
 
 float Kernel::SMOOTHING_RADIUS = 1.0f;

@@ -87,6 +87,7 @@ float VISCOSITY = .250f;
 float TIMESTEP = .025f;
 float MASS = 1.f;
 
+
 float FRICTION = .1f;
 float ELASTICITY = .7f;
 float timePassed = 0.0f;
@@ -785,7 +786,8 @@ static void init()
 	GLSL::checkVersion();
 
 	Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
-	
+	initAverageMass();
+
 	// Set background color
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	// Enable z-buffer test
@@ -1186,6 +1188,44 @@ void updateFluidPCISPH(float time) {
 	cout << "Finished step " << steps << endl;
 }
 
+void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
+	for (int i = start_index; i < end_index; i++) {
+		float timeStepRemaining = time;
+		glm::vec3 acceleration = particleList[i].getAcceleration();
+		glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
+		glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
+		glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
+
+		for (Plane surface : surfaces) {
+			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
+				// collision stuff
+				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+				glm::vec3 velocityTangentAfter;
+				if (glm::length(velocityTangentBefore) == 0) {
+					velocityTangentAfter = velocityTangentBefore;
+				}
+				else {
+					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+				}
+
+				newVelocity = velocityNormalAfter + velocityTangentAfter;
+				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+				newPosition = newPosition + addedVector;
+				// particleList[i].setPosition(newPosition);
+			}
+		}
+
+		particleList[i].setVelocity(newVelocity);
+		particleList[i].setPosition(newPosition);
+		particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
+
+	}
+}
+
 void updateMatchPoints(float time) {
 	Keyframe k;
 	k.time = time + timePassed;
@@ -1303,7 +1343,7 @@ void updateFluid(float time) {
 
 	for (int i = 0; i < N_THREADS; i++) {
 		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(updatePositionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
+		threads[i] = thread(updatePositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
 	}
 
 	for (int i = 0; i < N_THREADS; i++) {

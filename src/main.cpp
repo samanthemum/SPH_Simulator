@@ -78,7 +78,7 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = .5f;
+float LOW_RES_RADIUS = .75f;
 float MID_RES_RADIUS = (2.0f / 3.0f);
 float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
@@ -243,10 +243,15 @@ void setAccelerationForParticles_updated(int start_index, int end_index) {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS * 2, 500, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], radius * 2, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
+	if (xIndex == 2903) {
+		cout << "Found particle 2903" << endl;
+		cout << "Particle 2903 has " << numPointsInRadius << " neighbors" << endl;
+		cout << "Particle position " << particlePositions[xIndex].x << " " << particlePositions[xIndex].y << " " << particlePositions[xIndex].z << endl;
+	}
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
 			neighbors.push_back(&particleList[info[i].index]);
@@ -264,6 +269,43 @@ void setNeighborsForParticles(int start_index, int end_index) {
 	}
 }
 
+void updatePredictedPositionForParticles_Leapfrog(int start_index, int end_index, double time) {
+	for (int i = start_index; i < end_index; i++) {
+		float timeStepRemaining = time;
+		glm::vec3 acceleration = particleList[i].getAcceleration();
+		glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
+		glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
+		glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
+
+		for (Plane surface : surfaces) {
+			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
+				// collision stuff
+				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+				glm::vec3 velocityTangentAfter;
+				if (glm::length(velocityTangentBefore) == 0) {
+					velocityTangentAfter = velocityTangentBefore;
+				}
+				else {
+					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+				}
+
+				newVelocity = velocityNormalAfter + velocityTangentAfter;
+				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+				newPosition = newPosition + addedVector;
+				// particleList[i].setPosition(newPosition);
+			}
+		}
+
+		particleList[i].setPredictedVelocity(newVelocity);
+		particleList[i].setPredictedPosition(newPosition);
+		// particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
+
+	}
+}
 
 void updatePredictedPositionForParticle(Particle& xi, double time) {
 	float timeStepRemaining = time;
@@ -431,9 +473,9 @@ void initParticleList_atRest_Uniform() {
 				float x_position = ((float)distribution(generator));
 				float y_position = ((float)distribution(generator) * .4f);
 				float z_position = ((float)distribution(generator));
-				if (k % 2 == 1) {
+				/*if (k % 2 == 1) {
 					x_position += (.5 * scaleFactor);
-				}
+				}*/
 				p.setPosition(glm::vec3(x_position, y_position, z_position));
 				p.setDensity(DENSITY_0_GUESS);
 				p.setMass(MASS);
@@ -662,6 +704,7 @@ void initAverageMass() {
 
 	MASS = averageMass;
 	cout << "The average mass was " << MASS << endl;
+	kdTree = nullptr;
 }
 
 void initReferenceDensity() {
@@ -699,11 +742,20 @@ void initDeltaError() {
 		threads[i].join();
 	}
 
+	// find the average number of neighbors
+	float averageNeighbors = 0;
+	for (int i = 0; i < particleCount; i++) {
+		averageNeighbors += (float)particleList[i].getNeighbors().size() / particleCount;
+	}
+	cout << "The average neighbor of neighbors is " << (int)averageNeighbors << endl;
+
 	// find the particle with the most filled neihborhood
 	Particle* mostFilled = nullptr;
 	for (int i = 0; i < particleCount; i++) {
-		if (!mostFilled || particleList[i].getNeighbors().size() > mostFilled->getNeighbors().size()) {
+		if (particleList[i].getNeighbors().size() == (int)averageNeighbors) {
 			mostFilled = &particleList[i];
+			cout << "Found particle with average neighbors" << endl;
+			break;
 		}
 	}
 
@@ -727,7 +779,7 @@ void initDeltaError() {
 
 	// update position for given particle
 	for (int i = 0; i < N_THREADS; i++) {
-		threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, TIMESTEP);
+		threads[i] = thread(updatePredictedPositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, TIMESTEP);
 	}
 
 	for (int i = 0; i < N_THREADS; i++) {
@@ -954,6 +1006,9 @@ glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 		//float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
 		pressureGradient += (pressureTerm * Kernel::monaghanKernelGradient(xi, *xj, predicted));
 	}
+	if (xi.getNeighbors().size() == 0) {
+		cout << "Particle has no neighbors" << endl;
+	}
 	return -1.0f * powf(xi.getMass(), 2.0f) * pressureGradient;
 }
 
@@ -1077,6 +1132,44 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 	}
 }
 
+void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
+	for (int i = start_index; i < end_index; i++) {
+		float timeStepRemaining = time;
+		glm::vec3 acceleration = particleList[i].getAcceleration();
+		glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
+		glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
+		glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
+
+		for (Plane surface : surfaces) {
+			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
+				// collision stuff
+				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+				glm::vec3 velocityTangentAfter;
+				if (glm::length(velocityTangentBefore) == 0) {
+					velocityTangentAfter = velocityTangentBefore;
+				}
+				else {
+					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+				}
+
+				newVelocity = velocityNormalAfter + velocityTangentAfter;
+				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+				newPosition = newPosition + addedVector;
+				// particleList[i].setPosition(newPosition);
+			}
+		}
+
+		particleList[i].setVelocity(newVelocity);
+		particleList[i].setPosition(newPosition);
+		particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
+
+	}
+}
+
 void updateFluidPCISPH(float time) {
 	// find neighborhoods
 	if (steps == steps_per_update) {
@@ -1119,7 +1212,7 @@ void updateFluidPCISPH(float time) {
 		// update predicted velocities and positions
 		max_density_error = 0;
 		for (int i = 0; i < N_THREADS; i++) {
-			threads[i] = thread(updatePredictedPositionsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
+			threads[i] = thread(updatePredictedPositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
 		}
 
 		for (int i = 0; i < N_THREADS; i++) {
@@ -1153,7 +1246,7 @@ void updateFluidPCISPH(float time) {
 		// TODO: make this step threaded
 		for (int i = 0; i < particleCount; i++) {
 			// QUESTION: is kernel with predictions or no?
-			particleList[i].forces.pressure = pressureGradient(particleList[i], true);
+			particleList[i].forces.pressure = pressureGradient(particleList[i], false);
 		}
 
 		// recalculate accelerations
@@ -1178,7 +1271,7 @@ void updateFluidPCISPH(float time) {
 	// update actual positions and velocities
 	for (int i = 0; i < N_THREADS; i++) {
 		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(updatePositionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
+		threads[i] = thread(updatePositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
 	}
 
 	for (int i = 0; i < N_THREADS; i++) {
@@ -1186,44 +1279,6 @@ void updateFluidPCISPH(float time) {
 	}
 	steps++;
 	cout << "Finished step " << steps << endl;
-}
-
-void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
-	for (int i = start_index; i < end_index; i++) {
-		float timeStepRemaining = time;
-		glm::vec3 acceleration = particleList[i].getAcceleration();
-		glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
-		glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
-		glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
-
-		for (Plane surface : surfaces) {
-			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-				// collision stuff
-				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-				glm::vec3 velocityTangentAfter;
-				if (glm::length(velocityTangentBefore) == 0) {
-					velocityTangentAfter = velocityTangentBefore;
-				}
-				else {
-					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-				}
-
-				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-				newPosition = newPosition + addedVector;
-				// particleList[i].setPosition(newPosition);
-			}
-		}
-
-		particleList[i].setVelocity(newVelocity);
-		particleList[i].setPosition(newPosition);
-		particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
-
-	}
 }
 
 void updateMatchPoints(float time) {
@@ -1652,7 +1707,7 @@ int main(int argc, char **argv)
 			if (!isPaused) {
 				float timeEnd = glfwGetTime();
 				// Integrate partices
-				updateFluid(TIMESTEP);
+				updateFluidPCISPH(TIMESTEP);
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;

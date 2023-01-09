@@ -160,32 +160,61 @@ class Kernel {
 			return outsideTerm * insideTerm;
 		}
 
-		//static glm::vec3 monaghanKernelGradient(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
-		//	glm::vec3 r;
-		//	float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
-		//	if (predicted) {
-		//		r = xi.getPredictedPosition() - xj.getPredictedPosition();
-		//	}
-		//	else {
-		//		r = xi.getPosition() - xj.getPosition();
-		//	}
+		static glm::vec3 monaghanKernelGradient(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
+			glm::vec3 r;
+			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			if (predicted) {
+				r = xi.getPredictedPosition() - xj.getPredictedPosition();
+			}
+			else {
+				r = xi.getPosition() - xj.getPosition();
+			}
 
-		//	if (length(r) > 2 * radius) {
-		//		return 0;
-		//	}
+			if (length(r) > 2 * radius) {
+				return glm::vec3(0, 0, 0);
+			}
 
-		//	float outsideTerm = 1 / (M_PI * powf(radius, 3.0f));
-		//	float insideTerm;
-		//	if (length(r) > radius) {
-		//		insideTerm = .25f * powf(2 - (length(r) / radius), 3.0f);
-		//	}
-		//	else {
-		//		insideTerm = 1.f - (3.f / 2.f) * powf(length(r) / radius, 2.f) + (3.f / 4.f) * powf(length(r) / radius, 3.f);
-		//	}
+			float outsideTerm = 1 / (M_PI * powf(radius, 4.0f));
+			float insideTerm;
+			if (length(r) > radius) {
+				insideTerm = -.75f * powf(2 - (length(r) / radius), 2.0f);
+			}
+			else {
+				insideTerm = 3 * (length(r) / radius) * (-1 + .75 * (length(r) / radius));
+			}
 
-		//	// otherwise
-		//	return outsideTerm * insideTerm;
-		//}
+			// otherwise
+			return outsideTerm * insideTerm * normalize(r);
+		}
+
+		static float monaghanKernelLaplacian(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
+			glm::vec3 r;
+			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			if (predicted) {
+				r = xi.getPredictedPosition() - xj.getPredictedPosition();
+			}
+			else {
+				r = xi.getPosition() - xj.getPosition();
+			}
+
+			if (length(r) > 2 * radius) {
+				return 0;
+			}
+
+			float outsideTerm = 1 / (M_PI * powf(radius, 5.0f));
+			float insideTerm;
+			if (length(r) > radius) {
+				insideTerm = 1.5 * powf(2 - (length(r) / radius), 1.0f);
+			}
+			else {
+				insideTerm = 3.0f * (-1.0f + 1.5f * (length(r) / radius));
+			}
+
+			// otherwise
+			return outsideTerm * insideTerm;
+		}
+
+		// TODO: add monaghan kernel laplacian
 };
 
 float Kernel::SMOOTHING_RADIUS = 1.0f;

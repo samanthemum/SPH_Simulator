@@ -67,7 +67,7 @@ glm::vec2 mousePrev(-1, -1);
 
 
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
+float DENSITY_0_GUESS = 1.0f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 0.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
@@ -78,14 +78,14 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = 1.0f;
+float LOW_RES_RADIUS = .5f;
 float MID_RES_RADIUS = (2.0f / 3.0f);
 float HIGH_RES_RADIUS = .50f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .250f;
 float TIMESTEP = .025f;
-float MASS = 1.0f;
+float MASS = 1.f;
 
 float FRICTION = .1f;
 float ELASTICITY = .7f;
@@ -113,7 +113,7 @@ const float permittedError = .01f;
 
 float density_constant = 1.0;
 int steps = 0;
-int steps_per_update = 3;
+int steps_per_update = 0;
 Particle* particleList;
 Vec3f* particlePositions;
 
@@ -131,7 +131,7 @@ float DELTA_ERROR;
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
 
-Scene selected_scene = Scene::SPLASH;
+Scene selected_scene = Scene::DAM_BREAK;
 
 // TODO: fix high resolution transfer
 
@@ -203,7 +203,7 @@ glm::vec3 diffusionTerm(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
 
-		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
+		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::monaghanKernelLaplacian(xi, *xj));
 	}
 	return diffusionLaplacian * VISCOSITY;
 }
@@ -220,7 +220,7 @@ void initializeForcesForParticles(int start_index, int end_index) {
 
 void setAccelerationForParticles_updated(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
-		glm::vec3 pressureForce = particleList[i].forces.pressure;
+		glm::vec3 pressureForce = particleList[i].forces.pressure * particleList[i].getDensity();
 		glm::vec3 diffusionForce = particleList[i].forces.viscosity;
 		glm::vec3 externalForce = particleList[i].forces.external;
 
@@ -229,6 +229,8 @@ void setAccelerationForParticles_updated(int start_index, int end_index) {
 		glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();*/
 
 		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
+
+		// actual density
 		acceleration /= particleList[i].getDensity();
 		/*if (length(tension) > TENSION_THRESHOLD) {
 			acceleration += tension;
@@ -240,7 +242,7 @@ void setAccelerationForParticles_updated(int start_index, int end_index) {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS * 2, 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -413,10 +415,10 @@ void initParticleList_atRest_Uniform() {
 	int height = roundf((float)slice / (float)width);
 	cout << "The height is " << height << endl;
 
-	float volume = (20 * 20 * 20);
+	float volume = (20 * 20 * 10);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
-	MASS = volumePerParticle * DENSITY_0_GUESS;
+	// MASS = 
 	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
 	std::default_random_engine generator;
 	
@@ -426,7 +428,7 @@ void initParticleList_atRest_Uniform() {
 				Particle p;
 
 				float x_position = ((float)distribution(generator));
-				float y_position = ((float)distribution(generator) * .4);
+				float y_position = ((float)distribution(generator) * .4f);
 				float z_position = ((float)distribution(generator));
 				if (k % 2 == 1) {
 					x_position += (.5 * scaleFactor);
@@ -452,10 +454,10 @@ void initParticleList_atRest_Uniform() {
 }
 
 float calculateDensityForParticle(const Particle x, bool predicted = false) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint(), predicted);
+	float density = x.getMass()* Kernel::monaghanKernel(x, x, x.getIsMatchPoint(), predicted);
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint(), predicted));
+		density += (xj->getMass() * Kernel::monaghanKernel(x, *xj, x.getIsMatchPoint(), predicted));
 	}
 
 	return (density * density_constant);
@@ -639,6 +641,27 @@ void initKdTree() {
 	}
 }
 
+void initAverageMass() {
+	initParticleList_atRest_Uniform();
+	initKdTree();
+	for (int i = 0; i < particleCount; i++) {
+		setNeighbors(particleList[i], i);
+	}
+
+	float averageMass = 0.0f;
+	for (int i = 0; i < particleCount; i++) {
+		Particle xi = particleList[i];
+		float thisKernel = Kernel::monaghanKernel(xi, xi, false, false);
+		float kernelSum = 0.f;
+		for (int j = 0; j < xi.getNeighbors().size(); j++) {
+			kernelSum += Kernel::monaghanKernel(xi, *xi.getNeighbors().at(j), false, false);
+		}
+		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
+	}
+
+	MASS = averageMass;
+	cout << "The average mass was " << MASS << endl;
+}
 
 void initReferenceDensity() {
 	initParticleList_atRest_Uniform();
@@ -648,9 +671,17 @@ void initReferenceDensity() {
 	for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
 	}
+
+	int numParticlesOver = 0;
 	for (int i = 0; i < particleCount; i++) {
-		referenceDensity += (calculateDensityForParticle(particleList[i]) / particleCount);
+		float newDensity = calculateDensityForParticle(particleList[i]);
+		referenceDensity += (newDensity / particleCount);
+		if (newDensity > 5.0f) {
+			numParticlesOver++;
+		}
 	}
+	cout << "Reference density" << referenceDensity << endl;
+	cout << "Number of particles over the reference density: " << numParticlesOver << endl;
 	DENSITY_0_GUESS = referenceDensity;
 }
 
@@ -706,17 +737,18 @@ void initDeltaError() {
 	glm::vec3 pressureKernelGradientSum = glm::vec3(0, 0, 0);
 	float dotSum = 0.0f;
 	cout << "Number of neighbors " << mostFilled->getNeighbors().size() << endl;
+	cout << "Density of said particle: " << mostFilled->getDensity() << endl;
 	for (int i = 0; i < mostFilled->getNeighbors().size(); i++) {
 		Particle* xj = mostFilled->getNeighbors()[i];
-		glm::vec3 densityGradient = Kernel::polyKernelGradient(*mostFilled, *xj, true);
-		glm::vec3 pressureGradient = Kernel::spikyKernelGradient(*mostFilled, *xj, true);
+		glm::vec3 densityGradient = Kernel::monaghanKernelGradient(*mostFilled, *xj, false, true);
+		glm::vec3 pressureGradient = Kernel::monaghanKernelGradient(*mostFilled, *xj, false, true);
 		densityKernelGradientSum += densityGradient;
 		pressureKernelGradientSum += pressureGradient;
 		dotSum += glm::dot(densityGradient, pressureGradient);
 	}
 
-	float beta = powf(TIMESTEP, 2.0) * powf(mostFilled->getMass(), 2.0f) * 2.0f / powf(DENSITY_0_GUESS, 2.0f);
-	float denominator = beta * (glm::dot(-1.0f * pressureKernelGradientSum, densityKernelGradientSum) - dotSum);
+	float beta = (powf(TIMESTEP, 2.0) * powf(mostFilled->getMass(), 2.0f) * 2.0f) / powf(DENSITY_0_GUESS, 2.0f);
+	float denominator = beta * (glm::dot(-1.0f * pressureKernelGradientSum, pressureKernelGradientSum) - dotSum);
 	DELTA_ERROR = -1.0f / denominator;
 	cout << "DELTA ERROR IS " << DELTA_ERROR << endl << endl;
 
@@ -791,8 +823,9 @@ static void init()
 
 	// initializes bounding volume with shape
 	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get()); 
-	//initReferenceDensity();
-	// initDeltaError();
+	// initReferenceDensity();
+	initAverageMass();
+	initDeltaError();
 
 
 	// initialize shape for sphere
@@ -911,12 +944,15 @@ glm::vec3 pressureGradient(const Particle& xi, bool predicted = false) {
 	for (int j = 0; j < xi.getNeighbors().size(); j++) {
 		Particle* xj = xi.getNeighbors().at(j);
 
-		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
+		float xi_density = predicted ? xi.getPredictedDensity() : xi.getDensity();
+		float xj_density = predicted ? xj->getPredictedDensity() : xj->getDensity();
+
+		float pressureTerm = (xi.getPressure() / powf(xi_density, 2.0f)) + (xj->getPressure() / powf(xj_density, 2.0f));
 		
-		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
-		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj, predicted));
+		//float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
+		pressureGradient += (pressureTerm * Kernel::monaghanKernelGradient(xi, *xj, predicted));
 	}
-	return -1.0f * pressureGradient;
+	return -1.0f * powf(xi.getMass(), 2.0f) * pressureGradient;
 }
 
 // surface tension functions
@@ -929,7 +965,7 @@ glm::vec3 surfaceNormalField(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		if (xj != &xi) {
 			float outside_term = xj->getMass() * 1 / xj->getDensity();
-			surfaceField += (outside_term * Kernel::polyKernelGradient(xi, *xj));
+			surfaceField += (outside_term * Kernel::monaghanKernelGradient(xi, *xj));
 		}
 		
 	}
@@ -945,7 +981,7 @@ float colorFieldLaplacian(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		float outside_term = xj->getMass() * 1 / xj->getDensity();
 
-		surfaceField += (outside_term * Kernel::polyKernelLaplacian(xi, *xj));
+		surfaceField += (outside_term * Kernel::monaghanKernelLaplacian(xi, *xj));
 	}
 	return surfaceField;
 }
@@ -954,7 +990,12 @@ float colorFieldLaplacian(const Particle& xi) {
 
 void setDensitiesForParticles(int start_index, int end_index, bool predicted = false) {
 	for (int i = start_index; i < end_index; i++) {
-		particleList[i].setDensity(calculateDensityForParticle(particleList[i], predicted));
+		if (!predicted) {
+			particleList[i].setDensity(calculateDensityForParticle(particleList[i], predicted));
+		}
+		else {
+			particleList[i].setPredictedDensity(calculateDensityForParticle(particleList[i], predicted));
+		}
 	}
 }
 
@@ -1024,7 +1065,6 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
 				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
 				newPosition = newPosition + addedVector;
-				// particleList[i].setPosition(newPosition);
 			}
 		}
 
@@ -1096,7 +1136,7 @@ void updateFluidPCISPH(float time) {
 		// TODO: make this step threaded
 		int max_index = 0;
 		for (int i = 0; i < particleCount; i++) {
-			float density_error = particleList[i].getDensity() - DENSITY_0_GUESS;
+			float density_error = particleList[i].getPredictedDensity() - DENSITY_0_GUESS;
 
 			// set the error, if needed
 			if (abs(density_error / DENSITY_0_GUESS) > max_density_error) {
@@ -1111,7 +1151,7 @@ void updateFluidPCISPH(float time) {
 		// TODO: make this step threaded
 		for (int i = 0; i < particleCount; i++) {
 			// QUESTION: is kernel with predictions or no?
-			particleList[i].forces.pressure = pressureGradient(particleList[i], false);
+			particleList[i].forces.pressure = pressureGradient(particleList[i], true);
 		}
 
 		// recalculate accelerations
@@ -1127,7 +1167,7 @@ void updateFluidPCISPH(float time) {
 		cout << "Iteration " << iter << endl;
 		cout << "Error: " << max_density_error << endl;
 		cout << "Max index " << max_index << endl;
-		cout << "Density @ max index " << particleList[max_index].getDensity() << endl;
+		cout << "Density @ max index " << particleList[max_index].getPredictedDensity() << endl;
 		cout << "Pressure @ max index " << particleList[max_index].getPressure() << endl;
 		cout << "Predicted Position @ max index " << particleList[max_index].getPredictedPosition().x << ", " << particleList[max_index].getPredictedPosition().y << ", " << particleList[max_index].getPredictedPosition().z << endl;
 		cout << "Pressure force @ max index " << particleList[max_index].forces.pressure.x << ", " << particleList[max_index].forces.pressure.y << ", " << particleList[max_index].forces.pressure.z << endl << endl;
@@ -1190,6 +1230,30 @@ void updateFluid(float time) {
 		// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
 		threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, false);
 	} 
+
+	int max_index = 0;
+	int min_index = 0;
+	float max_density_error = 0;
+	float min_density_error = 10;
+	for (int i = 0; i < particleCount; i++) {
+		float density_error = particleList[i].getDensity() - DENSITY_0_GUESS;
+
+		// set the error, if needed
+		if (abs(density_error / DENSITY_0_GUESS) > max_density_error) {
+			max_index = i;
+			max_density_error = abs(density_error / DENSITY_0_GUESS);
+		}
+
+		if (abs(density_error / DENSITY_0_GUESS) < min_density_error) {
+			min_index = i;
+			min_density_error = abs(density_error / DENSITY_0_GUESS);
+		}
+
+		// update pressure
+		// particleList[i].setPressure(particleList[i].getPressure() + (DELTA_ERROR * density_error));
+	}
+	cout << "Most off density: " << particleList[max_index].getDensity() << endl;
+	cout << "Least off density: " << particleList[min_index].getDensity() << endl;
 
 	for (int i = 0; i < N_THREADS; i++) {
 		threads[i].join();

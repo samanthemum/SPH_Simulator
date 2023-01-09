@@ -41,6 +41,10 @@
 #include "../../Leaven/lib/src/volumeSampler.h"
 #include "../../Leaven/lib/src/surfaceSampler.h"
 
+// kdTree
+#include "nanoflann.hpp"
+#include "utils.h"
+
 using namespace std;
 using cy::Vec3f;
 
@@ -67,7 +71,7 @@ glm::vec2 mousePrev(-1, -1);
 
 
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
+float DENSITY_0_GUESS = .05f; // density of water= 1 g/cm^3
 float STIFFNESS_PARAM = 60.0f;
 float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
@@ -113,10 +117,14 @@ const float permittedError = .01f;
 
 float density_constant = 1.0;
 int steps = 0;
-int steps_per_update = 3;
+int steps_per_update = 5;
 Particle* particleList;
 Vec3f* particlePositions;
 
+// updated kdtree
+PointCloud<float> cloud;
+
+// cy
 shared_ptr<cy::PointCloud<Vec3f, float, 3>> kdTree;
 shared_ptr<cy::TriMesh> shapeMesh;
 shared_ptr<cy::BVHTriMesh> bvh;
@@ -312,7 +320,7 @@ void initParticleList_atRest_Uniform() {
 				Particle p;
 
 				float x_position = ((float)distribution(generator));
-				float y_position = ((float)distribution(generator) * .4);
+				float y_position = ((float)distribution(generator) * .4f);
 				float z_position = ((float)distribution(generator));
 				if (k % 2 == 1) {
 					x_position += (.5 * scaleFactor);
@@ -501,14 +509,33 @@ void initSceneDrop() {
 	surfaces.push_back(wall_4);
 }
 
+void updatePointCloud(int startIndex, int endIndex) {
+	// std::vector<PointCloud<float>::Point> pts;
+	for (int i = startIndex; i < endIndex; i++) {
+		PointCloud<float>::Point point;
+		point.x = particleList[i].getPosition().x;
+		point.y = particleList[i].getPosition().y;
+		point.z = particleList[i].getPosition().z;
+		cloud.pts[i] = point;
+	}
+}
+
 void initKdTree() {
 	// Should automatically build the tree?
-	 if (!kdTree) {
+	 /*if (!kdTree) {
 		cout << "Making new kd tree!" << endl;
 		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
 	 }
 	else {
 		kdTree->Build(particleCount + matchpointNumber, particlePositions);
+	}*/
+	cloud.pts = std::vector<PointCloud<float>::Point>(particleCount);
+	for (int i = 0; i < N_THREADS; i++) {
+		threads[i] = thread(updatePointCloud, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	}
+
+	for (int i = 0; i < N_THREADS; i++) {
+		threads[i].join();
 	}
 }
 
@@ -533,22 +560,48 @@ void initMatchPoints() {
 	}
 }
 
-
-void setNeighbors(Particle& x, int xIndex) {
-	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
-	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
-
+void setNeighbors_Updated(Particle& x, int xIndex) {
+	
+	float radius = x.getIsMatchPoint() ? x.getRadius() : (MAX_RADIUS * 2);
 	// create a vector for the new neighbors
+	using my_kd_tree_t = nanoflann::KDTreeSingleIndexAdaptor<
+		nanoflann::L2_Simple_Adaptor<float, PointCloud<float>>,
+		PointCloud<float>, 3 /* dim */
+	>;
+	my_kd_tree_t index(3 /*dim*/, cloud, { 50 /* max leaf */ });
+	float query[3] = { x.getPosition().x, x.getPosition().y , x.getPosition().z };
+
+	std::vector<nanoflann::ResultItem<uint32_t, float>> ret_matches;
+	size_t numPointsInRadius = index.radiusSearch(&query[0], radius, ret_matches);
 	std::vector<Particle*> neighbors;
 	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
-			neighbors.push_back(&particleList[info[i].index]);
+		if (xIndex != ret_matches[i].first && !particleList[ret_matches[i].first].getIsMatchPoint()) {
+			neighbors.push_back(&particleList[ret_matches[i].first]);
 		}
 	}
-
+	if (neighbors.size() == 0) {
+		// cout << "No neighbors found" << endl;
+	}
 	x.setNeighbors(neighbors);
-	delete[] info;
+}
+
+
+void setNeighbors(Particle& x, int xIndex) {
+	setNeighbors_Updated(x, xIndex);
+	//float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	//cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
+	//int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+
+	//// create a vector for the new neighbors
+	//std::vector<Particle*> neighbors;
+	//for (int i = 0; i < numPointsInRadius; i++) {
+	//	if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+	//		neighbors.push_back(&particleList[info[i].index]);
+	//	}
+	//}
+
+	//x.setNeighbors(neighbors);
+	//delete[] info;
 }
 
 void initAverageMass() {

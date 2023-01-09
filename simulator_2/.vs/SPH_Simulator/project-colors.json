@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "d67a0a3b-1cfe-34f3-aca1-d6b5ac5d4f92": {
+      "ProjectGuid": "d67a0a3b-1cfe-34f3-aca1-d6b5ac5d4f92",
+      "DisplayName": "SPH_Simulator",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

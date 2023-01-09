@@ -1,0 +1,47 @@
+﻿  Building Custom Rule C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/Leaven/lib/CMakeLists.txt
+  surfaceSampler.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\common.h(166,38): warning C4244: '/=': conversion from 'double' to 'Common::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(41,21): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(54,48): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(54,29): warning C4244: 'initializing': conversion from 'double' to 'const SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(67,31): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(67,25): warning C4244: 'initializing': conversion from 'double' to 'const SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(93,39): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'uint', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<unsigned int,3,-1,0,3,-1>
+          ]
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(93,25): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'const uint', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<unsigned int,3,-1,0,3,-1>
+          ]
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(119,47): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'unsigned int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<unsigned int,3,-1,0,3,-1>
+          ]
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(119,33): warning C4244: 'initializing': conversion from 'Eigen::EigenBase<Derived>::Index' to 'const unsigned int', possible loss of data
+          with
+          [
+              Derived=Eigen::Matrix<unsigned int,3,-1,0,3,-1>
+          ]
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(137,55): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(137,31): warning C4244: 'initializing': conversion from 'double' to 'const SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(168,22): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.cpp(170,22): warning C4244: 'initializing': conversion from 'double' to 'SurfaceSampler::scalar', possible loss of data
+  volumeSampler.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\common.h(166,38): warning C4244: '/=': conversion from 'double' to 'Common::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(85,21): warning C4244: 'initializing': conversion from 'double' to 'VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(99,31): warning C4244: 'initializing': conversion from 'double' to 'VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(99,25): warning C4244: 'initializing': conversion from 'double' to 'const VolumeSampler::scalar', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.cpp(171,23): warning C4018: '<': signed/unsigned mismatch
+  cubic_lagrange_discrete_grid.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\ext\Discregrid\discregrid\src\cubic_lagrange_discrete_grid.cpp(821,10): warning C4834: discarding return value of function with 'nodiscard' attribute
+  discrete_grid.cpp
+  entity_containers.cpp
+  entity_iterators.cpp
+  triangle_mesh.cpp
+  timing.cpp
+  Generating Code...
+  LeavenLib.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\Leaven\lib\Release\LeavenLib.lib

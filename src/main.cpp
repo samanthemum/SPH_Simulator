@@ -41,6 +41,9 @@
 #include "../../Leaven/lib/src/volumeSampler.h"
 #include "../../Leaven/lib/src/surfaceSampler.h"
 
+// Open MP
+#include <omp.h>
+
 using namespace std;
 using cy::Vec3f;
 
@@ -96,7 +99,7 @@ float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
-bool CONTROL = true;
+bool CONTROL = false;
 
 // matchpoint system
 vector<Keyframe> keyframes;
@@ -798,36 +801,43 @@ float colorFieldLaplacian(const Particle& xi) {
 }
 
 void setNeighborsForParticles(int start_index, int end_index) {
+
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		setNeighbors(particleList[i], i);
 	}
 }
 
 void setDensitiesForParticles(int start_index, int end_index) {
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
 	}
 }
 
 void setSurfaceTensionForParticles(int start_index, int end_index) {
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
 	}
 }
 
 void setColorFieldLaplaciansForParticles(int start_index, int end_index) {
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
 	}
 }
 
 void setPressuresForParticles(int start_index, int end_index) {
+	#pragma omp parallel
 	for (int i = start_index; i < end_index; i++) {
 		particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
 	}
 }
 
 void setAccelerationForParticles(int start_index, int end_index) {
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		glm::vec3 pressureForce = pressureGradient(particleList[i]);
 		glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
@@ -851,6 +861,8 @@ void setAccelerationForParticles(int start_index, int end_index) {
 }
 
 void updatePositionForParticles(int start_index, int end_index, double time) {
+	#pragma omp parallel
+	#pragma omp for
 	for (int i = start_index; i < end_index; i++) {
 		float timeStepRemaining = time;
 		glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
@@ -887,6 +899,7 @@ void updatePositionForParticles(int start_index, int end_index, double time) {
 }
 
 void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
+	#pragma omp parallel for
 	for (int i = start_index; i < end_index; i++) {
 		float timeStepRemaining = time;
 		glm::vec3 acceleration = particleList[i].getAcceleration();
@@ -953,82 +966,31 @@ void updateFluid(float time) {
 		initKdTree();
 		steps = 0;
 
-		// set neighbors for all particles
-		for (int i = 0; i < N_THREADS; i++) {
-			threads[i] = thread(setNeighborsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-		}
-
-		for (int i = 0; i < N_THREADS; i++) {
-			threads[i].join();
-		}
+		setNeighborsForParticles(0, particleCount);
 	}
 
 	// update density
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-		threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	} 
+	setDensitiesForParticles(0, particleCount);
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
-
-	// TODO: optimize with one loop later
 	// update surface normals
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
-		threads[i] = thread(setSurfaceTensionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	setSurfaceTensionForParticles(0, particleCount);
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
-		threads[i] = thread(setColorFieldLaplaciansForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	setColorFieldLaplaciansForParticles(0, particleCount);
 
 	// update the pressures
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(setPressuresForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	setPressuresForParticles(0, particleCount);
 
 	// update the pressures
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(setAccelerationForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	setAccelerationForParticles(0, particleCount);
 
 	//kdTree_thread.join();
-
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(updatePositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	updatePositionForParticles_Leapfrog(0, particleCount, time);
 
 	// do key frame stuff
 	if (!recording) {
 		updateMatchPoints(time);
 	}
-	else if(CONTROL) {
+	else if (CONTROL) {
 		// apply match point control
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
@@ -1067,11 +1029,11 @@ void updateFluid(float time) {
 					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
 						Particle* xj = highResSample.getNeighbors().at(j);
 						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
-						
+
 						float newDensity = xj->getDensity() + densityError * (kernel / totalError);
 						xj->setDensity(newDensity);
 					}
-					
+
 					// update sampled density and error
 					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
 

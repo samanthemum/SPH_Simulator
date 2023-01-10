@@ -78,9 +78,9 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = sqrt(1.5f);
-float MID_RES_RADIUS = sqrt((.5f));
-float HIGH_RES_RADIUS = sqrt(1.f / 3.0f);
+float LOW_RES_RADIUS = 1.0f;
+float MID_RES_RADIUS = (2.f / 3.f);
+float HIGH_RES_RADIUS = .5f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .1f;
@@ -101,7 +101,7 @@ bool CONTROL = true;
 // matchpoint system
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-const int matchpointNumber = 100;
+const int matchpointNumber = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 
@@ -338,7 +338,7 @@ void initParticleList_atRest_Uniform() {
 }
 
 void initParticleShape() {
-	float sphereRadius = 6.0f;
+	float sphereRadius = 5.0f;
 	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (sphereRadius * 2.0f));
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 	
@@ -538,7 +538,7 @@ void initMatchPoints() {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[500];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], MAX_RADIUS, 500, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2.f * radius), 500, info);
 
 	// create a vector for the new neighbors
 	std::vector<Particle*> neighbors;
@@ -547,6 +547,7 @@ void setNeighbors(Particle& x, int xIndex) {
 			neighbors.push_back(&particleList[info[i].index]);
 		}
 	}
+
 	x.setNeighbors(neighbors);
 	delete[] info;
 }

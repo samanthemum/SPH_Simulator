@@ -78,12 +78,12 @@ uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
-float LOW_RES_RADIUS = 1.0f;
-float MID_RES_RADIUS = (2.0f / 3.0f);
-float HIGH_RES_RADIUS = .50f;
+float LOW_RES_RADIUS = sqrt(1.5f);
+float MID_RES_RADIUS = sqrt((.5f));
+float HIGH_RES_RADIUS = sqrt(1.f / 3.0f);
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
-float VISCOSITY = .250f;
+float VISCOSITY = .1f;
 float TIMESTEP = .025f;
 float MASS = 1.0f;
 
@@ -96,12 +96,12 @@ float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
-bool CONTROL = false;
+bool CONTROL = true;
 
 // matchpoint system
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-const int matchpointNumber = 5;
+const int matchpointNumber = 100;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 
@@ -338,7 +338,8 @@ void initParticleList_atRest_Uniform() {
 }
 
 void initParticleShape() {
-	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (4.0f * 2.0f));
+	float sphereRadius = 6.0f;
+	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (sphereRadius * 2.0f));
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 	
 	// update the size of particles
@@ -360,9 +361,9 @@ void initParticleShape() {
 		float y = meshParticles.at(i)[1];
 		float z = meshParticles.at(i)[2];
 
-		x = 4.0 * x + 10;
-		y = 4.0 * y + 100;
-		z = 4.0 * z + 10;
+		x = sphereRadius * x + 10;
+		y = sphereRadius * y + 50;
+		z = sphereRadius * z + 10;
 
 		Particle p;
 		p.setPosition(glm::vec3(x, y, z));
@@ -521,7 +522,7 @@ void initMatchPoints() {
 
 		Particle matchPoint;
 		matchPoint.setPosition(particleList[particleIndex].getPosition());
-		float radius = rand() % 3 + 1;
+		float radius = rand() % 5 + 1;
 		matchPoint.setRadius(radius);
 		matchPoint.setMass(MASS);
 		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
@@ -546,7 +547,6 @@ void setNeighbors(Particle& x, int xIndex) {
 			neighbors.push_back(&particleList[info[i].index]);
 		}
 	}
-
 	x.setNeighbors(neighbors);
 	delete[] info;
 }
@@ -1053,7 +1053,7 @@ void updateFluid(float time) {
 				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
 				float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
-				while (absError > permittedError || iterations < 6) {
+				while (absError > permittedError) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
@@ -1180,12 +1180,13 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			particleForShape = HIGH_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = HIGH_RES_RADIUS;
 			Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
+			initAverageMass();
 			MAX_RADIUS = HIGH_RES_RADIUS;
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
 			TIMESTEP = .01f;
-			DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
+			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
@@ -1201,7 +1202,6 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
 			}
-			
 			isPaused = false;
 
 			cout << "Recording... please be patient :)" << endl;

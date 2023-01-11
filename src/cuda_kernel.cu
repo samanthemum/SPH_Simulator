@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 #include "cuda_kernel.cuh"
 
+
 __global__ void vectorAdditionKernel(double* A, double* B, double* C, int arraySize) {
     // Get thread ID.
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -62,7 +63,7 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
     }
 }
 
-void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount) {
+void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel) {
     // Initialize device pointers
     // Particle* d_particleList;
 
@@ -72,6 +73,7 @@ void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount) {
 
     // Launch CUDA kernel.
     //vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
+    setDensitiesForParticles << <gridSize, blockSize >> > (particleList, particleCount, kernel);
 
     // Copy result array c back to host memory.
     // cudaMemcpy(particleList, d_particleList, particleCount * sizeof(Particle), cudaMemcpyDeviceToHost);

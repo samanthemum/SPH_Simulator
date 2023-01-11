@@ -46,6 +46,17 @@
 #include <cuda_runtime_api.h>
 #include "cuda_kernel.cuh"
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
+{
+	if (code != cudaSuccess)
+	{
+		fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+		if (abort) exit(code);
+	}
+}
+
+
 using namespace std;
 using cy::Vec3f;
 
@@ -235,16 +246,20 @@ void initParticleList_atRest() {
 				cudaFree(particleList[i].neighborIndices);
 			}
 		}
+		gpuErrchk(cudaDeviceSynchronize());
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
 		// delete[] particlePositions;
 		cudaFree(particlePositions);
 	}
+
+	gpuErrchk(cudaDeviceSynchronize());
 	// particleList = new Particle[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
 	// particlePositions = new Vec3f[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -301,6 +316,7 @@ void initParticleList_atRest_Uniform() {
 				cudaFree(particleList[i].neighborIndices);
 			}
 		}
+		gpuErrchk(cudaDeviceSynchronize());
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
@@ -308,9 +324,11 @@ void initParticleList_atRest_Uniform() {
 		cudaFree(particlePositions);
 	}
 	// particleList = new Particle[particleCount + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
+	gpuErrchk(cudaDeviceSynchronize());
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle))));
 	// particlePositions = new Vec3f[particleCount + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f))));
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -369,9 +387,10 @@ void initParticleShape() {
 
 	// update the size of particles
 	Particle* shapeParticles; // = new Particle[particleCount + usedParticles + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle)));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
 	Vec3f* newPositions; // = new Vec3f[particleCount + usedParticles + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle)));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
+	gpuErrchk(cudaDeviceSynchronize());
 
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
@@ -386,6 +405,7 @@ void initParticleShape() {
 				cudaFree(particleList[i].neighborIndices);
 			}
 		}
+		gpuErrchk(cudaDeviceSynchronize());
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
@@ -423,7 +443,7 @@ void initParticleShape() {
 		shapeParticles[particleCount + i] = p;
 		newPositions[particleCount + i] = potentialParticle;
 	}
-
+	gpuErrchk(cudaDeviceSynchronize());
 	particleList = shapeParticles;
 	particlePositions = newPositions;
 	particleCount += usedParticles;
@@ -439,11 +459,12 @@ void initParticleList() {
 		// delete[] particlePositions;
 		cudaFree(particlePositions);
 	}
+	gpuErrchk(cudaDeviceSynchronize());
 	// particleList = new Particle[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
 	// particlePositions = new Vec3f[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
-
+	gpuErrchk(cudaDeviceSynchronize());
 	// put them in a cube shape for ease of access
 	float depth = 20.0f;
 	int slice = particleCount / depth;
@@ -598,6 +619,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	if (x.neighborIndices == nullptr) {
 		cudaMallocManaged(reinterpret_cast<void**>(&x.neighborIndices), Particle::maxNeighborsAllowed * sizeof(int));
 	}
+	gpuErrchk(cudaDeviceSynchronize());
 
 	x.numNeighbors = numPointsInRadius;
 	for (int i = 0; i < numPointsInRadius; i++) {
@@ -637,7 +659,8 @@ static void init()
 {
 	GLSL::checkVersion();
 
-	kernel = new Kernel;
+	cudaMallocManaged(reinterpret_cast<void**>(&kernel), sizeof(Kernel));
+	gpuErrchk(cudaDeviceSynchronize());
 	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
 
 	initAverageMass();
@@ -1025,14 +1048,18 @@ void updateFluid(float time) {
 	}
 
 	// update density
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-		threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
+	//	threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	//}
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	threads[i].join();
+	//}
+
+	gpuErrchk(cudaDeviceSynchronize());
+	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// TODO: optimize with one loop later
 	// update surface normals
@@ -1426,6 +1453,7 @@ int main(int argc, char** argv)
 
 	// clean up memory
 	cudaFree(particleList);
+	cudaFree(kernel);
 
 	// Quit program.
 	glfwDestroyWindow(window);

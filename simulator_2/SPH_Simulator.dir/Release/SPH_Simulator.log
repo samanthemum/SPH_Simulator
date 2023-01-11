@@ -202,7 +202,7 @@ C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(39): w
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(39): warning #20011-D: calling a __host__ function("Particle::getPosition() const") from a __host__ __device__ function("Kernel::polyKernelFunction") is not allowed
   
   cuda_kernel.cu
-  tmpxft_000043a8_00000000-7_cuda_kernel.cudafe1.cpp
+  tmpxft_00006894_00000000-7_cuda_kernel.cudafe1.cpp
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(68): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(82): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data

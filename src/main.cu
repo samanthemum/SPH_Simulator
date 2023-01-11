@@ -44,6 +44,7 @@
 // CUDA
 #include <cuda.h>
 #include <cuda_runtime_api.h>
+#include "cuda_kernel.cuh"
 
 using namespace std;
 using cy::Vec3f;
@@ -68,7 +69,8 @@ bool keyToggles[256] = { false }; // only for English keyboards!
 glm::vec2 cameraRotations(0, 0);
 glm::vec2 mousePrev(-1, -1);
 
-
+// Kernel stuff
+Kernel* kernel;
 
 float resolutionConstant = 8000;
 float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
@@ -619,10 +621,10 @@ void initAverageMass() {
 	float averageMass = 0.0f;
 	for (int i = 0; i < particleCount; i++) {
 		Particle xi = particleList[i];
-		float thisKernel = Kernel::monaghanKernel(xi, xi, false, false);
+		float thisKernel = kernel->monaghanKernel(xi, xi, false, false);
 		float kernelSum = 0.f;
 		for (int j = 0; j < xi.getNeighbors().size(); j++) {
-			kernelSum += Kernel::monaghanKernel(xi, *xi.getNeighbors().at(j), false, false);
+			kernelSum += kernel->monaghanKernel(xi, *xi.getNeighbors().at(j), false, false);
 		}
 		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
 	}
@@ -635,7 +637,9 @@ static void init()
 {
 	GLSL::checkVersion();
 
-	Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
+	kernel = new Kernel;
+	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
+
 	initAverageMass();
 
 	// Set background color
@@ -768,10 +772,10 @@ void render()
 }
 
 float calculateDensityForParticle(const Particle x) {
-	float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint());
+	float density = x.getMass() * kernel->polyKernelFunction(x, x, x.getIsMatchPoint());
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * Kernel::polyKernelFunction(x, *xj, x.getIsMatchPoint()));
+		density += (xj->getMass() * kernel->polyKernelFunction(x, *xj, x.getIsMatchPoint()));
 	}
 
 	return (density * density_constant);
@@ -782,8 +786,8 @@ float sampleDensityForMatchpoint(const Particle x) {
 	float normalizer = 0;
 	for (int j = 0; j < x.getNeighbors().size(); j++) {
 		Particle* xj = x.getNeighbors().at(j);
-		sample += (xj->getDensity() * Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
-		normalizer += (Kernel::samplingKernel(x, *xj, x.getIsMatchPoint()));
+		sample += (xj->getDensity() * kernel->samplingKernel(x, *xj, x.getIsMatchPoint()));
+		normalizer += (kernel->samplingKernel(x, *xj, x.getIsMatchPoint()));
 	}
 
 	return sample / normalizer;
@@ -805,7 +809,7 @@ glm::vec3 pressureGradient(const Particle& xi) {
 		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
 
 		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
-		pressureGradient += (xj->getMass() * pressureTerm * Kernel::spikyKernelGradient(xi, *xj));
+		pressureGradient += (xj->getMass() * pressureTerm * kernel->spikyKernelGradient(xi, *xj));
 	}
 	return -1.0f * pressureGradient;
 }
@@ -818,7 +822,7 @@ glm::vec3 diffusionTerm(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
 
-		diffusionLaplacian += (xj->getMass() * velocityTerm * Kernel::viscosityKernelLaplacian(xi, *xj));
+		diffusionLaplacian += (xj->getMass() * velocityTerm * kernel->viscosityKernelLaplacian(xi, *xj));
 	}
 	return diffusionLaplacian * VISCOSITY;
 }
@@ -833,7 +837,7 @@ glm::vec3 surfaceNormalField(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		if (xj != &xi) {
 			float outside_term = xj->getMass() * 1 / xj->getDensity();
-			surfaceField += (outside_term * Kernel::polyKernelGradient(xi, *xj));
+			surfaceField += (outside_term * kernel->polyKernelGradient(xi, *xj));
 		}
 
 	}
@@ -849,7 +853,7 @@ float colorFieldLaplacian(const Particle& xi) {
 		Particle* xj = xi.getNeighbors().at(j);
 		float outside_term = xj->getMass() * 1 / xj->getDensity();
 
-		surfaceField += (outside_term * Kernel::polyKernelLaplacian(xi, *xj));
+		surfaceField += (outside_term * kernel->polyKernelLaplacian(xi, *xj));
 	}
 	return surfaceField;
 }
@@ -1116,16 +1120,16 @@ void updateFluid(float time) {
 					float totalError = 0;
 					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
 						Particle* xj = highResSample.getNeighbors().at(j);
-						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
-						totalError += powf(kernel, 2.0f);
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						totalError += powf(gravity_kernel_value, 2.0f);
 					}
 
 					// 4. Apply control for each neighbor
 					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
 						Particle* xj = highResSample.getNeighbors().at(j);
-						float kernel = Kernel::samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
 
-						float newDensity = xj->getDensity() + densityError * (kernel / totalError);
+						float newDensity = xj->getDensity() + densityError * (gravity_kernel_value / totalError);
 						xj->setDensity(newDensity);
 					}
 
@@ -1237,7 +1241,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			particleCount = HIGH_RES_COUNT;
 			particleForShape = HIGH_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = HIGH_RES_RADIUS;
-			Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
+			kernel->setSmoothingRadius(SMOOTHING_RADIUS);
 			initAverageMass();
 			MAX_RADIUS = HIGH_RES_RADIUS;
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -1277,7 +1281,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			particleCount = MID_RES_COUNT;
 			particleForShape = MID_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = MID_RES_RADIUS;
-			Kernel::setSmoothingRadius(SMOOTHING_RADIUS);
+			kernel->setSmoothingRadius(SMOOTHING_RADIUS);
 			MAX_RADIUS = MID_RES_RADIUS;
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));

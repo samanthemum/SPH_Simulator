@@ -21,7 +21,7 @@ __global__ void vectorAdditionKernel(double* A, double* B, double* C, int arrayS
  * @param C Sum of array elements A and B directly across.
  * @param arraySize Size of arrays A, B, and C.
  */
-void kernel(double* A, double* B, double* C, int arraySize) {
+void test_kernel(double* A, double* B, double* C, int arraySize) {
 
     // Initialize device pointers.
     double* d_A, * d_B, * d_C;
@@ -46,19 +46,19 @@ void kernel(double* A, double* B, double* C, int arraySize) {
     cudaMemcpy(C, d_C, arraySize * sizeof(double), cudaMemcpyDeviceToHost);
 }
 
-__global__ void setDensitiesForParticles(Particle* particleList, int particleCount) {
+__global__ void setDensitiesForParticles(Particle* particleList, int particleCount, Kernel* kernel) {
     // Get thread ID.
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (threadID < particleCount) {
         // Calculate the density
-        Particle x = particleList[threadID];
-
-        float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint());
-        for (int j = 0; j < x.numNeighbors; j++) {
-            int index = x.neighborIndices[j];
-            density += (particleList[index].getMass() * Kernel::polyKernelFunction(x, particleList[index], x.getIsMatchPoint()));
+        float density = particleList[threadID].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[threadID], particleList[threadID].getIsMatchPoint());
+        for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
+            int index = particleList[threadID].neighborIndices[j];
+            density += (particleList[index].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[index], particleList[threadID].getIsMatchPoint()));
         }
+
+        particleList[threadID].setDensity(density);
     }
 }
 

@@ -19,8 +19,8 @@
 
 class Particle {
 	public:
-		Particle() {};
-		~Particle() {
+		CUDA_CALLABLE_MEMBER Particle() {};
+		CUDA_CALLABLE_MEMBER ~Particle() {
 		};
 
 		// setter functions
@@ -29,7 +29,7 @@ class Particle {
 		void setAcceleration(glm::vec3 a) { this->acceleration = a; };
 		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
 		void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
-		void setDensity(float density) { this->density = density; };
+		CUDA_CALLABLE_MEMBER void setDensity(float density) { this->density = density; };
 		void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
 		void setVolume(float v) { this->volume = v; };
@@ -88,13 +88,12 @@ class Particle {
 		glm::vec3 getAcceleration() const { return acceleration; };
 		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
 		float getColorFieldLaplacian() const { return colorFieldLaplacian; }
-		float getDensity() const { return density; };
+		CUDA_CALLABLE_MEMBER float getDensity() const { return density; };
 		float getPressure() const { return pressure; };
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		float getVolume() const { return volume; };
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
-		// CUDA_CALLABLE_MEMBER std::vector<int> getNeighborIndices() const { return neighborIndices; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
 		static const int maxNeighborsAllowed = 500;
 		int* neighborIndices = nullptr;

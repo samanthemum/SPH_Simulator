@@ -326,8 +326,9 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\MatrixStack.cpp" />
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Program.cpp" />
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Shape.cpp" />
-    <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
-    </None>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\imgui-master\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\imgui-master\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\imgui-master\imgui.cpp" />
@@ -346,8 +347,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Plane.h" />
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Program.h" />
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Shape.h" />
-    <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh">
-    </None>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" />
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyBVH.h" />
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyCore.h" />
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyPointCloud.h" />

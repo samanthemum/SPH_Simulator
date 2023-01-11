@@ -19,12 +19,14 @@
 
 class Kernel {
 	private:
-		static float SMOOTHING_RADIUS;
+		float SMOOTHING_RADIUS = 1.0;
 
 	public:
-		static float getSmoothingRadius() { return SMOOTHING_RADIUS; }
-		static void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
-		static float polyKernelFunction(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
+		Kernel() {};
+		~Kernel() {};
+		float getSmoothingRadius() { return SMOOTHING_RADIUS; }
+		void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
+		CUDA_CALLABLE_MEMBER float polyKernelFunction(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
 			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 
@@ -38,7 +40,7 @@ class Kernel {
 			return outsideTerm * insideTerm;
 		}
 
-		static float samplingKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
+		float samplingKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
 			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
 
@@ -51,7 +53,7 @@ class Kernel {
 			return kernelValue;
 		}
 
-		static glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj) {
+		glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
 			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
 				return glm::vec3(0,0,0);
@@ -69,7 +71,7 @@ class Kernel {
 		}
 
 		// TODO: fix this function
-		static float polyKernelLaplacian(const Particle& xi, const Particle& xj) {
+		float polyKernelLaplacian(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
 			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
 				return 0;
@@ -84,7 +86,7 @@ class Kernel {
 		}
 
 
-		static float viscosityKernelLaplacian(const Particle& xi, const Particle& xj) {
+		float viscosityKernelLaplacian(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
 			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
 				return 0;
@@ -95,7 +97,7 @@ class Kernel {
 			return outsideTerm * insideTerm;
 		}
 
-		static glm::vec3 polyKernelGradient(const Particle& xi, const Particle& xj) {
+		glm::vec3 polyKernelGradient(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
 			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
 				return glm::vec3(0.0f, 0.0f, 0.0f);
@@ -109,7 +111,7 @@ class Kernel {
 			return outsideTerm * insideTerm * vectorTerm;
 		}
 
-		static float monaghanKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
+		float monaghanKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
 			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
 			/*if (predicted) {
@@ -136,7 +138,7 @@ class Kernel {
 			return outsideTerm * insideTerm;
 		}
 
-		static glm::vec3 monaghanKernelGradient(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
+		glm::vec3 monaghanKernelGradient(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
 			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
 			/*if (predicted) {
@@ -163,7 +165,7 @@ class Kernel {
 			return outsideTerm * insideTerm * normalize(r);
 		}
 
-		static float monaghanKernelLaplacian(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
+		float monaghanKernelLaplacian(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
 			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
 			/*if (predicted) {
@@ -191,5 +193,4 @@ class Kernel {
 		}
 };
 
-float Kernel::SMOOTHING_RADIUS = 1.0f;
 #endif

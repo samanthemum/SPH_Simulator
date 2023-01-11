@@ -116,10 +116,6 @@
     <CustomBuild Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\phong_frag.glsl" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\phong_vert.glsl" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\simple_frag.glsl" />
@@ -135,6 +131,10 @@
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" />
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>

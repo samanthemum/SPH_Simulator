@@ -42,7 +42,8 @@
 #include "../../Leaven/lib/src/surfaceSampler.h"
 
 // CUDA
-// #include "cuda_kernel.cuh"
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 
 using namespace std;
 using cy::Vec3f;
@@ -226,13 +227,17 @@ bool isInBoundingVolume(const Vec3f& point) {
 
 void initParticleList_atRest() {
 	if (particleList != nullptr) {
-		delete[] particleList;
+		// delete[] particleList;
+		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
-		delete[] particlePositions;
+		// delete[] particlePositions;
+		cudaFree(particlePositions);
 	}
-	particleList = new Particle[particleCount + matchpointNumber];
-	particlePositions = new Vec3f[particleCount + matchpointNumber];
+	// particleList = new Particle[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
+	// particlePositions = new Vec3f[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -283,13 +288,17 @@ void initParticleList_atRest() {
 
 void initParticleList_atRest_Uniform() {
 	if (particleList != nullptr) {
-		delete[] particleList;
+		// delete[] particleList;
+		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
-		delete[] particlePositions;
+		// delete[] particlePositions;
+		cudaFree(particlePositions);
 	}
-	particleList = new Particle[particleCount + matchpointNumber];
-	particlePositions = new Vec3f[particleCount + matchpointNumber];
+	// particleList = new Particle[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
+	// particlePositions = new Vec3f[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
 
 	// put them in a cube shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -347,8 +356,11 @@ void initParticleShape() {
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 
 	// update the size of particles
-	Particle* shapeParticles = new Particle[particleCount + usedParticles + matchpointNumber];
-	Vec3f* newPositions = new Vec3f[particleCount + usedParticles + matchpointNumber];
+	Particle* shapeParticles; // = new Particle[particleCount + usedParticles + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle)));
+	Vec3f* newPositions; // = new Vec3f[particleCount + usedParticles + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle)));
+
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
 		newPositions[i] = particlePositions[i];
@@ -392,8 +404,18 @@ void initParticleShape() {
 }
 
 void initParticleList() {
-	particleList = new Particle[particleCount];
-	particlePositions = new Vec3f[particleCount + matchpointNumber];
+	if (particleList != nullptr) {
+		// delete[] particleList;
+		cudaFree(particleList);
+	}
+	if (particlePositions != nullptr) {
+		// delete[] particlePositions;
+		cudaFree(particlePositions);
+	}
+	// particleList = new Particle[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
+	// particlePositions = new Vec3f[particleCount + matchpointNumber];
+	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
 
 	// put them in a cube shape for ease of access
 	float depth = 20.0f;

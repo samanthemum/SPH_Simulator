@@ -55,8 +55,8 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
         Particle x = particleList[threadID];
 
         float density = x.getMass() * Kernel::polyKernelFunction(x, x, x.getIsMatchPoint());
-        for (int j = 0; j < x.getNeighborIndices().size(); j++) {
-            int index = x.getNeighborIndices().at(j);
+        for (int j = 0; j < x.numNeighbors; j++) {
+            int index = x.neighborIndices[j];
             density += (particleList[index].getMass() * Kernel::polyKernelFunction(x, particleList[index], x.getIsMatchPoint()));
         }
     }
@@ -64,13 +64,7 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
 
 void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount) {
     // Initialize device pointers
-    Particle* d_particleList;
-
-    // Allocate device memory
-    cudaMalloc((void**)&d_particleList, particleCount * sizeof(Particle));
-
-    // Transfer array
-    cudaMemcpy(d_particleList, particleList, particleCount * sizeof(Particle), cudaMemcpyHostToDevice);
+    // Particle* d_particleList;
 
     // Calculate blocksize and grid size
     dim3 blockSize(512, 1, 1);
@@ -80,5 +74,5 @@ void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount) {
     //vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
 
     // Copy result array c back to host memory.
-    cudaMemcpy(particleList, d_particleList, particleCount * sizeof(Particle), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(particleList, d_particleList, particleCount * sizeof(Particle), cudaMemcpyDeviceToHost);
 }

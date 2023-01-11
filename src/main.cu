@@ -228,6 +228,11 @@ bool isInBoundingVolume(const Vec3f& point) {
 void initParticleList_atRest() {
 	if (particleList != nullptr) {
 		// delete[] particleList;
+		for (int i = 0; i < particleCount + matchpointNumber; i++) {
+			if (particleList[i].neighborIndices != nullptr) {
+				cudaFree(particleList[i].neighborIndices);
+			}
+		}
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
@@ -289,6 +294,11 @@ void initParticleList_atRest() {
 void initParticleList_atRest_Uniform() {
 	if (particleList != nullptr) {
 		// delete[] particleList;
+		for (int i = 0; i < particleCount + matchpointNumber; i++) {
+			if (particleList[i].neighborIndices != nullptr) {
+				cudaFree(particleList[i].neighborIndices);
+			}
+		}
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
@@ -364,6 +374,21 @@ void initParticleShape() {
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
 		newPositions[i] = particlePositions[i];
+	}
+
+
+	if (particleList != nullptr) {
+		// delete[] particleList;
+		for (int i = 0; i < particleCount + matchpointNumber; i++) {
+			if (particleList[i].neighborIndices != nullptr) {
+				cudaFree(particleList[i].neighborIndices);
+			}
+		}
+		cudaFree(particleList);
+	}
+	if (particlePositions != nullptr) {
+		// delete[] particlePositions;
+		cudaFree(particlePositions);
 	}
 
 	//// approximate density
@@ -567,17 +592,20 @@ void setNeighbors(Particle& x, int xIndex) {
 	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2.f * radius), Particle::maxNeighborsAllowed, info);
 
 	// create a vector for the new neighbors
-	std::vector<Particle*> neighbors;
-	std::vector<int> neighborIndices;
+	// std::vector<Particle*> neighbors;
+	if (x.neighborIndices == nullptr) {
+		cudaMallocManaged(reinterpret_cast<void**>(&x.neighborIndices), Particle::maxNeighborsAllowed * sizeof(int));
+	}
+
+	x.numNeighbors = numPointsInRadius;
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
-			neighbors.push_back(&particleList[info[i].index]);
-			neighborIndices.push_back(info[i].index);
+			// neighbors.push_back(&particleList[info[i].index]);
+			x.neighborIndices[i] = info[i].index;
 		}
 	}
 
-	x.setNeighborIndices(neighborIndices);
-	x.setNeighbors(neighbors);
+	// x.setNeighbors(neighbors);
 	delete[] info;
 }
 
@@ -1393,7 +1421,7 @@ int main(int argc, char** argv)
 	_pclose(ffmpeg);
 
 	// clean up memory
-	delete[] particleList;
+	cudaFree(particleList);
 
 	// Quit program.
 	glfwDestroyWindow(window);

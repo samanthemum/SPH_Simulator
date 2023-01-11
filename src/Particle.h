@@ -5,7 +5,10 @@
 #include <memory>
 #include <glm/common.hpp>
 #include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+#include <vector>
 #include "Plane.h"
+
 
 class Particle {
 	public:
@@ -27,28 +30,28 @@ class Particle {
 		void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
 		static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
-			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
+			/*if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;
 			}
 			else {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) + radius;
-			}
+			}*/
 
 			float newDistance;
-			if (glm::dot((newPos - p.getPoint()), p.getNormal()) >= 0.0f) {
+			/*if (glm::dot((newPos - p.getPoint()), p.getNormal()) >= 0.0f) {
 				newDistance = glm::dot((newPos - p.getPoint()), p.getNormal()) - radius;
 			}
 			else {
 				newDistance = glm::dot((newPos - p.getPoint()), p.getNormal()) + radius;
-			}
+			}*/
 
-			if (glm::dot((newPos - p.getPoint()), p.getNormal()) > 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) <= 0.0f) {
+			/*if (glm::dot((newPos - p.getPoint()), p.getNormal()) > 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) <= 0.0f) {
 				return true;
 			}
 
 			if (glm::dot((newPos - p.getPoint()), p.getNormal()) < 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				return true;
-			}
+			}*/
 
 			// same signedness == no collisions
 			if ((newDistance > 0 && oldDistance > 0) || (newDistance < 0 && oldDistance < 0) || (newDistance == 0 && oldDistance == 0)) {

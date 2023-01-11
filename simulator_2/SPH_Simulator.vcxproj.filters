@@ -129,4 +129,10 @@
       <UniqueIdentifier>{31C0E220-F3C7-3292-B06D-F819E4A7A7EE}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" />
+  </ItemGroup>
 </Project>

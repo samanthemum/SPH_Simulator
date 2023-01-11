@@ -1,4 +1,189 @@
-﻿  main.cpp
+﻿  Compiling CUDA source file C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu...
+  
+  C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.30.30705\bin\HostX64\x64" -x cu   -I"C:\glm-master\glm-master" -I"C:\glfw-3.3.6\glfw-3.3.6\include" -I"C:\glew-2.1.0\glew-2.1.0\include" -I"C:\eigen-3.4.0\eigen-3.4.0" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\ext\Discregrid\discregrid\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include"     --keep-dir x64\Release  -maxrregcount=0  --machine 64 --compile -cudart static    -D_MBCS -DWIN32 -D_WINDOWS -DNDEBUG -D"CMAKE_INTDIR=\"Release\"" -Xcompiler "/EHsc /W3 /nologo /O2 /FdSPH_Simulator.dir\Release\vc143.pdb /FS   /MD /GR" -o "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\x64\Release\cuda_kernel.cu.obj" "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu" 
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning #549-D: variable "newDistance" is used before its value is set
+  
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning #549-D: variable "oldDistance" is used before its value is set
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning #549-D: variable "newDistance" is used before its value is set
+  
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning #549-D: variable "oldDistance" is used before its value is set
+  
+  cuda_kernel.cu
+  tmpxft_00003544_00000000-7_cuda_kernel.cudafe1.cpp
+  main.cpp
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(25,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(55,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(69,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
@@ -9,43 +194,46 @@ C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(142,22
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(148,43): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(169,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(172,22): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(187,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(190,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(188,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(191,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(234,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(236,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(238,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(240,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(242,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(255,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(258,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(291,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(293,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(295,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(297,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(299,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(315,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(318,24): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(343,72): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(354,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(396,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(397,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(407,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(408,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(409,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(525,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(855,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(891,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1186,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1225,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1310,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1327,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(237,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(239,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(241,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(243,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(245,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(258,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(261,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(294,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(296,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(298,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(300,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(302,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(318,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(321,24): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(346,72): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(357,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(399,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(400,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(410,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(411,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(412,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(528,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(858,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(894,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1189,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1228,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1313,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1330,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning C4700: uninitialized local variable 'newDistance' used
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h(57): warning C4700: uninitialized local variable 'oldDistance' used
+     Creating library C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.lib and object C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.exp
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\Release\SPH_Simulator.exe

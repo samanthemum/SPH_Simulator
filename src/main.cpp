@@ -41,6 +41,9 @@
 #include "../../Leaven/lib/src/volumeSampler.h"
 #include "../../Leaven/lib/src/surfaceSampler.h"
 
+// CUDA
+#include "cuda_kernel.cuh"
+
 using namespace std;
 using cy::Vec3f;
 

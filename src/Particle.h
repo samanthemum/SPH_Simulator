@@ -9,6 +9,11 @@
 #include <vector>
 #include "Plane.h"
 
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#endif 
 
 class Particle {
 	public:
@@ -27,31 +32,32 @@ class Particle {
 		void setVolume(float v) { this->volume = v; };
 		void setRadius(float r) { this->radius = r; }
 		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
+		void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
 		void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
 		static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
-			/*if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
+			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;
 			}
 			else {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) + radius;
-			}*/
+			}
 
 			float newDistance;
-			/*if (glm::dot((newPos - p.getPoint()), p.getNormal()) >= 0.0f) {
+			if (glm::dot((newPos - p.getPoint()), p.getNormal()) >= 0.0f) {
 				newDistance = glm::dot((newPos - p.getPoint()), p.getNormal()) - radius;
 			}
 			else {
 				newDistance = glm::dot((newPos - p.getPoint()), p.getNormal()) + radius;
-			}*/
+			}
 
-			/*if (glm::dot((newPos - p.getPoint()), p.getNormal()) > 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) <= 0.0f) {
+			if (glm::dot((newPos - p.getPoint()), p.getNormal()) > 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) <= 0.0f) {
 				return true;
 			}
 
 			if (glm::dot((newPos - p.getPoint()), p.getNormal()) < 0.0f && glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				return true;
-			}*/
+			}
 
 			// same signedness == no collisions
 			if ((newDistance > 0 && oldDistance > 0) || (newDistance < 0 && oldDistance < 0) || (newDistance == 0 && oldDistance == 0)) {
@@ -81,11 +87,13 @@ class Particle {
 		float getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		float getDensity() const { return density; };
 		float getPressure() const { return pressure; };
-		float getMass() const { return mass; };
+		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		float getVolume() const { return volume; };
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
-		bool getIsMatchPoint() const { return isMatchPoint; }
+		CUDA_CALLABLE_MEMBER std::vector<int> getNeighborIndices() const { return neighborIndices; }
+		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
+		static const int maxNeighborsAllowed = 100;
 
 	private:
 		glm::vec3 position;
@@ -94,6 +102,8 @@ class Particle {
 		glm::vec3 surfaceNormal;
 		float colorFieldLaplacian;
 		std::vector<Particle*> neighbors;
+		std::vector<int> neighborIndices;
+		//int neighborIndices[maxNeighborsAllowed];
 		float density;
 		float mass;
 		float radius;

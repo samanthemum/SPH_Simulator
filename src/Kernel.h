@@ -2,20 +2,31 @@
 #ifndef KERNEL_H_
 #define KERNEL_H_
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "Particle.h"
 #include "Plane.h"
 #include <glm/common.hpp>
 #include <glm/fwd.hpp>
+
+#ifdef __CUDACC__
+#define CUDA_CALLABLE_MEMBER __host__ __device__
+#else
+#define CUDA_CALLABLE_MEMBER
+#endif 
+
 
 class Kernel {
 	private:
 		static float SMOOTHING_RADIUS;
 
 	public:
+		static float getSmoothingRadius() { return SMOOTHING_RADIUS; }
 		static void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
 		static float polyKernelFunction(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
-			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 
 			if (length(xi.getPosition() - xj.getPosition()) > radius) {
 				return 0;

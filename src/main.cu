@@ -130,7 +130,7 @@ const float permittedError = .01f;
 
 float density_constant = 1.0;
 int steps = 0;
-int steps_per_update = 15;
+int steps_per_update = 3;
 Particle* particleList;
 Vec3f* particlePositions;
 
@@ -139,7 +139,10 @@ shared_ptr<cy::TriMesh> shapeMesh;
 shared_ptr<cy::BVHTriMesh> bvh;
 
 shared_ptr<Shape> lowResSphere;
-std::vector<Plane> surfaces;
+
+// Surfaces for collisions
+Plane* surfaces;
+int numSurfaces;
 
 
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
@@ -425,7 +428,7 @@ void initParticleShape() {
 		float z = meshParticles.at(i)[2];
 
 		x = sphereRadius * x + 10;
-		y = sphereRadius * y + 50;
+		y = sphereRadius * y + 70;
 		z = sphereRadius * z + 10;
 
 		Particle p;
@@ -506,12 +509,18 @@ void initSceneOriginal() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(21.0f, 0.0, 0.0));
 
 	// initialize surfaces
-	surfaces.clear();
-	surfaces.push_back(ground);
+	/*surfaces.push_back(ground);
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);
+	surfaces.push_back(wall_4);*/
+
+	surfaces[0] = ground;
+	surfaces[1] = wall_1;
+	surfaces[2] = wall_2;
+	surfaces[3] = wall_3;
+	surfaces[4] = wall_4;
+	numSurfaces = 5;
 
 }
 
@@ -526,13 +535,21 @@ void initSceneDamBreak() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5, 0.0, 0.0));
 
 	// initialize surfaces
-	surfaces.clear();
+	/*surfaces.clear();
 	surfaces.push_back(ground);
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
 	surfaces.push_back(wall_5);
-	surfaces.push_back(wall_4);
+	surfaces.push_back(wall_4);*/
+
+	surfaces[0] = ground;
+	surfaces[1] = wall_1;
+	surfaces[2] = wall_2;
+	surfaces[3] = wall_3;
+	surfaces[4] = wall_5;
+	surfaces[5] = wall_4;
+	numSurfaces = 6;
 
 }
 
@@ -549,12 +566,12 @@ void initSceneSplash() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
 
 	// initialize surfaces
-	surfaces.clear();
-	surfaces.push_back(ground);
-	surfaces.push_back(wall_1);
-	surfaces.push_back(wall_2);
-	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);
+	surfaces[0] = ground;
+	surfaces[1] = wall_1;
+	surfaces[2] = wall_2;
+	surfaces[3] = wall_3;
+	surfaces[4] = wall_4;
+	numSurfaces = 5;
 }
 
 void initSceneDrop() {
@@ -568,12 +585,19 @@ void initSceneDrop() {
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
 
 	// initialize surfaces
-	surfaces.clear();
+	/*surfaces.clear();
 	surfaces.push_back(ground);
 	surfaces.push_back(wall_1);
 	surfaces.push_back(wall_2);
 	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);
+	surfaces.push_back(wall_4);*/
+
+	surfaces[0] = ground;
+	surfaces[1] = wall_1;
+	surfaces[2] = wall_2;
+	surfaces[3] = wall_3;
+	surfaces[4] = wall_4;
+	numSurfaces = 5;
 }
 
 void initKdTree() {
@@ -707,6 +731,9 @@ static void init()
 	lowResSphere = make_shared<Shape>();
 	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
 	lowResSphere->init();
+
+	// initialize surfaces
+	cudaMallocManaged(reinterpret_cast<void**>(&surfaces), sizeof(Plane) * 6);
 
 	// initialize particles and tree
 	keyframes.clear();
@@ -935,77 +962,77 @@ void setAccelerationForParticles(int start_index, int end_index) {
 }
 
 void updatePositionForParticles(int start_index, int end_index, double time) {
-	for (int i = start_index; i < end_index; i++) {
-		float timeStepRemaining = time;
-		glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
-		glm::vec3 newPosition = particleList[i].getPosition() + newVelocity * timeStepRemaining;
+	//for (int i = start_index; i < end_index; i++) {
+	//	float timeStepRemaining = time;
+	//	glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
+	//	glm::vec3 newPosition = particleList[i].getPosition() + newVelocity * timeStepRemaining;
 
-		for (Plane surface : surfaces) {
-			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-				// collision stuff
-				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-				glm::vec3 velocityTangentAfter;
-				if (glm::length(velocityTangentBefore) == 0) {
-					velocityTangentAfter = velocityTangentBefore;
-				}
-				else {
-					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-				}
+	//	for (Plane surface : surfaces) {
+	//		if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
+	//			// collision stuff
+	//			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+	//			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+	//			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+	//			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+	//			glm::vec3 velocityTangentAfter;
+	//			if (glm::length(velocityTangentBefore) == 0) {
+	//				velocityTangentAfter = velocityTangentBefore;
+	//			}
+	//			else {
+	//				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+	//			}
 
-				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-				newPosition = newPosition + addedVector;
-				// particleList[i].setPosition(newPosition);
-			}
-		}
+	//			newVelocity = velocityNormalAfter + velocityTangentAfter;
+	//			float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+	//			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+	//			newPosition = newPosition + addedVector;
+	//			// particleList[i].setPosition(newPosition);
+	//		}
+	//	}
 
-		particleList[i].setVelocity(newVelocity);
-		particleList[i].setPosition(newPosition);
-		particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
+	//	particleList[i].setVelocity(newVelocity);
+	//	particleList[i].setPosition(newPosition);
+	//	particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
 
-	}
+	//}
 }
 
 void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
-	for (int i = start_index; i < end_index; i++) {
-		float timeStepRemaining = time;
-		glm::vec3 acceleration = particleList[i].getAcceleration();
-		glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
-		glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
-		glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
+	//for (int i = start_index; i < end_index; i++) {
+	//	float timeStepRemaining = time;
+	//	glm::vec3 acceleration = particleList[i].getAcceleration();
+	//	glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
+	//	glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
+	//	glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
 
-		for (Plane surface : surfaces) {
-			if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-				// collision stuff
-				glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-				glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-				glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-				float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-				glm::vec3 velocityTangentAfter;
-				if (glm::length(velocityTangentBefore) == 0) {
-					velocityTangentAfter = velocityTangentBefore;
-				}
-				else {
-					velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-				}
+	//	for (Plane surface : surfaces) {
+	//		if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
+	//			// collision stuff
+	//			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
+	//			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+	//			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+	//			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+	//			glm::vec3 velocityTangentAfter;
+	//			if (glm::length(velocityTangentBefore) == 0) {
+	//				velocityTangentAfter = velocityTangentBefore;
+	//			}
+	//			else {
+	//				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+	//			}
 
-				newVelocity = velocityNormalAfter + velocityTangentAfter;
-				float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-				glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-				newPosition = newPosition + addedVector;
-				// particleList[i].setPosition(newPosition);
-			}
-		}
+	//			newVelocity = velocityNormalAfter + velocityTangentAfter;
+	//			float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
+	//			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
+	//			newPosition = newPosition + addedVector;
+	//			// particleList[i].setPosition(newPosition);
+	//		}
+	//	}
 
-		particleList[i].setVelocity(newVelocity);
-		particleList[i].setPosition(newPosition);
-		particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
+	//	particleList[i].setVelocity(newVelocity);
+	//	particleList[i].setPosition(newPosition);
+	//	particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
 
-	}
+	//}
 }
 
 void updateMatchPoints(float time) {
@@ -1048,84 +1075,32 @@ void updateFluid(float time) {
 	}
 
 	// update density
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	// particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-	//	threads[i] = thread(setDensitiesForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	//}
-
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	threads[i].join();
-	//}
-
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// TODO: optimize with one loop later
-	// update surface normals
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	// particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
-	//	threads[i] = thread(setSurfaceTensionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	//}
-
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	/*for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}*/
-
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	// particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
-	//	threads[i] = thread(setColorFieldLaplaciansForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	//}
-
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	threads[i].join();
-	//}
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 
 	// update the pressures
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-	//	threads[i] = thread(setPressuresForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	//}
-
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	threads[i].join();
-	//}
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// update the pressures
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-	//	threads[i] = thread(setAccelerationForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	//}
-
-	//for (int i = 0; i < N_THREADS; i++) {
-	//	threads[i].join();
-	//}
-
-	gpuErrchk(cudaDeviceSynchronize());
+	// calculate acceleration
+	// gpuErrchk(cudaDeviceSynchronize());
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	//kdTree_thread.join();
-
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(updatePositionForParticles_Leapfrog, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, time);
-	}
-
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	// update positions
+	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// do key frame stuff
 	if (!recording) {
@@ -1421,7 +1396,7 @@ int main(int argc, char** argv)
 
 	std::string buttonText = "Play";
 	bool isPaused = true;
-	cout << "Number of surfaces: " << surfaces.size() << endl;
+	cout << "Number of surfaces: " << numSurfaces << endl;
 	while (!glfwWindowShouldClose(window) || (recording && timePassed <= end_time)) {
 		if (!glfwGetWindowAttrib(window, GLFW_ICONIFIED)) {
 
@@ -1433,9 +1408,9 @@ int main(int argc, char** argv)
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;
-				if (timePassed >= 6 && surfaces.size() == 6 && selected_scene == Scene::DAM_BREAK) {
+				if (timePassed >= 6 && numSurfaces == 6 && selected_scene == Scene::DAM_BREAK) {
 					cout << "Release the kracken!" << endl;
-					surfaces.resize(5);
+					numSurfaces = 5;
 				}
 				GLSL::checkError(GET_FILE_LINE);
 			}
@@ -1469,6 +1444,7 @@ int main(int argc, char** argv)
 	// clean up memory
 	cudaFree(particleList);
 	cudaFree(kernel);
+	cudaFree(surfaces);
 
 	// Quit program.
 	glfwDestroyWindow(window);

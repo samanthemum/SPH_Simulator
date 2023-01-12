@@ -37,7 +37,7 @@ class Particle {
 		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
 		// void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
 		void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
-		static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
+		CUDA_CALLABLE_MEMBER static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				oldDistance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;
@@ -70,7 +70,7 @@ class Particle {
 			return true;
 		}
 
-		static float getDistanceFromPlane(glm::vec3 position, float radius, const Plane& p) {
+		CUDA_CALLABLE_MEMBER static float getDistanceFromPlane(glm::vec3 position, float radius, const Plane& p) {
 			float distance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
 				distance = glm::dot((position - p.getPoint()), p.getNormal()) - radius;
@@ -92,7 +92,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getPressure() const { return pressure; };
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		float getVolume() const { return volume; };
-		float getRadius() const { return radius; }
+		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
 		static const int maxNeighborsAllowed = 500;

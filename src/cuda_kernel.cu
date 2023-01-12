@@ -212,3 +212,52 @@ void setAccelerationsForParticles_CUDA(Particle* particleList, int particleCount
     // Launch CUDA kernel.
     setAccelerationsForParticles << <gridSize, blockSize >> > (particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 }
+
+__global__ void updatePositionsAndVelocities(Particle* particleList, cy::Vec3f* particlePositions, int particleCount, float timestep, Plane* surfaces, int numSurfaces, float ELASTICITY, float FRICTION, Kernel* kernel) {
+    int threadID = blockDim.x * blockIdx.x + threadIdx.x;
+    if (threadID < particleCount) {
+        float timeStepRemaining = timestep;
+        glm::vec3 acceleration = particleList[threadID].getAcceleration();
+        glm::vec3 halfPointVelocity = particleList[threadID].getVelocity() + acceleration * (timeStepRemaining / 2.f);
+        glm::vec3 newPosition = particleList[threadID].getPosition() + particleList[threadID].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
+        glm::vec3 newVelocity = halfPointVelocity + particleList[threadID].getAcceleration() * timeStepRemaining;
+
+        for (int i = 0; i < numSurfaces; i++) {
+            if (Particle::willCollideWithPlane(particleList[threadID].getPosition(), newPosition, particleList[threadID].getRadius(), surfaces[i])) {
+                // collision stuff
+                glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surfaces[i].getNormal()) * surfaces[i].getNormal();
+                glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
+                glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
+                float frictionMultiplier = glm::min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
+                glm::vec3 velocityTangentAfter;
+                if (glm::length(velocityTangentBefore) == 0) {
+                    velocityTangentAfter = velocityTangentBefore;
+                }
+                else {
+                    velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
+                }
+
+                newVelocity = velocityNormalAfter + velocityTangentAfter;
+                float distance = particleList[threadID].getDistanceFromPlane(newPosition, particleList[threadID].getRadius(), surfaces[i]);
+                glm::vec3 addedVector = glm::vec3(surfaces[i].getNormal()) * (distance * (1 + ELASTICITY));
+                newPosition = newPosition + addedVector;
+                // particleList[i].setPosition(newPosition);
+            }
+        }
+
+        particleList[threadID].setVelocity(newVelocity);
+        particleList[threadID].setPosition(newPosition);
+
+        particlePositions[threadID].x = newPosition.x;
+        particlePositions[threadID].y = newPosition.y;
+        particlePositions[threadID].z = newPosition.z;
+    }
+}
+
+void updatePositionsAndVelocities_CUDA(Particle* particleList, cy::Vec3f* particlePositions, int particleCount, float timestep, Plane* surfaces, int numSurfaces, float ELASTICITY, float FRICTION, Kernel* kernel) {
+    // Calculate blocksize and grid size
+    int blockSize = 512;
+    int gridSize = (particleCount + blockSize - 1) / blockSize;
+
+    updatePositionsAndVelocities << <gridSize, blockSize >> > (particleList, particlePositions, particleCount, timestep, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
+}

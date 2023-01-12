@@ -130,7 +130,7 @@ const float permittedError = .01f;
 
 float density_constant = 1.0;
 int steps = 0;
-int steps_per_update = 15;
+int steps_per_update = 3;
 Particle* particleList;
 Vec3f* particlePositions;
 
@@ -147,11 +147,12 @@ glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount),
 
 Scene selected_scene = Scene::SPLASH;
 
-// TODO: fix high resolution transfer
-
+// Threading
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
-std::thread threads[N_THREADS];
+std::thread threads[N_THREADS + 10];
+std::vector<int*> neighborBackBuffer;
+bool isBackBufferTheadDoneUpdating[N_THREADS];
 
 int width = 1280;
 int height = 960;
@@ -608,6 +609,34 @@ void initMatchPoints() {
 	}
 }
 
+void setNeighborBackBuffer(Particle& x, int xIndex) {
+	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
+
+	int* newNeighborIndices;
+	//gpuErrchk(cudaDeviceSynchronize());
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newNeighborIndices), numPointsInRadius * sizeof(int)));
+	// gpuErrchk(cudaDeviceSynchronize());
+	for (int i = 0; i < numPointsInRadius; i++) {
+		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+			newNeighborIndices[i] = info[i].index;
+		}
+	}
+
+	neighborBackBuffer.at(xIndex) = newNeighborIndices;
+	delete[] info;
+}
+
+void setNeighborsFromBackBuffer(Particle& x, int xIndex) {
+	if (x.neighborIndices != nullptr) {
+		//gpuErrchk(cudaFree(x.neighborIndices));
+	}
+	
+	x.neighborIndices = neighborBackBuffer[xIndex];
+	//gpuErrchk(cudaDeviceSynchronize());
+}
+
 
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
@@ -653,6 +682,15 @@ void initAverageMass() {
 
 	MASS = averageMass;
 	cout << "The average mass was " << MASS << endl;
+}
+
+void initBackBuffer() {
+	neighborBackBuffer.clear();
+
+	for (int i = 0; i < particleCount; i++) {
+		int* newPointer;
+		neighborBackBuffer.push_back(newPointer);
+	}
 }
 
 static void init()
@@ -708,6 +746,9 @@ static void init()
 	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
 	lowResSphere->init();
 
+	// initialize the backbuffer
+	neighborBackBuffer.reserve(particleCount);
+
 	// initialize particles and tree
 	keyframes.clear();
 	switch (selected_scene) {
@@ -729,6 +770,8 @@ static void init()
 	for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
 	}
+
+	initBackBuffer();
 
 	// If there were any OpenGL errors, this will print something.
 	// You can intersperse this line in your code to find the exact location
@@ -881,6 +924,28 @@ float colorFieldLaplacian(const Particle& xi) {
 	return surfaceField;
 }
 
+void setNeighborBackBuffersForParticles(int start_index, int end_index) {
+	for (int i = start_index; i < end_index; i++) {
+		setNeighborBackBuffer(particleList[i], i);
+	}
+}
+
+bool areBackBuffersDoneUpdating() {
+	for (int i = 0; i < N_THREADS; i++) {
+		if (!isBackBufferTheadDoneUpdating[i]) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void setNeighborsFromBackBuffersForParticles(int start_index, int end_index, int index) {
+	for (int i = start_index; i < end_index; i++) {
+		setNeighborsFromBackBuffer(particleList[i], i);
+	}
+}
+
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
 		setNeighbors(particleList[i], i);
@@ -1031,19 +1096,15 @@ void updateMatchPoints(float time) {
 void updateFluid(float time) {
 
 	// update the kd tree
-	//std::thread kdTree_thread;
-	//kdTree_thread = thread(initKdTree);
+	/*std::thread kdTree_thread;
+	kdTree_thread = thread(initKdTree);*/
 	if (steps == steps_per_update) {
 		initKdTree();
-		steps = 0;
 
 		// set neighbors for all particles
+		cout << "Started back buffers" << endl;
 		for (int i = 0; i < N_THREADS; i++) {
-			threads[i] = thread(setNeighborsForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-		}
-
-		for (int i = 0; i < N_THREADS; i++) {
-			threads[i].join();
+			threads[i + N_THREADS] = thread(setNeighborBackBuffersForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
 		}
 	}
 
@@ -1057,7 +1118,7 @@ void updateFluid(float time) {
 	//	threads[i].join();
 	//}
 
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1068,7 +1129,7 @@ void updateFluid(float time) {
 	//	threads[i] = thread(setSurfaceTensionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
 	//}
 
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1084,7 +1145,7 @@ void updateFluid(float time) {
 	//for (int i = 0; i < N_THREADS; i++) {
 	//	threads[i].join();
 	//}
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1098,7 +1159,7 @@ void updateFluid(float time) {
 	//for (int i = 0; i < N_THREADS; i++) {
 	//	threads[i].join();
 	//}
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1112,11 +1173,9 @@ void updateFluid(float time) {
 	//	threads[i].join();
 	//}
 
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
-
-	//kdTree_thread.join();
 
 	for (int i = 0; i < N_THREADS; i++) {
 		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
@@ -1187,6 +1246,25 @@ void updateFluid(float time) {
 
 			nextKeyframe++;
 		}
+	}
+
+	if (steps == steps_per_update) {
+		// join the back buffer threads
+		steps = 0;
+		for (int i = 0; i < N_THREADS; i++) {
+			threads[i + 10].join();
+		}
+		cout << "Joined back buffers" << endl;
+		
+		cout << "Started setting neighbors " << endl;
+		for (int i = 0; i < N_THREADS; i++) {
+			threads[i + N_THREADS] = thread(setNeighborsFromBackBuffersForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD, i);
+		}
+
+		for (int i = 0; i < N_THREADS; i++) {
+			threads[i + N_THREADS].join();
+		}
+		cout << "Finished setting neighbors " << endl;
 	}
 
 	steps++;

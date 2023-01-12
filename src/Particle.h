@@ -95,7 +95,7 @@ class Particle {
 		float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
-		static const int maxNeighborsAllowed = 500;
+		static const int maxNeighborsAllowed = 200;
 		int* neighborIndices = nullptr;
 		int numNeighbors;
 

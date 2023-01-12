@@ -24,13 +24,13 @@ class Particle {
 		};
 
 		// setter functions
-		void setPosition(glm::vec3 pos) { this->position = pos; };
-		void setVelocity(glm::vec3 v) { this->velocity = v; };
-		void setAcceleration(glm::vec3 a) { this->acceleration = a; };
-		void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
-		void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
+		CUDA_CALLABLE_MEMBER void setPosition(glm::vec3 pos) { this->position = pos; };
+		CUDA_CALLABLE_MEMBER void setVelocity(glm::vec3 v) { this->velocity = v; };
+		CUDA_CALLABLE_MEMBER void setAcceleration(glm::vec3 a) { this->acceleration = a; };
+		CUDA_CALLABLE_MEMBER void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
+		CUDA_CALLABLE_MEMBER void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
 		CUDA_CALLABLE_MEMBER void setDensity(float density) { this->density = density; };
-		void setPressure(float p) { this->pressure = p; };
+		CUDA_CALLABLE_MEMBER void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
 		void setVolume(float v) { this->volume = v; };
 		void setRadius(float r) { this->radius = r; }
@@ -83,13 +83,13 @@ class Particle {
 		}
 		
 		// getter functions
-		glm::vec3 getPosition() const { return position; };
-		glm::vec3 getVelocity() const { return velocity; };
-		glm::vec3 getAcceleration() const { return acceleration; };
-		glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
-		float getColorFieldLaplacian() const { return colorFieldLaplacian; }
+		CUDA_CALLABLE_MEMBER glm::vec3 getPosition() const { return position; };
+		CUDA_CALLABLE_MEMBER glm::vec3 getVelocity() const { return velocity; };
+		CUDA_CALLABLE_MEMBER glm::vec3 getAcceleration() const { return acceleration; };
+		CUDA_CALLABLE_MEMBER glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
+		CUDA_CALLABLE_MEMBER float getColorFieldLaplacian() const { return colorFieldLaplacian; }
 		CUDA_CALLABLE_MEMBER float getDensity() const { return density; };
-		float getPressure() const { return pressure; };
+		CUDA_CALLABLE_MEMBER float getPressure() const { return pressure; };
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		float getVolume() const { return volume; };
 		float getRadius() const { return radius; }

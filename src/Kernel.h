@@ -24,7 +24,7 @@ class Kernel {
 	public:
 		Kernel() {};
 		~Kernel() {};
-		float getSmoothingRadius() { return SMOOTHING_RADIUS; }
+		CUDA_CALLABLE_MEMBER float getSmoothingRadius() { return SMOOTHING_RADIUS; }
 		void setSmoothingRadius(float radius) { SMOOTHING_RADIUS = radius; }
 		CUDA_CALLABLE_MEMBER float polyKernelFunction(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
@@ -42,7 +42,7 @@ class Kernel {
 
 		float samplingKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false) {
 			// if we're less than the max radius, don't do anything
-			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 
 			if (length(xi.getPosition() - xj.getPosition()) > radius) {
 				return 0;
@@ -53,9 +53,9 @@ class Kernel {
 			return kernelValue;
 		}
 
-		glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj) {
+		CUDA_CALLABLE_MEMBER glm::vec3 spikyKernelGradient(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
-			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
+			if (length(xi.getPosition() - xj.getPosition()) > getSmoothingRadius()) {
 				return glm::vec3(0,0,0);
 			}
 
@@ -65,55 +65,55 @@ class Kernel {
 			}
 
 			// otherwise
-			float outsideTerm = -45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
-			float insideTerm = powf(SMOOTHING_RADIUS - length(xi.getPosition() - xj.getPosition()), 2.0f);
+			float outsideTerm = -45.0f / (M_PI * powf(getSmoothingRadius(), 6.0f));
+			float insideTerm = powf(getSmoothingRadius() - length(xi.getPosition() - xj.getPosition()), 2.0f);
 			return outsideTerm * insideTerm * normalize(xi.getPosition() - xj.getPosition());
 		}
 
 		// TODO: fix this function
-		float polyKernelLaplacian(const Particle& xi, const Particle& xj) {
+		CUDA_CALLABLE_MEMBER float polyKernelLaplacian(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
-			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
+			if (length(xi.getPosition() - xj.getPosition()) > getSmoothingRadius()) {
 				return 0;
 			}
 
 			// otherwise
 			glm::vec3 r = xi.getPosition() - xj.getPosition();
-			float outsideTerm = 3.0f * 315.0f * length(r) * length(r) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 8.0f);
-			float insideTerm = powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f);
+			float outsideTerm = 3.0f * 315.0f * length(r) * length(r) / (M_PI * powf(getSmoothingRadius(), 9.0f) * 8.0f);
+			float insideTerm = powf(getSmoothingRadius(), 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f);
 			// glm::vec3 vectorTerm = glm::vec3((powf(r.y, 2.0f) + powf(r.z, 2.0f)) / powf(length(r), 3.0f), (powf(r.x, 2.0f) + powf(r.z, 2.0f)) / powf(length(r), 3.0f), (powf(r.y, 2.0f) + powf(r.x, 2.0f)) / powf(length(r), 3.0f));
 			return outsideTerm * insideTerm;
 		}
 
 
-		float viscosityKernelLaplacian(const Particle& xi, const Particle& xj) {
+		CUDA_CALLABLE_MEMBER float viscosityKernelLaplacian(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
-			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
+			if (length(xi.getPosition() - xj.getPosition()) > getSmoothingRadius()) {
 				return 0;
 			}
 
-			float outsideTerm = 45.0f / (M_PI * powf(SMOOTHING_RADIUS, 6.0f));
-			float insideTerm = SMOOTHING_RADIUS - length(xi.getPosition() - xj.getPosition());
+			float outsideTerm = 45.0f / (M_PI * powf(getSmoothingRadius(), 6.0f));
+			float insideTerm = getSmoothingRadius() - length(xi.getPosition() - xj.getPosition());
 			return outsideTerm * insideTerm;
 		}
 
-		glm::vec3 polyKernelGradient(const Particle& xi, const Particle& xj) {
+		CUDA_CALLABLE_MEMBER glm::vec3 polyKernelGradient(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
-			if (length(xi.getPosition() - xj.getPosition()) > SMOOTHING_RADIUS) {
+			if (length(xi.getPosition() - xj.getPosition()) > getSmoothingRadius()) {
 				return glm::vec3(0.0f, 0.0f, 0.0f);
 			}
 
 			// otherwise
 			glm::vec3 r = xi.getPosition() - xj.getPosition();
-			float outsideTerm = -3.0f * 315.0f * length(xi.getPosition() - xj.getPosition()) / (M_PI * powf(SMOOTHING_RADIUS, 9.0f) * 32.0f);
-			float insideTerm = powf(powf(SMOOTHING_RADIUS, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 2.0f);
+			float outsideTerm = -3.0f * 315.0f * length(xi.getPosition() - xj.getPosition()) / (M_PI * powf(getSmoothingRadius(), 9.0f) * 32.0f);
+			float insideTerm = powf(powf(getSmoothingRadius(), 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 2.0f);
 			glm::vec3 vectorTerm = glm::vec3(r.x / length(r), r.y / length(r), r.z / length(r));
 			return outsideTerm * insideTerm * vectorTerm;
 		}
 
 		float monaghanKernel(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
-			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 			/*if (predicted) {
 				r = xi.getPredictedPosition() - xj.getPredictedPosition();
 			}*/
@@ -140,7 +140,7 @@ class Kernel {
 
 		glm::vec3 monaghanKernelGradient(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
-			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 			/*if (predicted) {
 				r = xi.getPredictedPosition() - xj.getPredictedPosition();
 			}*/
@@ -167,7 +167,7 @@ class Kernel {
 
 		float monaghanKernelLaplacian(const Particle& xi, const Particle& xj, bool useCustomRadius = false, bool predicted = false) {
 			glm::vec3 r;
-			float radius = useCustomRadius ? xi.getRadius() : SMOOTHING_RADIUS;
+			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 			/*if (predicted) {
 				r = xi.getPredictedPosition() - xj.getPredictedPosition();
 			}*/

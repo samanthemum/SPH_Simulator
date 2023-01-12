@@ -130,7 +130,7 @@ const float permittedError = .01f;
 
 float density_constant = 1.0;
 int steps = 0;
-int steps_per_update = 3;
+int steps_per_update = 15;
 Particle* particleList;
 Vec3f* particlePositions;
 
@@ -612,7 +612,7 @@ void initMatchPoints() {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2.f * radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
 
 	// create a vector for the new neighbors
 	// std::vector<Particle*> neighbors;
@@ -645,8 +645,8 @@ void initAverageMass() {
 		Particle xi = particleList[i];
 		float thisKernel = kernel->monaghanKernel(xi, xi, false, false);
 		float kernelSum = 0.f;
-		for (int j = 0; j < xi.getNeighbors().size(); j++) {
-			kernelSum += kernel->monaghanKernel(xi, *xi.getNeighbors().at(j), false, false);
+		for (int j = 0; j < xi.numNeighbors; j++) {
+			kernelSum += kernel->monaghanKernel(xi, particleList[xi.neighborIndices[j]], false, false);
 		}
 		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
 	}
@@ -1063,43 +1063,58 @@ void updateFluid(float time) {
 
 	// TODO: optimize with one loop later
 	// update surface normals
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
-		threads[i] = thread(setSurfaceTensionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	// particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
+	//	threads[i] = thread(setSurfaceTensionForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	//}
 
-	for (int i = 0; i < N_THREADS; i++) {
+	gpuErrchk(cudaDeviceSynchronize());
+	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
+
+	/*for (int i = 0; i < N_THREADS; i++) {
 		threads[i].join();
-	}
+	}*/
 
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
-		threads[i] = thread(setColorFieldLaplaciansForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	// particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
+	//	threads[i] = thread(setColorFieldLaplaciansForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	//}
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	threads[i].join();
+	//}
+	gpuErrchk(cudaDeviceSynchronize());
+	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
+
 
 	// update the pressures
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(setPressuresForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
+	//	threads[i] = thread(setPressuresForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	//}
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	threads[i].join();
+	//}
+	gpuErrchk(cudaDeviceSynchronize());
+	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update the pressures
-	for (int i = 0; i < N_THREADS; i++) {
-		// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-		threads[i] = thread(setAccelerationForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	// particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
+	//	threads[i] = thread(setAccelerationForParticles, i * PARTICLES_PER_THREAD, (i + 1) * PARTICLES_PER_THREAD);
+	//}
 
-	for (int i = 0; i < N_THREADS; i++) {
-		threads[i].join();
-	}
+	//for (int i = 0; i < N_THREADS; i++) {
+	//	threads[i].join();
+	//}
+
+	gpuErrchk(cudaDeviceSynchronize());
+	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	//kdTree_thread.join();
 

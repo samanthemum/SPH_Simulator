@@ -72,6 +72,9 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
         }
         particleList[threadID].setDensity(density);
     }
+
+    
+
 }
 
 void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel) {
@@ -92,6 +95,7 @@ void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Ke
 
 __global__ void surfaceNormalField(Particle* particleList, int particleCount, Kernel* kernel) {
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
+    
     if (threadID < particleCount) {
         // for every Particle xj in the neighbor hood of xi
         glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -100,10 +104,15 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
 
             float outside_term = particleList[index].getMass() * 1 / particleList[index].getDensity();
             surfaceField += (outside_term * kernel->polyKernelGradient(particleList[threadID], particleList[index]));
-
-
+            if (surfaceField.x != surfaceField.x) {
+                printf("The threadID is %i\n", threadID);
+                printf("The current neighbor is %i\n", index);
+                printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
+            }
         }
+       
         particleList[threadID].setSurfaceNormal(surfaceField);
+        
     }
     
 }
@@ -131,8 +140,9 @@ __global__ void colorFieldLaplacian(Particle* particleList, int particleCount, K
 
             surfaceField += (outside_term * kernel->polyKernelLaplacian(particleList[threadID], particleList[index]));
         }
-
+        
         particleList[threadID].setColorFieldLaplacian(surfaceField);
+        
     }
 }
 

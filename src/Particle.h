@@ -31,12 +31,12 @@ class Particle {
 		CUDA_CALLABLE_MEMBER void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
 		CUDA_CALLABLE_MEMBER void setDensity(float density) { this->density = density; };
 		CUDA_CALLABLE_MEMBER void setPressure(float p) { this->pressure = p; };
-		void setMass(float m) { this->mass = m; };
+		CUDA_CALLABLE_MEMBER void setMass(float m) { this->mass = m; };
 		// void setVolume(float v) { this->volume = v; };
-		void setRadius(float r) { this->radius = r; }
-		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
+		CUDA_CALLABLE_MEMBER void setRadius(float r) { this->radius = r; }
+		CUDA_CALLABLE_MEMBER void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
 		// void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
-		void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
+		CUDA_CALLABLE_MEMBER void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
 		CUDA_CALLABLE_MEMBER static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {

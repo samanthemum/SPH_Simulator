@@ -103,6 +103,10 @@ class Kernel {
 				return glm::vec3(0.0f, 0.0f, 0.0f);
 			}
 
+			if (length(xi.getPosition() - xj.getPosition()) == 0.0f) {
+				return glm::vec3(0, 0, 0);
+			}
+
 			// otherwise
 			glm::vec3 r = xi.getPosition() - xj.getPosition();
 			float outsideTerm = -3.0f * 315.0f * length(xi.getPosition() - xj.getPosition()) / (M_PI * powf(getSmoothingRadius(), 9.0f) * 32.0f);

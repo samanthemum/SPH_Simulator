@@ -654,14 +654,11 @@ void setNeighbors(Particle& x, int xIndex) {
 		gpuErrchk(cudaHostGetDevicePointer((void**)&x.device_neighborIndices, (void*)x.neighborIndices, 0));
 		gpuErrchk(cudaDeviceSynchronize());
 	}
-	else {
-		cout << "The particle position is " << particlePositions[xIndex].x << " " << particlePositions[xIndex].y << " " << particlePositions[xIndex].z << endl;
-	}
 	
 
 	x.numNeighbors = numPointsInRadius;
 	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
+		if (xIndex != info[i].index && info[i].index < particleCount) {
 			// neighbors.push_back(&particleList[info[i].index]);
 			x.neighborIndices[i] = (int)info[i].index;
 		}
@@ -1082,9 +1079,6 @@ void updateFluid(float time) {
 	gpuErrchk(cudaDeviceSynchronize());
 	if (steps == steps_per_update) {
 		initKdTree();
-		if (particleCount >= 20000) {
-			cout << "Built tree" << endl;
-		}
 		steps = 0;
 
 		// set neighbors for all particles
@@ -1095,35 +1089,32 @@ void updateFluid(float time) {
 		for (int i = 0; i < N_THREADS; i++) {
 			threads[i].join();
 		}
-		if (particleCount >= 20000) {
-			cout << "Set neighbors" << endl;
-		}
 	}
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update density
 	// gpuErrchk(cudaDeviceSynchronize());
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
-	gpuErrchk(cudaDeviceSynchronize());
+	// gpuErrchk(cudaDeviceSynchronize());
 
 	// gpuErrchk(cudaDeviceSynchronize());
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
-	gpuErrchk(cudaDeviceSynchronize());
+	//gpuErrchk(cudaDeviceSynchronize());
 
 	//// gpuErrchk(cudaDeviceSynchronize());
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
-	gpuErrchk(cudaDeviceSynchronize());
+	//gpuErrchk(cudaDeviceSynchronize());
 
 
 	//// update the pressures
 	//// gpuErrchk(cudaDeviceSynchronize());
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
-	gpuErrchk(cudaDeviceSynchronize());
+	//gpuErrchk(cudaDeviceSynchronize());
 
 	//// calculate acceleration
 	//// gpuErrchk(cudaDeviceSynchronize());
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
-	gpuErrchk(cudaDeviceSynchronize());
+	//gpuErrchk(cudaDeviceSynchronize());
 
 	//// update positions
 	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);

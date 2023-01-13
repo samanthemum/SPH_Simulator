@@ -94,10 +94,11 @@ uint32_t LOW_RES_COUNT_SHAPE = 250;
 uint32_t MID_RES_COUNT_SHAPE = 1000;
 uint32_t HIGH_RES_COUNT_SHAPE = 2000;
 int particleCount = LOW_RES_COUNT;
+int previousParticleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
 float LOW_RES_RADIUS = 1.0f;
-float MID_RES_RADIUS = (2.f / 3.f);
-float HIGH_RES_RADIUS = .5f;
+float MID_RES_RADIUS = .5f;
+float HIGH_RES_RADIUS = (1.f / 3.f);
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .1f;
@@ -314,7 +315,7 @@ void initParticleList_atRest() {
 void initParticleList_atRest_Uniform() {
 	if (particleList != nullptr) {
 		// delete[] particleList;
-		for (int i = 0; i < particleCount + matchpointNumber; i++) {
+		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
 				cudaFree(particleList[i].neighborIndices);
 			}
@@ -636,20 +637,28 @@ void initMatchPoints() {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
 
 	// create a vector for the new neighbors
 	// std::vector<Particle*> neighbors;
-	if (x.neighborIndices == nullptr) {
-		cudaMallocManaged(reinterpret_cast<void**>(&x.neighborIndices), Particle::maxNeighborsAllowed * sizeof(int));
+	size_t total_mem, free_mem;
+	cudaMemGetInfo(&free_mem, &total_mem);
+	// std::cout << xIndex << ":Allocated " << allocsz;
+	// std::cout << " Currently " << free_mem << " bytes free out of " << total_mem << std::endl;
+
+	if (x.neighborIndices != nullptr) {
+		cudaFree(x.neighborIndices);
+		gpuErrchk(cudaDeviceSynchronize());
 	}
+	gpuErrchk(cudaHostAlloc(reinterpret_cast<void**>(&x.neighborIndices), numPointsInRadius * sizeof(short), cudaHostAllocMapped));
+	gpuErrchk(cudaHostGetDevicePointer((void **)&x.device_neighborIndices, (short*)x.neighborIndices, 0));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	x.numNeighbors = numPointsInRadius;
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
 			// neighbors.push_back(&particleList[info[i].index]);
-			x.neighborIndices[i] = info[i].index;
+			x.neighborIndices[i] = (short)info[i].index;
 		}
 	}
 
@@ -1083,22 +1092,22 @@ void updateFluid(float time) {
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// gpuErrchk(cudaDeviceSynchronize());
+	//// gpuErrchk(cudaDeviceSynchronize());
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 
-	// update the pressures
-	// gpuErrchk(cudaDeviceSynchronize());
+	//// update the pressures
+	//// gpuErrchk(cudaDeviceSynchronize());
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// calculate acceleration
-	// gpuErrchk(cudaDeviceSynchronize());
+	//// calculate acceleration
+	//// gpuErrchk(cudaDeviceSynchronize());
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// update positions
+	//// update positions
 	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1255,6 +1264,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			timePassed = 0.0f;
 			// FIXME: leftover particles after switch
 			kdTree = nullptr;
+			previousParticleCount = particleCount;
 			particleCount = HIGH_RES_COUNT;
 			particleForShape = HIGH_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = HIGH_RES_RADIUS;

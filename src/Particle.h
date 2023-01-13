@@ -32,7 +32,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER void setDensity(float density) { this->density = density; };
 		CUDA_CALLABLE_MEMBER void setPressure(float p) { this->pressure = p; };
 		void setMass(float m) { this->mass = m; };
-		void setVolume(float v) { this->volume = v; };
+		// void setVolume(float v) { this->volume = v; };
 		void setRadius(float r) { this->radius = r; }
 		void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
 		// void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
@@ -91,13 +91,14 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getDensity() const { return density; };
 		CUDA_CALLABLE_MEMBER float getPressure() const { return pressure; };
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
-		float getVolume() const { return volume; };
+		//float getVolume() const { return volume; };
 		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
-		static const int maxNeighborsAllowed = 500;
-		int* neighborIndices = nullptr;
-		int numNeighbors;
+		static const short maxNeighborsAllowed = 300;
+		short* neighborIndices = nullptr;
+		short* device_neighborIndices = nullptr;
+		short numNeighbors;
 
 	private:
 		glm::vec3 position;
@@ -110,7 +111,7 @@ class Particle {
 		float density;
 		float mass;
 		float radius;
-		float volume;
+		// float volume;
 		float pressure;
 		bool isMatchPoint = false;
 };

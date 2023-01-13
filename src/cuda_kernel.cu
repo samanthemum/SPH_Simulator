@@ -1,6 +1,16 @@
 #include <cuda_runtime.h>
 #include "cuda_kernel.cuh"
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
+{
+    if (code != cudaSuccess)
+    {
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+        if (abort) exit(code);
+    }
+}
+
 
 __global__ void vectorAdditionKernel(double* A, double* B, double* C, int arraySize) {
     // Get thread ID.
@@ -56,7 +66,7 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
         float density = particleList[threadID].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[threadID], particleList[threadID].getIsMatchPoint());
         float kernelValue = kernel->polyKernelFunction(particleList[threadID], particleList[threadID], particleList[threadID].getIsMatchPoint());
         for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
-            int index = particleList[threadID].neighborIndices[j];
+            int index = particleList[threadID].device_neighborIndices[j];
             density += (particleList[index].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[index], particleList[threadID].getIsMatchPoint()));
         }
        
@@ -74,8 +84,8 @@ void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Ke
 
     // Launch CUDA kernel.
     //vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
-    setDensitiesForParticles << <gridSize, blockSize >> > (particleList, particleCount, kernel);
 
+    setDensitiesForParticles << <gridSize, blockSize >> > (particleList, particleCount, kernel);
     // Copy result array c back to host memory.
     // cudaMemcpy(particleList, d_particleList, particleCount * sizeof(Particle), cudaMemcpyDeviceToHost);
 }
@@ -86,7 +96,7 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
         // for every Particle xj in the neighbor hood of xi
         glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
         for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
-            int index = particleList[threadID].neighborIndices[j];
+            int index = particleList[threadID].device_neighborIndices[j];
 
             float outside_term = particleList[index].getMass() * 1 / particleList[index].getDensity();
             surfaceField += (outside_term * kernel->polyKernelGradient(particleList[threadID], particleList[index]));
@@ -116,7 +126,7 @@ __global__ void colorFieldLaplacian(Particle* particleList, int particleCount, K
 
         // for every Particle xj in the neighbor hood of xi
         for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
-            int index = particleList[threadID].neighborIndices[j];
+            int index = particleList[threadID].device_neighborIndices[j];
             float outside_term = particleList[index].getMass() * 1 / particleList[index].getDensity();
 
             surfaceField += (outside_term * kernel->polyKernelLaplacian(particleList[threadID], particleList[index]));
@@ -134,7 +144,6 @@ void setColorFieldLaplaciansForParticles_CUDA(Particle* particleList, int partic
 
     // Launch CUDA kernel.
     colorFieldLaplacian << <gridSize, blockSize >> > (particleList, particleCount, kernel);
-
 }
 
 __global__ void calculatePressureForParticle(Particle* particleList, int particleCount, float STIFFNESS_PARAM, float DENSITY_0_GUESS, Kernel* kernel) {
@@ -160,7 +169,7 @@ __device__ glm::vec3 pressureGradient(int threadID, Particle* particleList, Kern
 
     // for every Particle xj in the neighbor hood of xi
     for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
-        int index = particleList[threadID].neighborIndices[j];
+        int index = particleList[threadID].device_neighborIndices[j];
         float pressureTerm = (particleList[threadID].getPressure() + particleList[index].getPressure()) / (2 * particleList[index].getDensity());
         pressureGradient += (particleList[index].getMass() * pressureTerm * kernel->spikyKernelGradient(particleList[threadID], particleList[index]));
     }
@@ -173,7 +182,7 @@ __device__ glm::vec3 diffusionTerm(int threadID, Particle* particleList, float V
 
     // for every Particle xj in the neighbor hood of xi
     for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
-        int index = particleList[threadID].neighborIndices[j];
+        int index = particleList[threadID].device_neighborIndices[j];
         glm::vec3 velocityTerm = (particleList[index].getVelocity() - particleList[threadID].getVelocity()) / particleList[index].getDensity();
 
         diffusionLaplacian += (particleList[index].getMass() * velocityTerm * kernel->viscosityKernelLaplacian(particleList[threadID], particleList[index]));

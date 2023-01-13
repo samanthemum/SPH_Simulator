@@ -114,7 +114,7 @@ float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
-bool CONTROL = true;
+bool CONTROL = false;
 
 // matchpoint system
 vector<Keyframe> keyframes;
@@ -245,9 +245,9 @@ bool isInBoundingVolume(const Vec3f& point) {
 void initParticleList_atRest() {
 	if (particleList != nullptr) {
 		// delete[] particleList;
-		for (int i = 0; i < particleCount + matchpointNumber; i++) {
+		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
-				cudaFree(particleList[i].neighborIndices);
+				cudaFreeHost(particleList[i].neighborIndices);
 			}
 		}
 		gpuErrchk(cudaDeviceSynchronize());
@@ -317,7 +317,7 @@ void initParticleList_atRest_Uniform() {
 		// delete[] particleList;
 		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
-				cudaFree(particleList[i].neighborIndices);
+				cudaFreeHost(particleList[i].neighborIndices);
 			}
 		}
 		gpuErrchk(cudaDeviceSynchronize());
@@ -406,7 +406,7 @@ void initParticleShape() {
 		// delete[] particleList;
 		for (int i = 0; i < particleCount + matchpointNumber; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
-				cudaFree(particleList[i].neighborIndices);
+				cudaFreeHost(particleList[i].neighborIndices);
 			}
 		}
 		gpuErrchk(cudaDeviceSynchronize());
@@ -637,28 +637,36 @@ void initMatchPoints() {
 void setNeighbors(Particle& x, int xIndex) {
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
 
 	// create a vector for the new neighbors
 	// std::vector<Particle*> neighbors;
-	size_t total_mem, free_mem;
-	cudaMemGetInfo(&free_mem, &total_mem);
-	// std::cout << xIndex << ":Allocated " << allocsz;
-	// std::cout << " Currently " << free_mem << " bytes free out of " << total_mem << std::endl;
-
 	if (x.neighborIndices != nullptr) {
-		cudaFree(x.neighborIndices);
+		gpuErrchk(cudaFreeHost(x.neighborIndices));
 		gpuErrchk(cudaDeviceSynchronize());
 	}
-	gpuErrchk(cudaHostAlloc(reinterpret_cast<void**>(&x.neighborIndices), numPointsInRadius * sizeof(short), cudaHostAllocMapped));
-	gpuErrchk(cudaHostGetDevicePointer((void **)&x.device_neighborIndices, (short*)x.neighborIndices, 0));
+
+	gpuErrchk(cudaHostAlloc(reinterpret_cast<void**>(&x.neighborIndices), numPointsInRadius * sizeof(int), cudaHostAllocMapped));
 	gpuErrchk(cudaDeviceSynchronize());
+	gpuErrchk(cudaSetDeviceFlags(cudaDeviceMapHost));
+	gpuErrchk(cudaDeviceSynchronize());
+	if (numPointsInRadius > 0) {
+		gpuErrchk(cudaHostGetDevicePointer((void**)&x.device_neighborIndices, (void*)x.neighborIndices, 0));
+		gpuErrchk(cudaDeviceSynchronize());
+	}
+	else {
+		cout << "The particle position is " << particlePositions[xIndex].x << " " << particlePositions[xIndex].y << " " << particlePositions[xIndex].z << endl;
+	}
+	
 
 	x.numNeighbors = numPointsInRadius;
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && !particleList[info[i].index].getIsMatchPoint()) {
 			// neighbors.push_back(&particleList[info[i].index]);
-			x.neighborIndices[i] = (short)info[i].index;
+			x.neighborIndices[i] = (int)info[i].index;
+		}
+		else {
+			x.numNeighbors--;
 		}
 	}
 
@@ -669,10 +677,13 @@ void setNeighbors(Particle& x, int xIndex) {
 void initAverageMass() {
 	initParticleList_atRest_Uniform();
 	initKdTree();
+	cout << "Started setting neighbors" << endl;
 	for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
 	}
+	cout << "Finished setting neighbors" << endl;
 
+	cout << "Started calculating average mass" << endl;
 	float averageMass = 0.0f;
 	for (int i = 0; i < particleCount; i++) {
 		Particle xi = particleList[i];
@@ -683,7 +694,7 @@ void initAverageMass() {
 		}
 		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
 	}
-
+	cout << "Finished calculating average mass" << endl;
 	MASS = averageMass;
 	cout << "The average mass was " << MASS << endl;
 }
@@ -692,7 +703,7 @@ static void init()
 {
 	GLSL::checkVersion();
 
-	cudaMallocManaged(reinterpret_cast<void**>(&kernel), sizeof(Kernel));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&kernel), sizeof(Kernel)));
 	gpuErrchk(cudaDeviceSynchronize());
 	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
 
@@ -725,7 +736,6 @@ static void init()
 	keyToggles[(unsigned)'l'] = true;
 
 	// initialize shape for extra mesh, if desired
-	// TODO: can add other shapes later. for now spheres only baby
 	shapeMesh = make_shared<cy::TriMesh>();
 	std::string mesh_location = RESOURCE_DIR + "low_res_sphere.obj";
 	if (!shapeMesh->LoadFromFileObj(mesh_location.c_str(), false)) {
@@ -1069,8 +1079,12 @@ void updateFluid(float time) {
 	// update the kd tree
 	//std::thread kdTree_thread;
 	//kdTree_thread = thread(initKdTree);
+	gpuErrchk(cudaDeviceSynchronize());
 	if (steps == steps_per_update) {
 		initKdTree();
+		if (particleCount >= 20000) {
+			cout << "Built tree" << endl;
+		}
 		steps = 0;
 
 		// set neighbors for all particles
@@ -1081,7 +1095,11 @@ void updateFluid(float time) {
 		for (int i = 0; i < N_THREADS; i++) {
 			threads[i].join();
 		}
+		if (particleCount >= 20000) {
+			cout << "Set neighbors" << endl;
+		}
 	}
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update density
 	// gpuErrchk(cudaDeviceSynchronize());
@@ -1233,6 +1251,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			buttonText = "Play";
 			isPaused = true;
 			timePassed = 0.0f;
+			previousParticleCount = particleCount;
 			particleCount = LOW_RES_COUNT;
 			keyframes.clear();
 			if (selected_scene == Scene::DAM_BREAK) {
@@ -1258,11 +1277,12 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			//DENSITY_0_GUESS = averageDensity;
 		}
 		if (ImGui::Button("Record in High Resolution")) {
+			isPaused = true;
+			cudaDeviceSynchronize();
 			recording = true;
 
 			end_time = timePassed;
 			timePassed = 0.0f;
-			// FIXME: leftover particles after switch
 			kdTree = nullptr;
 			previousParticleCount = particleCount;
 			particleCount = HIGH_RES_COUNT;
@@ -1299,22 +1319,26 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			keyToggles[(unsigned)' '] = true;
 		}
 		if (ImGui::Button("Record in Mid Resolution")) {
+			cudaDeviceSynchronize();
+			isPaused = true;
 			recording = true;
 
 			end_time = timePassed;
 			timePassed = 0.0f;
 			// FIXME: leftover particles after switch
 			kdTree = nullptr;
+			previousParticleCount = particleCount;
 			particleCount = MID_RES_COUNT;
 			particleForShape = MID_RES_COUNT_SHAPE;
 			SMOOTHING_RADIUS = MID_RES_RADIUS;
 			kernel->setSmoothingRadius(SMOOTHING_RADIUS);
+			initAverageMass();
 			MAX_RADIUS = MID_RES_RADIUS;
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
-			PARTICLES_PER_THREAD = particleCount / N_THREADS;
+			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
 			TIMESTEP = .01f;
-			DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
+			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
 			if (selected_scene == Scene::DAM_BREAK) {
 				initSceneDamBreak();
@@ -1330,7 +1354,6 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
 			}
-
 			isPaused = false;
 
 			cout << "Recording... please be patient :)" << endl;

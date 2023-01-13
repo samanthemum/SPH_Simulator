@@ -95,9 +95,9 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
 		std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
-		static const short maxNeighborsAllowed = 300;
-		short* neighborIndices = nullptr;
-		short* device_neighborIndices = nullptr;
+		static const short maxNeighborsAllowed = 500;
+		int* neighborIndices = nullptr;
+		int* device_neighborIndices = nullptr;
 		short numNeighbors;
 
 	private:

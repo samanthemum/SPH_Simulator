@@ -64,12 +64,12 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
     if (threadID < particleCount) {
         // Calculate the density
         float density = particleList[threadID].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[threadID], particleList[threadID].getIsMatchPoint());
+        
         float kernelValue = kernel->polyKernelFunction(particleList[threadID], particleList[threadID], particleList[threadID].getIsMatchPoint());
         for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
             int index = particleList[threadID].device_neighborIndices[j];
             density += (particleList[index].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[index], particleList[threadID].getIsMatchPoint()));
         }
-       
         particleList[threadID].setDensity(density);
     }
 }

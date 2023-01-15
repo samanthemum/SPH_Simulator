@@ -34,7 +34,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER void setMass(float m) { this->mass = m; };
 		// void setVolume(float v) { this->volume = v; };
 		CUDA_CALLABLE_MEMBER void setRadius(float r) { this->radius = r; }
-		CUDA_CALLABLE_MEMBER void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
+		// CUDA_CALLABLE_MEMBER void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
 		// void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
 		CUDA_CALLABLE_MEMBER void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
 		CUDA_CALLABLE_MEMBER static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
@@ -93,7 +93,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		//float getVolume() const { return volume; };
 		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
-		std::vector<Particle*> getNeighbors() const { return neighbors; }
+		// std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
 		static const short maxNeighborsAllowed = 500;
 		int* neighborIndices = nullptr;
@@ -106,7 +106,7 @@ class Particle {
 		glm::vec3 acceleration;
 		glm::vec3 surfaceNormal;
 		float colorFieldLaplacian;
-		std::vector<Particle*> neighbors;
+		// std::vector<Particle*> neighbors;
 		// std::vector<int> neighborIndices;
 		float density;
 		float mass;

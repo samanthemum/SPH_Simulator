@@ -97,8 +97,8 @@ int particleCount = LOW_RES_COUNT;
 int previousParticleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
 float LOW_RES_RADIUS = 1.0f;
-float MID_RES_RADIUS = .5f;
-float HIGH_RES_RADIUS = (1.f / 3.f);
+float MID_RES_RADIUS = (2. / 3.f);
+float HIGH_RES_RADIUS = .5f;
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .1f;
@@ -657,6 +657,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	
 
 	x.numNeighbors = numPointsInRadius;
+	// std::vector<Particle*> neighbors;
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && info[i].index < particleCount) {
 			// neighbors.push_back(&particleList[info[i].index]);
@@ -837,23 +838,24 @@ void render()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
-float calculateDensityForParticle(const Particle x) {
-	float density = x.getMass() * kernel->polyKernelFunction(x, x, x.getIsMatchPoint());
-	for (int j = 0; j < x.getNeighbors().size(); j++) {
-		Particle* xj = x.getNeighbors().at(j);
-		density += (xj->getMass() * kernel->polyKernelFunction(x, *xj, x.getIsMatchPoint()));
-	}
-
-	return (density * density_constant);
-}
+//float calculateDensityForParticle(const Particle x) {
+//	float density = x.getMass() * kernel->polyKernelFunction(x, x, x.getIsMatchPoint());
+//	for (int j = 0; j < x.getNeighbors().size(); j++) {
+//		Particle* xj = x.getNeighbors().at(j);
+//		density += (xj->getMass() * kernel->polyKernelFunction(x, *xj, x.getIsMatchPoint()));
+//	}
+//
+//	return (density * density_constant);
+//}
 
 float sampleDensityForMatchpoint(const Particle x) {
 	float sample = 0;
 	float normalizer = 0;
-	for (int j = 0; j < x.getNeighbors().size(); j++) {
-		Particle* xj = x.getNeighbors().at(j);
-		sample += (xj->getDensity() * kernel->samplingKernel(x, *xj, x.getIsMatchPoint()));
-		normalizer += (kernel->samplingKernel(x, *xj, x.getIsMatchPoint()));
+	for (int j = 0; j < x.numNeighbors; j++) {
+		// Particle* xj = x.getNeighbors().at(j);
+		int index = x.neighborIndices[j];
+		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
+		normalizer += (kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
 	}
 
 	return sample / normalizer;
@@ -865,117 +867,117 @@ float calculatePressureForParticle(const Particle x) {
 	return pressure;
 }
 
-glm::vec3 pressureGradient(const Particle& xi) {
-	glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
+//glm::vec3 pressureGradient(const Particle& xi) {
+//	glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
+//
+//	// for every Particle xj in the neighbor hood of xi
+//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
+//		Particle* xj = xi.getNeighbors().at(j);
+//
+//		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
+//
+//		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
+//		pressureGradient += (xj->getMass() * pressureTerm * kernel->spikyKernelGradient(xi, *xj));
+//	}
+//	return -1.0f * pressureGradient;
+//}
 
-	// for every Particle xj in the neighbor hood of xi
-	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-		Particle* xj = xi.getNeighbors().at(j);
-
-		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
-
-		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
-		pressureGradient += (xj->getMass() * pressureTerm * kernel->spikyKernelGradient(xi, *xj));
-	}
-	return -1.0f * pressureGradient;
-}
-
-glm::vec3 diffusionTerm(const Particle& xi) {
-	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
-
-	// for every Particle xj in the neighbor hood of xi
-	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-		Particle* xj = xi.getNeighbors().at(j);
-		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
-
-		diffusionLaplacian += (xj->getMass() * velocityTerm * kernel->viscosityKernelLaplacian(xi, *xj));
-	}
-	return diffusionLaplacian * VISCOSITY;
-}
-
-// surface tension functions
-glm::vec3 surfaceNormalField(const Particle& xi) {
-	glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
-
-	// for every Particle xj in the neighbor hood of xi
-	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-
-		Particle* xj = xi.getNeighbors().at(j);
-		if (xj != &xi) {
-			float outside_term = xj->getMass() * 1 / xj->getDensity();
-			surfaceField += (outside_term * kernel->polyKernelGradient(xi, *xj));
-		}
-
-	}
-	return surfaceField;
-}
+//glm::vec3 diffusionTerm(const Particle& xi) {
+//	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
+//
+//	// for every Particle xj in the neighbor hood of xi
+//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
+//		Particle* xj = xi.getNeighbors().at(j);
+//		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
+//
+//		diffusionLaplacian += (xj->getMass() * velocityTerm * kernel->viscosityKernelLaplacian(xi, *xj));
+//	}
+//	return diffusionLaplacian * VISCOSITY;
+//}
 
 // surface tension functions
-float colorFieldLaplacian(const Particle& xi) {
-	float surfaceField = 0;
+//glm::vec3 surfaceNormalField(const Particle& xi) {
+//	glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
+//
+//	// for every Particle xj in the neighbor hood of xi
+//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
+//
+//		Particle* xj = xi.getNeighbors().at(j);
+//		if (xj != &xi) {
+//			float outside_term = xj->getMass() * 1 / xj->getDensity();
+//			surfaceField += (outside_term * kernel->polyKernelGradient(xi, *xj));
+//		}
+//
+//	}
+//	return surfaceField;
+//}
 
-	// for every Particle xj in the neighbor hood of xi
-	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-		Particle* xj = xi.getNeighbors().at(j);
-		float outside_term = xj->getMass() * 1 / xj->getDensity();
-
-		surfaceField += (outside_term * kernel->polyKernelLaplacian(xi, *xj));
-	}
-	return surfaceField;
-}
-
+// surface tension functions
+//float colorFieldLaplacian(const Particle& xi) {
+//	float surfaceField = 0;
+//
+//	// for every Particle xj in the neighbor hood of xi
+//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
+//		Particle* xj = xi.getNeighbors().at(j);
+//		float outside_term = xj->getMass() * 1 / xj->getDensity();
+//
+//		surfaceField += (outside_term * kernel->polyKernelLaplacian(xi, *xj));
+//	}
+//	return surfaceField;
+//}
+//
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
 		setNeighbors(particleList[i], i);
 	}
 }
 
-void setDensitiesForParticles(int start_index, int end_index) {
-	for (int i = start_index; i < end_index; i++) {
-		particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-	}
-}
+//void setDensitiesForParticles(int start_index, int end_index) {
+//	for (int i = start_index; i < end_index; i++) {
+//		particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
+//	}
+//}
 
-void setSurfaceTensionForParticles(int start_index, int end_index) {
-	for (int i = start_index; i < end_index; i++) {
-		particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
-	}
-}
+//void setSurfaceTensionForParticles(int start_index, int end_index) {
+//	for (int i = start_index; i < end_index; i++) {
+//		particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
+//	}
+//}
+//
+//void setColorFieldLaplaciansForParticles(int start_index, int end_index) {
+//	for (int i = start_index; i < end_index; i++) {
+//		particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
+//	}
+//}
 
-void setColorFieldLaplaciansForParticles(int start_index, int end_index) {
-	for (int i = start_index; i < end_index; i++) {
-		particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
-	}
-}
+//void setPressuresForParticles(int start_index, int end_index) {
+//	for (int i = start_index; i < end_index; i++) {
+//		particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
+//	}
+//}
 
-void setPressuresForParticles(int start_index, int end_index) {
-	for (int i = start_index; i < end_index; i++) {
-		particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-	}
-}
-
-void setAccelerationForParticles(int start_index, int end_index) {
-	for (int i = start_index; i < end_index; i++) {
-		glm::vec3 pressureForce = pressureGradient(particleList[i]);
-		glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
-		glm::vec3 externalForce = glm::vec3(0.0, -9.8f * particleList[i].getDensity(), 0.0f);
-
-		// calculate surface pressure/tension
-
-		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
-
-		if (TENSION_ALPHA > 0.0) {
-			float k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
-			glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
-			if (length(tension) > TENSION_THRESHOLD) {
-				acceleration += tension;
-			}
-		}
-
-		acceleration /= particleList[i].getDensity();
-		particleList[i].setAcceleration(acceleration);
-	}
-}
+//void setAccelerationForParticles(int start_index, int end_index) {
+//	for (int i = start_index; i < end_index; i++) {
+//		glm::vec3 pressureForce = pressureGradient(particleList[i]);
+//		glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
+//		glm::vec3 externalForce = glm::vec3(0.0, -9.8f * particleList[i].getDensity(), 0.0f);
+//
+//		// calculate surface pressure/tension
+//
+//		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
+//
+//		if (TENSION_ALPHA > 0.0) {
+//			float k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
+//			glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
+//			if (length(tension) > TENSION_THRESHOLD) {
+//				acceleration += tension;
+//			}
+//		}
+//
+//		acceleration /= particleList[i].getDensity();
+//		particleList[i].setAcceleration(acceleration);
+//	}
+//}
 
 void updatePositionForParticles(int start_index, int end_index, double time) {
 	//for (int i = start_index; i < end_index; i++) {
@@ -1153,19 +1155,22 @@ void updateFluid(float time) {
 				while (absError > permittedError) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
-					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
-						Particle* xj = highResSample.getNeighbors().at(j);
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+					for (int j = 0; j < highResSample.numNeighbors; j++) {
+						int index = highResSample.neighborIndices[j];
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], highResSample.getIsMatchPoint());
 						totalError += powf(gravity_kernel_value, 2.0f);
 					}
 
 					// 4. Apply control for each neighbor
-					for (int j = 0; j < highResSample.getNeighbors().size(); j++) {
-						Particle* xj = highResSample.getNeighbors().at(j);
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, *xj, highResSample.getIsMatchPoint());
+					if (highResSample.numNeighbors == 0) {
+						cout << "It has no neighbors" << endl;
+					}
+					for (int j = 0; j < highResSample.numNeighbors; j++) {
+						int index = highResSample.neighborIndices[j];
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], highResSample.getIsMatchPoint());
 
-						float newDensity = xj->getDensity() + densityError * (gravity_kernel_value / totalError);
-						xj->setDensity(newDensity);
+						float newDensity = particleList[j].getDensity() + densityError * (gravity_kernel_value / totalError);
+						particleList[j].setDensity(newDensity);
 					}
 
 					// update sampled density and error
@@ -1260,10 +1265,10 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				setNeighbors(particleList[i], i);
 			}
 
-			float averageDensity = 0;
+			/*float averageDensity = 0;
 			for (int i = 0; i < particleCount; i++) {
 				averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
-			}
+			}*/
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			//DENSITY_0_GUESS = averageDensity;
 		}
@@ -1303,7 +1308,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				setNeighbors(particleList[i], i);
 			}
 			isPaused = false;
-
+			cout << "Number of keyframes: " << keyframes.size() << endl;
 			cout << "Recording... please be patient :)" << endl;
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;

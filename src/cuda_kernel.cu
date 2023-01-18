@@ -1,62 +1,8 @@
 #include <cuda_runtime.h>
 #include "cuda_kernel.cuh"
 
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
-{
-    if (code != cudaSuccess)
-    {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-        if (abort) exit(code);
-    }
-}
 
-
-__global__ void vectorAdditionKernel(double* A, double* B, double* C, int arraySize) {
-    // Get thread ID.
-    int threadID = blockDim.x * blockIdx.x + threadIdx.x;
-
-    // Check if thread is within array bounds.
-    if (threadID < arraySize) {
-        // Add a and b.
-        C[threadID] = A[threadID] + B[threadID];
-    }
-}
-
-
-
-/**
- * Wrapper function for the CUDA kernel function.
- * @param A Array A.
- * @param B Array B.
- * @param C Sum of array elements A and B directly across.
- * @param arraySize Size of arrays A, B, and C.
- */
-void test_kernel(double* A, double* B, double* C, int arraySize) {
-
-    // Initialize device pointers.
-    double* d_A, * d_B, * d_C;
-
-    // Allocate device memory.
-    cudaMalloc((void**)&d_A, arraySize * sizeof(double));
-    cudaMalloc((void**)&d_B, arraySize * sizeof(double));
-    cudaMalloc((void**)&d_C, arraySize * sizeof(double));
-
-    // Transfer arrays a and b to device.
-    cudaMemcpy(d_A, A, arraySize * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_B, B, arraySize * sizeof(double), cudaMemcpyHostToDevice);
-
-    // Calculate blocksize and gridsize.
-    dim3 blockSize(512, 1, 1);
-    dim3 gridSize(512 / arraySize + 1, 1);
-
-    // Launch CUDA kernel.
-    vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
-
-    // Copy result array c back to host memory.
-    cudaMemcpy(C, d_C, arraySize * sizeof(double), cudaMemcpyDeviceToHost);
-}
-
+// calculate the density for a given particle using the given kernel
 __global__ void setDensitiesForParticles(Particle* particleList, int particleCount, Kernel* kernel) {
     // Get thread ID.
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -77,22 +23,18 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
 
 }
 
+// wrapper function fo calculating and updating densities
 void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel) {
-    // Initialize device pointers
-    // Particle* d_particleList;
 
     // Calculate blocksize and grid size
     int blockSize = 512;
     int gridSize = (particleCount + blockSize - 1) / blockSize;
 
     // Launch CUDA kernel.
-    //vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
-
     setDensitiesForParticles << <gridSize, blockSize >> > (particleList, particleCount, kernel);
-    // Copy result array c back to host memory.
-    // cudaMemcpy(particleList, d_particleList, particleCount * sizeof(Particle), cudaMemcpyDeviceToHost);
 }
 
+// function to calculate and set the surface normal of a particle with the given kernel
 __global__ void surfaceNormalField(Particle* particleList, int particleCount, Kernel* kernel) {
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
     
@@ -117,6 +59,7 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
     
 }
 
+// wrapper function to calculate/set surface normals on GPU
 void setSurfaceNormalFieldForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel) {
 
     // Calculate blocksize and grid size
@@ -124,10 +67,10 @@ void setSurfaceNormalFieldForParticles_CUDA(Particle* particleList, int particle
     int gridSize = (particleCount + blockSize - 1) / blockSize;
 
     // Launch CUDA kernel.
-    //vectorAdditionKernel << <gridSize, blockSize >> > (d_A, d_B, d_C, arraySize);
     surfaceNormalField << <gridSize, blockSize >> > (particleList, particleCount, kernel);
 }
 
+// function to calculate and set the color field of a particle with the given kernel
 __global__ void colorFieldLaplacian(Particle* particleList, int particleCount, Kernel* kernel) {
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
     if (threadID < particleCount) {
@@ -146,6 +89,7 @@ __global__ void colorFieldLaplacian(Particle* particleList, int particleCount, K
     }
 }
 
+// wrapper function to calculate and set the surface normal of a particle on the GPU
 void setColorFieldLaplaciansForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel) {
 
     // Calculate blocksize and grid size
@@ -156,6 +100,7 @@ void setColorFieldLaplaciansForParticles_CUDA(Particle* particleList, int partic
     colorFieldLaplacian << <gridSize, blockSize >> > (particleList, particleCount, kernel);
 }
 
+// function to calculate and set the pressure of a particle with the given kernel
 __global__ void calculatePressureForParticle(Particle* particleList, int particleCount, float STIFFNESS_PARAM, float DENSITY_0_GUESS, Kernel* kernel) {
     
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
@@ -165,6 +110,7 @@ __global__ void calculatePressureForParticle(Particle* particleList, int particl
     }
 }
 
+// wrapper function to allow the CPU to call the GPU to perform pressure calculations
 void setPressuresForParticles_CUDA(Particle* particleList, int particleCount, float STIFFNESS_PARAM, float DENSITY_0_GUESS, Kernel* kernel) {
     // Calculate blocksize and grid size
     int blockSize = 512;
@@ -174,6 +120,7 @@ void setPressuresForParticles_CUDA(Particle* particleList, int particleCount, fl
     calculatePressureForParticle << <gridSize, blockSize >> > (particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
 }
 
+// function to calculate and set the pressure gradient of a particle with the given kernel
 __device__ glm::vec3 pressureGradient(int threadID, Particle* particleList, Kernel* kernel) {
     glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -187,6 +134,7 @@ __device__ glm::vec3 pressureGradient(int threadID, Particle* particleList, Kern
     return -1.0f * pressureGradient;
 }
 
+// function to calculate and set the diffusion term of a particle with the given kernel
 __device__ glm::vec3 diffusionTerm(int threadID, Particle* particleList, float VISCOSITY, Kernel* kernel) {
     glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -200,6 +148,7 @@ __device__ glm::vec3 diffusionTerm(int threadID, Particle* particleList, float V
     return diffusionLaplacian * VISCOSITY;
 }
 
+// function to calculate and set the accleration of a particle with the given kernel
 __global__ void setAccelerationsForParticles(Particle* particleList, int particleCount, float TENSION_ALPHA, float TENSION_THRESHOLD, float VISCOSITY, Kernel* kernel) {
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
     if (threadID < particleCount) {
@@ -223,6 +172,7 @@ __global__ void setAccelerationsForParticles(Particle* particleList, int particl
     }
 }
 
+// wrapper function that allows the CPU to utilize the GPU for acceleration calculations
 void setAccelerationsForParticles_CUDA(Particle* particleList, int particleCount, float TENSION_ALPHA, float TENSION_THRESHOLD, float VISCOSITY, Kernel* kernel) {
     // Calculate blocksize and grid size
     int blockSize = 512;
@@ -232,6 +182,7 @@ void setAccelerationsForParticles_CUDA(Particle* particleList, int particleCount
     setAccelerationsForParticles << <gridSize, blockSize >> > (particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 }
 
+// function to calculate and set the positions and velocities of a particle using leapfrog integration
 __global__ void updatePositionsAndVelocities(Particle* particleList, cy::Vec3f* particlePositions, int particleCount, float timestep, Plane* surfaces, int numSurfaces, float ELASTICITY, float FRICTION, Kernel* kernel) {
     int threadID = blockDim.x * blockIdx.x + threadIdx.x;
     if (threadID < particleCount) {
@@ -273,6 +224,7 @@ __global__ void updatePositionsAndVelocities(Particle* particleList, cy::Vec3f* 
     }
 }
 
+// wrapper function that allows the CPU to call on the GPU to perform acceleration integration
 void updatePositionsAndVelocities_CUDA(Particle* particleList, cy::Vec3f* particlePositions, int particleCount, float timestep, Plane* surfaces, int numSurfaces, float ELASTICITY, float FRICTION, Kernel* kernel) {
     // Calculate blocksize and grid size
     int blockSize = 512;

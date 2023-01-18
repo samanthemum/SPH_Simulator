@@ -32,11 +32,10 @@ class Particle {
 		CUDA_CALLABLE_MEMBER void setDensity(float density) { this->density = density; };
 		CUDA_CALLABLE_MEMBER void setPressure(float p) { this->pressure = p; };
 		CUDA_CALLABLE_MEMBER void setMass(float m) { this->mass = m; };
-		// void setVolume(float v) { this->volume = v; };
 		CUDA_CALLABLE_MEMBER void setRadius(float r) { this->radius = r; }
-		// CUDA_CALLABLE_MEMBER void setNeighbors(std::vector<Particle*> n) { this->neighbors = n; }
-		// void setNeighborIndices(std::vector<int> n) { this->neighborIndices = n; }
 		CUDA_CALLABLE_MEMBER void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
+
+		// determine whether a particle will collide with a given plan from going to newPos from position
 		CUDA_CALLABLE_MEMBER static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
 			float oldDistance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
@@ -70,6 +69,7 @@ class Particle {
 			return true;
 		}
 
+		// returns the distance of a particle from the given plane
 		CUDA_CALLABLE_MEMBER static float getDistanceFromPlane(glm::vec3 position, float radius, const Plane& p) {
 			float distance;
 			if (glm::dot((position - p.getPoint()), p.getNormal()) >= 0.0f) {
@@ -91,10 +91,10 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getDensity() const { return density; };
 		CUDA_CALLABLE_MEMBER float getPressure() const { return pressure; };
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
-		//float getVolume() const { return volume; };
 		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
-		// std::vector<Particle*> getNeighbors() const { return neighbors; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
+
+		// neighbor members
 		static const short maxNeighborsAllowed = 500;
 		int* neighborIndices = nullptr;
 		int* device_neighborIndices = nullptr;
@@ -106,12 +106,9 @@ class Particle {
 		glm::vec3 acceleration;
 		glm::vec3 surfaceNormal;
 		float colorFieldLaplacian;
-		// std::vector<Particle*> neighbors;
-		// std::vector<int> neighborIndices;
 		float density;
 		float mass;
 		float radius;
-		// float volume;
 		float pressure;
 		bool isMatchPoint = false;
 };

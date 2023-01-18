@@ -56,21 +56,17 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 	}
 }
 
-
 using namespace std;
 using cy::Vec3f;
 
+// Scene information
 enum class Scene {
 	DEFAULT,
 	DAM_BREAK,
 	SPLASH,
 	DROP
 };
-
-struct Keyframe {
-	std::vector<Particle> matchpoints;
-	float time;
-};
+Scene selected_scene = Scene::SPLASH;
 
 GLFWwindow* window; // Main application window
 string RESOURCE_DIR = "..\\resources\\"; // Where the resources are loaded from
@@ -83,10 +79,8 @@ glm::vec2 mousePrev(-1, -1);
 // Kernel stuff
 Kernel* kernel;
 
+// Simulation Initialization
 float resolutionConstant = 8000;
-float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
-float STIFFNESS_PARAM = 60.0f;
-float Y_PARAM = 7.0f;
 uint32_t LOW_RES_COUNT = 8000;
 uint32_t MID_RES_COUNT = 27000;
 uint32_t HIGH_RES_COUNT = 64000;
@@ -99,75 +93,67 @@ int particleForShape = LOW_RES_COUNT_SHAPE;
 float LOW_RES_RADIUS = 1.0f;
 float MID_RES_RADIUS = (2. / 3.f);
 float HIGH_RES_RADIUS = .5f;
+glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
+glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
+Particle* particleList;
+Vec3f* particlePositions;
+
+// Simulation Fluid Constants
 float MAX_RADIUS = LOW_RES_RADIUS;
 float SMOOTHING_RADIUS = LOW_RES_RADIUS;
 float VISCOSITY = .1f;
 float TIMESTEP = .025f;
 float MASS = 1.0f;
+float DENSITY_0_GUESS = .1f; // density of water= 1 g/cm^3
+float STIFFNESS_PARAM = 60.0f;
+float Y_PARAM = 7.0f;
 
+// Collision information
+Plane* surfaces;
+int numSurfaces;
 float FRICTION = .1f;
 float ELASTICITY = .7f;
-float timePassed = 0.0f;
 
 // surface tension stuff
 float TENSION_ALPHA = .25f;
 float TENSION_THRESHOLD = 1.0f;
 float totalTime = 0.0f;
 
-bool CONTROL = false;
 
-// matchpoint system
+// matchpoint and keyframe system
+struct Keyframe {
+	std::vector<Particle> matchpoints;
+	float time;
+};
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
 const int matchpointNumber = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
+bool CONTROL = false;
 
-// TODO:
-// 1. generate matchpoints (position and radius) at initialization
-// 2. Update keyframes at the end of each run
-// 3. If recording in mid or high res, do matchpoint error correction
-
-
-float density_constant = 1.0;
+// Kd tree and shape
 int steps = 0;
 int steps_per_update = 3;
-Particle* particleList;
-Vec3f* particlePositions;
-
 shared_ptr<cy::PointCloud<Vec3f, float, 3>> kdTree;
-shared_ptr<cy::TriMesh> shapeMesh;
-shared_ptr<cy::BVHTriMesh> bvh;
-
 shared_ptr<Shape> lowResSphere;
 
-// Surfaces for collisions
-Plane* surfaces;
-int numSurfaces;
 
-
-glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
-glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
-
-Scene selected_scene = Scene::SPLASH;
-
-// TODO: fix high resolution transfer
-
+// Threading information
 const int N_THREADS = 10;
 int PARTICLES_PER_THREAD = LOW_RES_COUNT / N_THREADS;
 std::thread threads[N_THREADS];
 
+// Recording information
 int width = 1280;
 int height = 960;
-
 const char* cmd = "\"C:\\Users\\Sam Hallam\\Desktop\\Art Stuff\\ffmpeg-2021-11-10-git-44c65c6cc0-essentials_build\\bin\\ffmpeg\" -r 30 -f rawvideo -pix_fmt rgba -s 1280x960 -i - "
 "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip output.mp4";
-
 FILE* ffmpeg = _popen(cmd, "wb");
 int* buffer = new int[width * height];
-
 bool recording = false;
 bool recording_low_res = false;
+float timePassed = 0.0f;
 float end_time = 0.0f;
 
 static void error_callback(int error, const char* description)
@@ -214,37 +200,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-bool isInBounds(const Vec3f& point, const float* bounds) {
-	if (bounds[0] <= point.x && bounds[1] <= point.y && bounds[2] <= point.z) {
-		if (bounds[3] >= point.x && bounds[4] >= point.y && bounds[5] >= point.z) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool isInBoundingVolume(const Vec3f& point, unsigned int currentNode) {
-	if (!isInBounds(point, bvh->GetNodeBounds(currentNode))) {
-		return false;
-	}
-	else if (bvh->IsLeafNode(currentNode)) {
-		return true;
-	}
-
-	unsigned int child1, child2;
-	bvh->GetChildNodes(currentNode, child1, child2);
-	return isInBoundingVolume(point, child1) || isInBoundingVolume(point, child2);
-}
-
-bool isInBoundingVolume(const Vec3f& point) {
-	unsigned int rootNode = bvh->GetRootNodeID();
-	return isInBoundingVolume(point, rootNode);
-}
-
-void initParticleList_atRest() {
+// Frees memory allocated through CUDA functions
+void freeCudaMemory() {
 	if (particleList != nullptr) {
-		// delete[] particleList;
 		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
 				cudaFreeHost(particleList[i].neighborIndices);
@@ -254,87 +212,23 @@ void initParticleList_atRest() {
 		cudaFree(particleList);
 	}
 	if (particlePositions != nullptr) {
-		// delete[] particlePositions;
 		cudaFree(particlePositions);
 	}
-
-	gpuErrchk(cudaDeviceSynchronize());
-	// particleList = new Particle[particleCount + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
-	// particlePositions = new Vec3f[particleCount + matchpointNumber];
-	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
-	gpuErrchk(cudaDeviceSynchronize());
-
-	// put them in a cube shape for ease of access
-	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
-	cout << "The scale factor is " << scaleFactor << endl;
-	int depth = 20.0f * (1.0f / scaleFactor);
-	cout << "The depth is " << depth << endl;
-	int slice = roundf((float)particleCount / depth);
-	cout << "Value of slice: " << slice << endl;
-	int width = roundf((float)slice / (float)depth);
-	cout << "The width is " << width << endl;
-	int height = roundf((float)slice / (float)width);
-	cout << "The height is " << height << endl;
-
-	float volume = (20 * 20 * 20);
-	float volumePerParticle = volume / particleCount;
-	cout << "The particle count is " << particleCount << endl;
-	MASS = volumePerParticle * DENSITY_0_GUESS;
-	for (int i = 0; i < depth; i++) {
-		for (int j = 0; j < width; j++) {
-			for (int k = 0; k < height; k++) {
-				Particle p;
-
-				float x_position = ((float)j) * scaleFactor;
-				float y_position = ((float)k * .5) * scaleFactor;
-				float z_position = (float)i * scaleFactor;
-				if (k % 2 == 1) {
-					x_position += (.5 * scaleFactor);
-				}
-				p.setPosition(glm::vec3(x_position, y_position, z_position));
-				p.setDensity(DENSITY_0_GUESS);
-				p.setMass(MASS);
-				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
-				p.setRadius(scaleParticles.x);
-
-				int index = (slice * i) + (height * j) + k;
-				if (index >= particleCount) {
-					cout << "value of i: " << i << endl;
-					cout << "Index too large: " << index << endl;
-				}
-				particleList[index] = p;
-				particlePositions[index] = Vec3f(x_position, y_position, z_position);
-
-			}
-		}
-	}
-	cout << "Finished particle initialization" << endl;
 }
 
-void initParticleList_atRest_Uniform() {
-	if (particleList != nullptr) {
-		// delete[] particleList;
-		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
-			if (particleList[i].neighborIndices != nullptr) {
-				cudaFreeHost(particleList[i].neighborIndices);
-			}
-		}
-		gpuErrchk(cudaDeviceSynchronize());
-		cudaFree(particleList);
-	}
-	if (particlePositions != nullptr) {
-		// delete[] particlePositions;
-		cudaFree(particlePositions);
-	}
-	// particleList = new Particle[particleCount + matchpointNumber];
+// initialize particle list so that it starts at rest
+void initParticleListAtRest() {
+
+	// Free up old memory if it was used
+	freeCudaMemory();
+
+	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
 	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle))));
-	// particlePositions = new Vec3f[particleCount + matchpointNumber];
 	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f))));
 	gpuErrchk(cudaDeviceSynchronize());
 
-	// put them in a cube shape for ease of access
+	// put them in a cube-ish shape for ease of access
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 	cout << "The scale factor is " << scaleFactor << endl;
 	int depth = 20.0f * (1.0f / scaleFactor);
@@ -349,7 +243,8 @@ void initParticleList_atRest_Uniform() {
 	float volume = (20 * 20 * 20);
 	float volumePerParticle = volume / particleCount;
 	cout << "The particle count is " << particleCount << endl;
-	// MASS = volumePerParticle * DENSITY_0_GUESS;
+
+	// create a uniform random distribution
 	std::uniform_real_distribution<float> distribution(0.0f, 20.0f);
 	std::default_random_engine generator;
 
@@ -358,12 +253,15 @@ void initParticleList_atRest_Uniform() {
 			for (int k = 0; k < height; k++) {
 				Particle p;
 
+				// generate particle positions from distribution
 				float x_position = ((float)distribution(generator));
 				float y_position = ((float)distribution(generator) * .4);
 				float z_position = ((float)distribution(generator));
 				if (k % 2 == 1) {
 					x_position += (.5 * scaleFactor);
 				}
+
+				// initialize particle values
 				p.setPosition(glm::vec3(x_position, y_position, z_position));
 				p.setDensity(DENSITY_0_GUESS);
 				p.setMass(MASS);
@@ -384,44 +282,33 @@ void initParticleList_atRest_Uniform() {
 	cout << "Finished particle initialization" << endl;
 }
 
+// initializes the particle list in a specific shape
 void initParticleShape() {
+
+	// sample the sphere for particle positions
 	float sphereRadius = 5.0f;
 	std::vector<Eigen::Matrix<float, 3, 1>> meshParticles = lowResSphere->sampleMesh(MAX_RADIUS / (sphereRadius * 2.0f));
 	int usedParticles = meshParticles.size() - (meshParticles.size() % 10);
 
 	// update the size of particles
-	Particle* shapeParticles; // = new Particle[particleCount + usedParticles + matchpointNumber];
+	Particle* shapeParticles;
 	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
-	Vec3f* newPositions; // = new Vec3f[particleCount + usedParticles + matchpointNumber];
+	Vec3f* newPositions;
 	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
 	gpuErrchk(cudaDeviceSynchronize());
 
+	// copy over old information
 	for (int i = 0; i < particleCount; i++) {
 		shapeParticles[i] = particleList[i];
 		newPositions[i] = particlePositions[i];
 	}
 
+	// free old memory
+	freeCudaMemory();
 
-	if (particleList != nullptr) {
-		// delete[] particleList;
-		for (int i = 0; i < particleCount + matchpointNumber; i++) {
-			if (particleList[i].neighborIndices != nullptr) {
-				cudaFreeHost(particleList[i].neighborIndices);
-			}
-		}
-		gpuErrchk(cudaDeviceSynchronize());
-		cudaFree(particleList);
-	}
-	if (particlePositions != nullptr) {
-		// delete[] particlePositions;
-		cudaFree(particlePositions);
-	}
-
-	//// approximate density
+	// approximate density of the sphere
 	float volume = (4.0 / 3.0) * M_PI * powf(1.75f, 3.0f);
 	float density_estimate = (MASS * usedParticles) / volume;
-	//density_estimate *= 100000.f;
-
 	for (int i = 0; i < usedParticles; i++) {
 		//		// translate x, y, and z
 		float x = meshParticles.at(i)[0];
@@ -454,21 +341,18 @@ void initParticleShape() {
 	PARTICLES_PER_THREAD = particleCount / N_THREADS;
 }
 
+// initializes the particle list in a cube, but not at rest
 void initParticleList() {
-	if (particleList != nullptr) {
-		// delete[] particleList;
-		cudaFree(particleList);
-	}
-	if (particlePositions != nullptr) {
-		// delete[] particlePositions;
-		cudaFree(particlePositions);
-	}
+	
+	// free old memory
+	freeCudaMemory();
+
+	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
-	// particleList = new Particle[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
-	// particlePositions = new Vec3f[particleCount + matchpointNumber];
 	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
 	gpuErrchk(cudaDeviceSynchronize());
+
 	// put them in a cube shape for ease of access
 	float depth = 20.0f;
 	int slice = particleCount / depth;
@@ -477,7 +361,8 @@ void initParticleList() {
 
 	float volume = (height * width * depth);
 	float volumePerParticle = volume / particleCount;
-	float mass = volumePerParticle * DENSITY_0_GUESS;
+
+	// Arrange particles in a cube
 	for (int i = 0; i < depth; i++) {
 		for (int j = 0; j < width; j++) {
 			for (int k = 0; k < height; k++) {
@@ -487,7 +372,7 @@ void initParticleList() {
 				float z = i; // +(2 * scaleParticles.z - 1);
 				p.setPosition(glm::vec3(x, y, z));
 				p.setDensity(DENSITY_0_GUESS);
-				p.setMass(2.00);
+				p.setMass(MASS);
 				p.setVelocity(glm::vec3(0.0f, 0.0f, 0.0f));
 				p.setRadius(scaleParticles.x);
 
@@ -500,6 +385,7 @@ void initParticleList() {
 	}
 }
 
+// Creates the default scene: a cube of water falling into a box
 void initSceneOriginal() {
 	initParticleList();
 
@@ -508,13 +394,6 @@ void initSceneOriginal() {
 	Plane wall_2(glm::vec3(1.0, 0.0, .0), glm::vec3(-1.0, 0.0, 0.0));
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, -1.0));
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(21.0f, 0.0, 0.0));
-
-	// initialize surfaces
-	/*surfaces.push_back(ground);
-	surfaces.push_back(wall_1);
-	surfaces.push_back(wall_2);
-	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);*/
 
 	surfaces[0] = ground;
 	surfaces[1] = wall_1;
@@ -525,8 +404,9 @@ void initSceneOriginal() {
 
 }
 
+// Creates the dam break scene
 void initSceneDamBreak() {
-	initParticleList_atRest_Uniform();
+	initParticleListAtRest();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5, 0.0));
 	Plane wall_1(glm::vec3(0.0f, 0.0, -1.0), glm::vec3(0.0, 0.0, 20.0f + .5));
@@ -535,15 +415,6 @@ void initSceneDamBreak() {
 	Plane wall_5(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(40 + .5, 0.0, 0.0));
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5, 0.0, 0.0));
 
-	// initialize surfaces
-	/*surfaces.clear();
-	surfaces.push_back(ground);
-	surfaces.push_back(wall_1);
-	surfaces.push_back(wall_2);
-	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_5);
-	surfaces.push_back(wall_4);*/
-
 	surfaces[0] = ground;
 	surfaces[1] = wall_1;
 	surfaces[2] = wall_2;
@@ -551,13 +422,11 @@ void initSceneDamBreak() {
 	surfaces[4] = wall_5;
 	surfaces[5] = wall_4;
 	numSurfaces = 6;
-
 }
 
+// Creates the splash scene
 void initSceneSplash() {
-	initParticleList_atRest_Uniform();
-	// HINT: unnatural behavior only occurs when the shape is created for some reason
-	// my guess is something wrong with neighbors or something maybe
+	initParticleListAtRest();
 	initParticleShape();
 
 	Plane ground(glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0f - .5f, 0.0));
@@ -575,6 +444,7 @@ void initSceneSplash() {
 	numSurfaces = 5;
 }
 
+// Creates the drop scene
 void initSceneDrop() {
 	particleCount = 0;
 	initParticleShape();
@@ -585,14 +455,6 @@ void initSceneDrop() {
 	Plane wall_3(glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, 0.0, 0.0 - .5f));
 	Plane wall_4(glm::vec3(-1.0, 0.0, 0.0), glm::vec3(20 + .5f, 0.0, 0.0));
 
-	// initialize surfaces
-	/*surfaces.clear();
-	surfaces.push_back(ground);
-	surfaces.push_back(wall_1);
-	surfaces.push_back(wall_2);
-	surfaces.push_back(wall_3);
-	surfaces.push_back(wall_4);*/
-
 	surfaces[0] = ground;
 	surfaces[1] = wall_1;
 	surfaces[2] = wall_2;
@@ -601,8 +463,8 @@ void initSceneDrop() {
 	numSurfaces = 5;
 }
 
+// initializes the kd tree for use
 void initKdTree() {
-	// Should automatically build the tree?
 	if (!kdTree) {
 		cout << "Making new kd tree!" << endl;
 		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
@@ -612,13 +474,23 @@ void initKdTree() {
 	}
 }
 
+// initialize the match points
 void initMatchPoints() {
+
+	// clear frames and old matchpoints
 	keyframes.clear();
 	defaultMatchpoints.clear();
 
-	for (int i = 0; i < matchpointNumber; i++) {
-		int particleIndex = rand() % particleCount;
+	// create a uniform random distribution
+	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
+	std::default_random_engine generator;
 
+	// for the user defined matchpoint number
+	for (int i = 0; i < matchpointNumber; i++) {
+		// Choose a uniform random particle index
+		int particleIndex = (int)distribution(generator);
+
+		// initialize a particle to act as a matchpoint
 		Particle matchPoint;
 		matchPoint.setPosition(particleList[particleIndex].getPosition());
 		float radius = rand() % 5 + 1;
@@ -628,24 +500,27 @@ void initMatchPoints() {
 		particlePositions[particleCount + i] = matchpointPosition;
 		matchPoint.setIsMatchpoint(true);
 
+		// Add it to the particle list
 		defaultMatchpoints.push_back(matchPoint);
 		particleList[particleCount + i] = matchPoint;
 	}
 }
 
-
+// Set the neighbors for a particle
 void setNeighbors(Particle& x, int xIndex) {
+
+	// Get all neighbors within a radius
 	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
 	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
 
-	// create a vector for the new neighbors
-	// std::vector<Particle*> neighbors;
+	// free old neighbors, if there
 	if (x.neighborIndices != nullptr) {
 		gpuErrchk(cudaFreeHost(x.neighborIndices));
 		gpuErrchk(cudaDeviceSynchronize());
 	}
 
+	// allocate memory for new neighbor list
 	gpuErrchk(cudaHostAlloc(reinterpret_cast<void**>(&x.neighborIndices), numPointsInRadius * sizeof(int), cudaHostAllocMapped));
 	gpuErrchk(cudaDeviceSynchronize());
 	gpuErrchk(cudaSetDeviceFlags(cudaDeviceMapHost));
@@ -656,11 +531,10 @@ void setNeighbors(Particle& x, int xIndex) {
 	}
 	
 
+	// set neighbors, ignoring matchpoints and self inclusion
 	x.numNeighbors = numPointsInRadius;
-	// std::vector<Particle*> neighbors;
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && info[i].index < particleCount) {
-			// neighbors.push_back(&particleList[info[i].index]);
 			x.neighborIndices[i] = (int)info[i].index;
 		}
 		else {
@@ -668,43 +542,48 @@ void setNeighbors(Particle& x, int xIndex) {
 		}
 	}
 
-	// x.setNeighbors(neighbors);
+	// delete point info
 	delete[] info;
 }
 
+// calculates the average mass for a particle at rest
 void initAverageMass() {
-	initParticleList_atRest_Uniform();
+	// use the at rest distribution and setup tree
+	initParticleListAtRest();
 	initKdTree();
-	cout << "Started setting neighbors" << endl;
 	for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
 	}
-	cout << "Finished setting neighbors" << endl;
 
-	cout << "Started calculating average mass" << endl;
+	// Calculate the mass it takes for each particle to be at approximately the rest density
 	float averageMass = 0.0f;
 	for (int i = 0; i < particleCount; i++) {
 		Particle xi = particleList[i];
-		float thisKernel = kernel->monaghanKernel(xi, xi, false, false);
+		float thisKernel = kernel->polyKernelFunction(xi, xi, false);
 		float kernelSum = 0.f;
 		for (int j = 0; j < xi.numNeighbors; j++) {
-			kernelSum += kernel->monaghanKernel(xi, particleList[xi.neighborIndices[j]], false, false);
+			kernelSum += kernel->polyKernelFunction(xi, particleList[xi.neighborIndices[j]], false);
 		}
 		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
 	}
+
+	// set the average mass
 	cout << "Finished calculating average mass" << endl;
 	MASS = averageMass;
 	cout << "The average mass was " << MASS << endl;
 }
 
+// initializes everything required before simulation start
 static void init()
 {
 	GLSL::checkVersion();
 
+	// allocate the kernel in shared memory
 	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&kernel), sizeof(Kernel)));
 	gpuErrchk(cudaDeviceSynchronize());
 	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
 
+	// initialize average mass
 	initAverageMass();
 
 	// Set background color
@@ -730,26 +609,14 @@ static void init()
 
 	// Initialize time.
 	glfwSetTime(0.0);
-
 	keyToggles[(unsigned)'l'] = true;
-
-	// initialize shape for extra mesh, if desired
-	shapeMesh = make_shared<cy::TriMesh>();
-	std::string mesh_location = RESOURCE_DIR + "low_res_sphere.obj";
-	if (!shapeMesh->LoadFromFileObj(mesh_location.c_str(), false)) {
-		cout << "Error loading mesh into triangle mesh" << endl;
-	}
-	shapeMesh->ComputeBoundingBox();
-
-	// initializes bounding volume with shape
-	bvh = make_shared<cy::BVHTriMesh>(shapeMesh.get());
 
 	// initialize shape for sphere
 	lowResSphere = make_shared<Shape>();
 	lowResSphere->loadMesh(RESOURCE_DIR + "low_res_sphere.obj");
 	lowResSphere->init();
 
-	// initialize surfaces
+	// initialize surfaces in shared memory
 	cudaMallocManaged(reinterpret_cast<void**>(&surfaces), sizeof(Plane) * 6);
 
 	// initialize particles and tree
@@ -768,7 +635,10 @@ static void init()
 		initSceneOriginal();
 	}
 
+	// initialize matchpoints
 	initMatchPoints();
+
+	// start kd tree and set neighbors
 	initKdTree();
 	for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
@@ -780,13 +650,18 @@ static void init()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
+// draw particle on the shared pointer
 void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->pushMatrix();
+
+	// color particles blue because water
 	glUniform3f(prog->getUniform("kd"), 0.0f, 0.3f, .7f);
 	glUniform3f(prog->getUniform("ka"), 0.0f, 0.3f, .7f);
 	glUniform3f(prog->getUniform("ks"), 0.0f, 0.3f, .7f);
 	glUniform3f(prog->getUniform("lightPos"), 20.0f, 20.0f, -20.0f);
 	MV->scale(scaleStructure);
+
+	// draw each particle
 	for (int i = 0; i < particleCount; i++) {
 		MV->pushMatrix();
 		MV->translate(particleList[i].getPosition());
@@ -799,6 +674,7 @@ void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->popMatrix();
 }
 
+// render a frame
 void render()
 {
 	// Update time.
@@ -838,21 +714,12 @@ void render()
 	GLSL::checkError(GET_FILE_LINE);
 }
 
-//float calculateDensityForParticle(const Particle x) {
-//	float density = x.getMass() * kernel->polyKernelFunction(x, x, x.getIsMatchPoint());
-//	for (int j = 0; j < x.getNeighbors().size(); j++) {
-//		Particle* xj = x.getNeighbors().at(j);
-//		density += (xj->getMass() * kernel->polyKernelFunction(x, *xj, x.getIsMatchPoint()));
-//	}
-//
-//	return (density * density_constant);
-//}
-
+// samples the density around a given matchpoint
+// uses the kernel from the original Keyser paper
 float sampleDensityForMatchpoint(const Particle x) {
 	float sample = 0;
 	float normalizer = 0;
 	for (int j = 0; j < x.numNeighbors; j++) {
-		// Particle* xj = x.getNeighbors().at(j);
 		int index = x.neighborIndices[j];
 		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
 		normalizer += (kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
@@ -861,199 +728,17 @@ float sampleDensityForMatchpoint(const Particle x) {
 	return sample / normalizer;
 }
 
-float calculatePressureForParticle(const Particle x) {
-	//float pressure = ((STIFFNESS_PARAM * DENSITY_0_GUESS) / Y_PARAM) *(powf((x.getDensity() / DENSITY_0_GUESS), Y_PARAM) - 1.0f);
-	float pressure = STIFFNESS_PARAM * (x.getDensity() - DENSITY_0_GUESS);
-	return pressure;
-}
-
-//glm::vec3 pressureGradient(const Particle& xi) {
-//	glm::vec3 pressureGradient = glm::vec3(0.0f, 0.0f, 0.0f);
-//
-//	// for every Particle xj in the neighbor hood of xi
-//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-//		Particle* xj = xi.getNeighbors().at(j);
-//
-//		//float pressureTerm = (xi.getPressure() / powf(xi.getDensity(), 2.0f)) + (xj->getPressure() / powf(xj->getDensity(), 2.0f));
-//
-//		float pressureTerm = (xi.getPressure() + xj->getPressure()) / (2 * xj->getDensity());
-//		pressureGradient += (xj->getMass() * pressureTerm * kernel->spikyKernelGradient(xi, *xj));
-//	}
-//	return -1.0f * pressureGradient;
-//}
-
-//glm::vec3 diffusionTerm(const Particle& xi) {
-//	glm::vec3 diffusionLaplacian = glm::vec3(0.0f, 0.0f, 0.0f);
-//
-//	// for every Particle xj in the neighbor hood of xi
-//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-//		Particle* xj = xi.getNeighbors().at(j);
-//		glm::vec3 velocityTerm = (xj->getVelocity() - xi.getVelocity()) / xj->getDensity();
-//
-//		diffusionLaplacian += (xj->getMass() * velocityTerm * kernel->viscosityKernelLaplacian(xi, *xj));
-//	}
-//	return diffusionLaplacian * VISCOSITY;
-//}
-
-// surface tension functions
-//glm::vec3 surfaceNormalField(const Particle& xi) {
-//	glm::vec3 surfaceField = glm::vec3(0.0f, 0.0f, 0.0f);
-//
-//	// for every Particle xj in the neighbor hood of xi
-//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-//
-//		Particle* xj = xi.getNeighbors().at(j);
-//		if (xj != &xi) {
-//			float outside_term = xj->getMass() * 1 / xj->getDensity();
-//			surfaceField += (outside_term * kernel->polyKernelGradient(xi, *xj));
-//		}
-//
-//	}
-//	return surfaceField;
-//}
-
-// surface tension functions
-//float colorFieldLaplacian(const Particle& xi) {
-//	float surfaceField = 0;
-//
-//	// for every Particle xj in the neighbor hood of xi
-//	for (int j = 0; j < xi.getNeighbors().size(); j++) {
-//		Particle* xj = xi.getNeighbors().at(j);
-//		float outside_term = xj->getMass() * 1 / xj->getDensity();
-//
-//		surfaceField += (outside_term * kernel->polyKernelLaplacian(xi, *xj));
-//	}
-//	return surfaceField;
-//}
-//
+// set neighbors for all particles within the given indices
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
 		setNeighbors(particleList[i], i);
 	}
 }
 
-//void setDensitiesForParticles(int start_index, int end_index) {
-//	for (int i = start_index; i < end_index; i++) {
-//		particleList[i].setDensity(calculateDensityForParticle(particleList[i]));
-//	}
-//}
-
-//void setSurfaceTensionForParticles(int start_index, int end_index) {
-//	for (int i = start_index; i < end_index; i++) {
-//		particleList[i].setSurfaceNormal(surfaceNormalField(particleList[i]));
-//	}
-//}
-//
-//void setColorFieldLaplaciansForParticles(int start_index, int end_index) {
-//	for (int i = start_index; i < end_index; i++) {
-//		particleList[i].setColorFieldLaplacian(colorFieldLaplacian(particleList[i]));
-//	}
-//}
-
-//void setPressuresForParticles(int start_index, int end_index) {
-//	for (int i = start_index; i < end_index; i++) {
-//		particleList[i].setPressure(calculatePressureForParticle(particleList[i]));
-//	}
-//}
-
-//void setAccelerationForParticles(int start_index, int end_index) {
-//	for (int i = start_index; i < end_index; i++) {
-//		glm::vec3 pressureForce = pressureGradient(particleList[i]);
-//		glm::vec3 diffusionForce = diffusionTerm(particleList[i]);
-//		glm::vec3 externalForce = glm::vec3(0.0, -9.8f * particleList[i].getDensity(), 0.0f);
-//
-//		// calculate surface pressure/tension
-//
-//		glm::vec3 acceleration = pressureForce + diffusionForce + externalForce;
-//
-//		if (TENSION_ALPHA > 0.0) {
-//			float k = -1.0f * particleList[i].getColorFieldLaplacian() / length(particleList[i].getSurfaceNormal());
-//			glm::vec3 tension = k * TENSION_ALPHA * particleList[i].getSurfaceNormal();
-//			if (length(tension) > TENSION_THRESHOLD) {
-//				acceleration += tension;
-//			}
-//		}
-//
-//		acceleration /= particleList[i].getDensity();
-//		particleList[i].setAcceleration(acceleration);
-//	}
-//}
-
-void updatePositionForParticles(int start_index, int end_index, double time) {
-	//for (int i = start_index; i < end_index; i++) {
-	//	float timeStepRemaining = time;
-	//	glm::vec3 newVelocity = particleList[i].getVelocity() + particleList[i].getAcceleration() * timeStepRemaining;
-	//	glm::vec3 newPosition = particleList[i].getPosition() + newVelocity * timeStepRemaining;
-
-	//	for (Plane surface : surfaces) {
-	//		if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-	//			// collision stuff
-	//			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-	//			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-	//			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-	//			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-	//			glm::vec3 velocityTangentAfter;
-	//			if (glm::length(velocityTangentBefore) == 0) {
-	//				velocityTangentAfter = velocityTangentBefore;
-	//			}
-	//			else {
-	//				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-	//			}
-
-	//			newVelocity = velocityNormalAfter + velocityTangentAfter;
-	//			float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-	//			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-	//			newPosition = newPosition + addedVector;
-	//			// particleList[i].setPosition(newPosition);
-	//		}
-	//	}
-
-	//	particleList[i].setVelocity(newVelocity);
-	//	particleList[i].setPosition(newPosition);
-	//	particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
-
-	//}
-}
-
-void updatePositionForParticles_Leapfrog(int start_index, int end_index, double time) {
-	//for (int i = start_index; i < end_index; i++) {
-	//	float timeStepRemaining = time;
-	//	glm::vec3 acceleration = particleList[i].getAcceleration();
-	//	glm::vec3 halfPointVelocity = particleList[i].getVelocity() + acceleration * (timeStepRemaining / 2.f);
-	//	glm::vec3 newPosition = particleList[i].getPosition() + particleList[i].getVelocity() * timeStepRemaining + .5f * acceleration * powf(timeStepRemaining, 2.f);
-	//	glm::vec3 newVelocity = halfPointVelocity + particleList[i].getAcceleration() * timeStepRemaining;
-
-	//	for (Plane surface : surfaces) {
-	//		if (Particle::willCollideWithPlane(particleList[i].getPosition(), newPosition, particleList[i].getRadius(), surface)) {
-	//			// collision stuff
-	//			glm::vec3 velocityNormalBefore = glm::dot(newVelocity, surface.getNormal()) * surface.getNormal();
-	//			glm::vec3 velocityTangentBefore = newVelocity - velocityNormalBefore;
-	//			glm::vec3 velocityNormalAfter = -1 * ELASTICITY * velocityNormalBefore;
-	//			float frictionMultiplier = min((1 - FRICTION) * glm::length(velocityNormalBefore), glm::length(velocityTangentBefore));
-	//			glm::vec3 velocityTangentAfter;
-	//			if (glm::length(velocityTangentBefore) == 0) {
-	//				velocityTangentAfter = velocityTangentBefore;
-	//			}
-	//			else {
-	//				velocityTangentAfter = velocityTangentBefore - frictionMultiplier * glm::normalize(velocityTangentBefore);
-	//			}
-
-	//			newVelocity = velocityNormalAfter + velocityTangentAfter;
-	//			float distance = particleList[i].getDistanceFromPlane(newPosition, particleList[i].getRadius(), surface);
-	//			glm::vec3 addedVector = glm::vec3(surface.getNormal()) * (distance * (1 + ELASTICITY));
-	//			newPosition = newPosition + addedVector;
-	//			// particleList[i].setPosition(newPosition);
-	//		}
-	//	}
-
-	//	particleList[i].setVelocity(newVelocity);
-	//	particleList[i].setPosition(newPosition);
-	//	particlePositions[i] = Vec3f(newPosition.x, newPosition.y, newPosition.z);
-
-	//}
-}
-
+// update the samples at each matchpoint
 void updateMatchPoints(float time) {
+
+	// create a new keyframe
 	Keyframe k;
 	k.time = time + timePassed;
 
@@ -1063,7 +748,7 @@ void updateMatchPoints(float time) {
 		// set the neighbors for match point
 		setNeighbors(defaultMatchpoints.at(i), particleCount + i);
 
-		// calculate density for matchpoint
+		// calculate density for matchpoint using the sampling method
 		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(defaultMatchpoints.at(i)));
 
 		// add the match point to the keyframe
@@ -1076,8 +761,6 @@ void updateMatchPoints(float time) {
 void updateFluid(float time) {
 
 	// update the kd tree
-	//std::thread kdTree_thread;
-	//kdTree_thread = thread(initKdTree);
 	gpuErrchk(cudaDeviceSynchronize());
 	if (steps == steps_per_update) {
 		initKdTree();
@@ -1095,30 +778,21 @@ void updateFluid(float time) {
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update density
-	// gpuErrchk(cudaDeviceSynchronize());
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
-	// gpuErrchk(cudaDeviceSynchronize());
 
-	// gpuErrchk(cudaDeviceSynchronize());
+	// update surface normal
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
-	//gpuErrchk(cudaDeviceSynchronize());
 
-	//// gpuErrchk(cudaDeviceSynchronize());
+	// update color field laplacian
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
-	//gpuErrchk(cudaDeviceSynchronize());
 
-
-	//// update the pressures
-	//// gpuErrchk(cudaDeviceSynchronize());
+	// update the pressures
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
-	//gpuErrchk(cudaDeviceSynchronize());
 
-	//// calculate acceleration
-	//// gpuErrchk(cudaDeviceSynchronize());
+	// calculate acceleration
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
-	//gpuErrchk(cudaDeviceSynchronize());
 
-	//// update positions
+	// update positions
 	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
@@ -1190,6 +864,7 @@ void updateFluid(float time) {
 	steps++;
 }
 
+// render the GUI
 void renderGui(bool& isPaused, std::string& buttonText) {
 	// Create GUI
 	ImGui_ImplOpenGL3_NewFrame();
@@ -1264,13 +939,6 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
 			}
-
-			/*float averageDensity = 0;
-			for (int i = 0; i < particleCount; i++) {
-				averageDensity += calculateDensityForParticle(particleList[i]) / (float)particleCount;
-			}*/
-			// density_constant = DENSITY_0_GUESS / averageDensity;
-			//DENSITY_0_GUESS = averageDensity;
 		}
 		if (ImGui::Button("Record in High Resolution")) {
 			isPaused = true;

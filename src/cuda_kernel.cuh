@@ -1,7 +1,7 @@
 #include "Kernel.h"
 #include "cyVector.h"
 
-void test_kernel(double* A, double* B, double* C, int arraySize);
+// wrapper functions to run simulation code on the GPU via CUDA
 void setDensitiesForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel);
 void setSurfaceNormalFieldForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel);
 void setColorFieldLaplaciansForParticles_CUDA(Particle* particleList, int particleCount, Kernel* kernel);

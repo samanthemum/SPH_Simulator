@@ -1,51 +1,1044 @@
-﻿  main.cpp
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(25,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(55,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(69,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(82,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(95,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(115,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(142,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(148,43): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(169,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(172,22): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(187,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+﻿  Compiling CUDA source file C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu...
+  Compiling CUDA source file C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu...
+  Compiling CUDA source file C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh...
+  
+  C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.30.30705\bin\HostX64\x64" -x cu   -I"C:\glm-master\glm-master" -I"C:\glfw-3.3.6\glfw-3.3.6\include" -I"C:\glew-2.1.0\glew-2.1.0\include" -I"C:\eigen-3.4.0\eigen-3.4.0" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\ext\Discregrid\discregrid\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include"     --keep-dir x64\Release  -maxrregcount=0  --machine 64 --compile -cudart static    -D_MBCS -DWIN32 -D_WINDOWS -DNDEBUG -D"CMAKE_INTDIR=\"Release\"" -Xcompiler "/EHsc /W3 /nologo /O2 /FdSPH_Simulator.dir\Release\vc143.pdb /FS   /MD /GR" -o "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\x64\Release\main.cu.obj" "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu" 
+  
+  C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.30.30705\bin\HostX64\x64" -x cu   -I"C:\glm-master\glm-master" -I"C:\glfw-3.3.6\glfw-3.3.6\include" -I"C:\glew-2.1.0\glew-2.1.0\include" -I"C:\eigen-3.4.0\eigen-3.4.0" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\ext\Discregrid\discregrid\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include"     --keep-dir x64\Release  -maxrregcount=0  --machine 64 --compile -cudart static    -D_MBCS -DWIN32 -D_WINDOWS -DNDEBUG -D"CMAKE_INTDIR=\"Release\"" -Xcompiler "/EHsc /W3 /nologo /O2 /FdSPH_Simulator.dir\Release\vc143.pdb /FS   /MD /GR" -o "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\x64\Release\cuda_kernel.cuh.obj" "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" 
+  
+  C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2>"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\bin\nvcc.exe" -gencode=arch=compute_52,code=\"sm_52,compute_52\" --use-local-env -ccbin "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.30.30705\bin\HostX64\x64" -x cu   -I"C:\glm-master\glm-master" -I"C:\glfw-3.3.6\glfw-3.3.6\include" -I"C:\glew-2.1.0\glew-2.1.0\include" -I"C:\eigen-3.4.0\eigen-3.4.0" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src" -I"C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\ext\Discregrid\discregrid\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include" -I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include"     --keep-dir x64\Release  -maxrregcount=0  --machine 64 --compile -cudart static    -D_MBCS -DWIN32 -D_WINDOWS -DNDEBUG -D"CMAKE_INTDIR=\"Release\"" -Xcompiler "/EHsc /W3 /nologo /O2 /FdSPH_Simulator.dir\Release\vc143.pdb /FS   /MD /GR" -o "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\x64\Release\cuda_kernel.cu.obj" "C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu" 
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(83): warning #20012-D: __device__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(83): warning #20012-D: __host__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(84): warning #20012-D: __device__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(84): warning #20012-D: __host__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(124): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(124): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(223): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(223): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(233): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(233): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+  
+C:\glm-master\glm-master\glm\detail\type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(248): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(248): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail\type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+  cuda_kernel.cuh
+  cuda_kernel.cu
+  tmpxft_000025b8_00000000-7_cuda_kernel.cudafe1.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(68): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(82): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(95): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(112): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(132): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(159): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(165): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(186): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(189): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  tmpxft_000071b4_00000000-7_cuda_kernel.cudafe1.cpp
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(68): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(82): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(95): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(112): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(132): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(159): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(165): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(186): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(189): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(97): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+  Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(97): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(98): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(98): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(146): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec2.hpp(146): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(102): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(102): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(179): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec3.hpp(179): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(100): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(100): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(101): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(101): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(252): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_vec4.hpp(252): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x2.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat2x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x3.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat3x4.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x2.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x3.hpp(36): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __device__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_mat4x4.hpp(35): warning #20012-D: __host__ annotation is ignored on a function("mat") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(95): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(95): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(96): warning #20012-D: __device__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(96): warning #20012-D: __host__ annotation is ignored on a function("vec") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(132): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\detail/type_vec1.hpp(132): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(83): warning #20012-D: __device__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(83): warning #20012-D: __host__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(84): warning #20012-D: __device__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(84): warning #20012-D: __host__ annotation is ignored on a function("qua") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(124): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\glm-master\glm-master\glm\ext\../detail/type_quat.hpp(124): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1535): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("abs") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1535): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("abs") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1535): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1535): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1540): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("abs") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1540): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("abs") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1540): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1540): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1564): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1565): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1566): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1564): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1565): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1566): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1567): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1572): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1573): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1574): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("exp") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1572): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1573): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1574): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(1575): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(223): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(223): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(233): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(233): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(248): warning #20012-D: __host__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(248): warning #20012-D: __device__ annotation is ignored on a function("DenseStorage") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D: __host__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
+  
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(843): warning #177-D: variable "index" was declared but never referenced
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(110): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("run") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::real_impl<std::complex<T>>::run(const std::complex<T> &) [with T=float]" 
+  (1232): here
+              instantiation of "Eigen::internal::real_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::real(const Scalar &) [with Scalar=std::complex<float>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(110): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::real_impl<std::complex<T>>::run(const std::complex<T> &) [with T=float]" 
+  (1232): here
+              instantiation of "Eigen::internal::real_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::real(const Scalar &) [with Scalar=std::complex<float>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(158): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("run") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::imag_impl<std::complex<T>>::run(const std::complex<T> &) [with T=float]" 
+  (1253): here
+              instantiation of "Eigen::internal::imag_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::imag(const Scalar &) [with Scalar=std::complex<float>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(158): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::imag_impl<std::complex<T>>::run(const std::complex<T> &) [with T=float]" 
+  (1253): here
+              instantiation of "Eigen::internal::imag_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::imag(const Scalar &) [with Scalar=std::complex<float>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(58): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_multiply(const std::complex<T> &, const std::complex<T> &) [with T=float]" 
+  (234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(71): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_divide_fast(const std::complex<T> &, const std::complex<T> &) [with T=float]" 
+  (96): here
+              instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_divide(const std::complex<T> &, const std::complex<T> &) [with T=float]" 
+  (234): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(110): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("run") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::real_impl<std::complex<T>>::run(const std::complex<T> &) [with T=double]" 
+  (1232): here
+              instantiation of "Eigen::internal::real_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::real(const Scalar &) [with Scalar=std::complex<double>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(110): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::real_impl<std::complex<T>>::run(const std::complex<T> &) [with T=double]" 
+  (1232): here
+              instantiation of "Eigen::internal::real_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::real(const Scalar &) [with Scalar=std::complex<double>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(158): warning #20013-D: calling a constexpr __host__ function("imag") from a __host__ __device__ function("run") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::imag_impl<std::complex<T>>::run(const std::complex<T> &) [with T=double]" 
+  (1253): here
+              instantiation of "Eigen::internal::imag_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::imag(const Scalar &) [with Scalar=std::complex<double>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(158): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "T Eigen::internal::imag_impl<std::complex<T>>::run(const std::complex<T> &) [with T=double]" 
+  (1253): here
+              instantiation of "Eigen::internal::imag_retval<Eigen::internal::global_math_functions_filtering_base<Scalar, void>::type>::type Eigen::numext::imag(const Scalar &) [with Scalar=std::complex<double>]" 
+  C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(235): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(58): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_multiply(const std::complex<T> &, const std::complex<T> &) [with T=double]" 
+  (235): here
+  
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(71): warning #20015-D: calling a constexpr __host__ function from a __host__ __device__ function is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
+            detected during:
+              instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_divide_fast(const std::complex<T> &, const std::complex<T> &) [with T=double]" 
+  (96): here
+              instantiation of "std::complex<T> Eigen::complex_operator_detail::complex_divide(const std::complex<T> &, const std::complex<T> &) [with T=double]" 
+  (235): here
+  
+  main.cu
+  tmpxft_000070b4_00000000-7_main.cudafe1.cpp
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(83): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(85): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(86): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(87): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(88): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(89): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(90): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(91): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(92): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(93): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(94): warning C4068: unknown pragma 'diag_suppress'
+C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(95): warning C4068: unknown pragma 'diag_suppress'
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(38): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(68): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(82): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(95): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(112): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(132): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(159): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(165): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(186): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(189): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(94): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(194): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(188,17): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(195): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(234,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(236,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(238,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(240,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(242,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(255,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(258,23): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(291,68): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(293,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(295,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(297,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(299,13): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(315,22): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(318,24): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(343,72): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(354,15): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(396,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(397,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(407,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(408,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(409,13): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(525,16): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(855,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(891,27): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1186,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1225,70): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1310,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cpp(1327,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(232): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(234): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(236): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(238): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(240): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(258): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(261): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(291): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(310): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(358): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(359): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(370): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(371): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(372): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(496): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(537): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(958): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1001): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1085): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1102): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+     Creating library C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.lib and object C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.exp
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\Release\SPH_Simulator.exe

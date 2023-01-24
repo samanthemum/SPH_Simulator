@@ -127,10 +127,13 @@ struct Keyframe {
 };
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-const int matchpointNumber = 10;
+int matchpointNumber = 10;
+const int maxMatchpoints = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 const int minIterations = 10;
+float matchPointPosition[3];
+float matchPointRadius;
 bool CONTROL = true;
 
 // Kd tree and shape
@@ -225,8 +228,8 @@ void initParticleListAtRest() {
 
 	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle))));
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + maxMatchpoints) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + maxMatchpoints) * sizeof(Vec3f))));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube-ish shape for ease of access
@@ -293,9 +296,9 @@ void initParticleShape() {
 
 	// update the size of particles
 	Particle* shapeParticles;
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + maxMatchpoints) * sizeof(Particle))));
 	Vec3f* newPositions;
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + maxMatchpoints) * sizeof(Particle))));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// copy over old information
@@ -350,8 +353,8 @@ void initParticleList() {
 
 	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
-	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
-	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
+	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + maxMatchpoints) * sizeof(Particle)));
+	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + maxMatchpoints) * sizeof(Vec3f)));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube shape for ease of access
@@ -971,6 +974,30 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		if (ImGui::BeginCombo("  ", NULL)) {
 			ImGui::SliderFloat("Time Per Step", &TIMESTEP, 0.0f, 0.05f);
 			ImGui::SliderInt("Steps Per Kd-Tree Update", &steps_per_update, 1, 20);
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Add Matchpoint");
+		if (ImGui::BeginCombo("       ", NULL)) {
+			ImGui::InputFloat3("Matchpoint Position", matchPointPosition);
+			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 2.0f);
+			if (ImGui::Button("Add Matchpoint")) {
+				// initialize a particle to act as a matchpoint
+				Particle matchPoint;
+				glm::vec3 mPosition = glm::vec3(matchPointPosition[0], matchPointPosition[1], matchPointPosition[2]);
+				matchPoint.setPosition(mPosition);
+				matchPoint.setRadius(matchPointRadius);
+				matchPoint.setMass(1.0f);
+				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				matchPoint.setIsMatchpoint(true);
+
+				// Add it to the particle list
+				defaultMatchpoints.push_back(matchPoint);
+				particleList[particleCount + matchpointNumber] = matchPoint;
+				matchpointNumber++;
+			}
 			ImGui::EndCombo();
 		}
 

@@ -674,6 +674,33 @@ void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->popMatrix();
 }
 
+// draw matchpoint on the shared pointer
+void drawMatchpoints(shared_ptr<MatrixStack>& MV) {
+	MV->pushMatrix();
+
+	// color particles blue because water
+	glUniform3f(prog->getUniform("kd"), 1.0f, 0.0f, .0f);
+	glUniform3f(prog->getUniform("ka"), 1.0f, 0.0f, .0f);
+	glUniform3f(prog->getUniform("ks"), 0.0f, 0.3f, .7f);
+	glUniform3f(prog->getUniform("lightPos"), 20.0f, 20.0f, -20.0f);
+	MV->scale(scaleStructure);
+
+	// draw each particle
+	for (int i = 0; i < matchpointNumber; i++) {
+		MV->pushMatrix();
+		MV->translate(particleList[particleCount + i].getPosition());
+
+		float radius = particleList[particleCount + i].getRadius();
+		glm::vec3 matchpointScale = glm::vec3(radius, radius, radius);
+		MV->scale(matchpointScale);
+		// calculate blue and green based on particle velocity
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		lowResSphere->draw(prog);
+		MV->popMatrix();
+	}
+	MV->popMatrix();
+}
+
 // render a frame
 void render()
 {
@@ -702,7 +729,13 @@ void render()
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
 	// draw particles
-	drawParticles(MV);
+	if (keyToggles[unsigned('c')] % 2 == 0) {
+		drawParticles(MV);
+	}
+	else {
+		drawMatchpoints(MV);
+	}
+	
 
 	// Unbind the program
 	prog->unbind();

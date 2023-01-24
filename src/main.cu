@@ -91,8 +91,8 @@ int particleCount = LOW_RES_COUNT;
 int previousParticleCount = LOW_RES_COUNT;
 int particleForShape = LOW_RES_COUNT_SHAPE;
 float LOW_RES_RADIUS = 1.0f;
-float MID_RES_RADIUS = (2. / 3.f);
-float HIGH_RES_RADIUS = .5f;
+float MID_RES_RADIUS = .5f;
+float HIGH_RES_RADIUS = (1.f / 3.f);
 glm::vec3 scaleStructure = glm::vec3(.05f, .05f, .05f);
 glm::vec3 scaleParticles = glm::vec3(.5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount), .5f * (resolutionConstant / particleCount));
 Particle* particleList;
@@ -127,10 +127,11 @@ struct Keyframe {
 };
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-const int matchpointNumber = 50;
+const int matchpointNumber = 10;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
-bool CONTROL = false;
+const int minIterations = 10;
+bool CONTROL = true;
 
 // Kd tree and shape
 int steps = 0;
@@ -493,9 +494,9 @@ void initMatchPoints() {
 		// initialize a particle to act as a matchpoint
 		Particle matchPoint;
 		matchPoint.setPosition(particleList[particleIndex].getPosition());
-		float radius = rand() % 5 + 1;
+		float radius = rand() % 3 + 1;
 		matchPoint.setRadius(radius);
-		matchPoint.setMass(MASS);
+		matchPoint.setMass(1.0f);
 		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
 		particlePositions[particleCount + i] = matchpointPosition;
 		matchPoint.setIsMatchpoint(true);
@@ -728,6 +729,20 @@ float sampleDensityForMatchpoint(const Particle x) {
 	return sample / normalizer;
 }
 
+// samples the velocity around a given matchpoint
+// uses the same kernel from the original Keyser pape
+glm::vec3 sampleVelocityForMatchpoint(const Particle x) {
+	glm::vec3 sample = glm::vec3(0.f, 0.f, 0.f);
+	float normalizer = 0;
+	for (int j = 0; j < x.numNeighbors; j++) {
+		int index = x.neighborIndices[j];
+		sample += (particleList[index].getVelocity() * kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
+		normalizer += (kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
+	}
+
+	return sample / normalizer;
+}
+
 // set neighbors for all particles within the given indices
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
@@ -750,6 +765,9 @@ void updateMatchPoints(float time) {
 
 		// calculate density for matchpoint using the sampling method
 		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(defaultMatchpoints.at(i)));
+
+		// calculate velocity for matchpoint using the sampling method
+		defaultMatchpoints.at(i).setVelocity(sampleVelocityForMatchpoint(defaultMatchpoints.at(i)));
 
 		// add the match point to the keyframe
 		k.matchpoints.push_back(defaultMatchpoints.at(i));
@@ -805,8 +823,9 @@ void updateFluid(float time) {
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
 			// loop through matchpoints
-			int iterations = 0;
+			
 			for (int i = 0; i < matchpointNumber; i++) {
+				int iterations = 0;
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
 
 				// 1. Sample high resolution model at point
@@ -822,11 +841,17 @@ void updateFluid(float time) {
 				// calculate high res density
 				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
 
+				// calculate high res velocity
+				highResSample.setVelocity(sampleVelocityForMatchpoint(highResSample));
+
 				// 2. Calculate error between high and low res value
 				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
-				float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+				float absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
-				while (absError > permittedError) {
+				glm::vec3 velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
+				float absError_velocity = (matchpoint.getVelocity() - highResSample.getVelocity()).length() / matchpoint.getVelocity().length();
+
+				while (iterations < minIterations && (absError_density > permittedError || absError_velocity > permittedError)) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
@@ -844,15 +869,23 @@ void updateFluid(float time) {
 						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], highResSample.getIsMatchPoint());
 
 						float newDensity = particleList[j].getDensity() + densityError * (gravity_kernel_value / totalError);
+						glm::vec3 newVelocity = particleList[j].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+
 						particleList[j].setDensity(newDensity);
+						particleList[j].setVelocity(newVelocity);
 					}
 
 					// update sampled density and error
 					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+					highResSample.setVelocity(sampleVelocityForMatchpoint(highResSample));
 
 					// update error
-					float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
-					float absError = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+					densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+					absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+
+					velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
+					absError_velocity = (matchpoint.getVelocity() - highResSample.getVelocity()).length() / matchpoint.getVelocity().length();
+
 					iterations++;
 				}
 			}
@@ -958,7 +991,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
-			TIMESTEP = .01f;
+			TIMESTEP = .0125f;
 			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
 			if (selected_scene == Scene::DAM_BREAK) {
@@ -1001,7 +1034,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
-			TIMESTEP = .01f;
+			TIMESTEP = .0125f;
 			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
 			if (selected_scene == Scene::DAM_BREAK) {

@@ -127,10 +127,13 @@ struct Keyframe {
 };
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-const int matchpointNumber = 10;
+int matchpointNumber = 10;
+const int maxMatchpoints = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 const int minIterations = 10;
+float matchPointPosition[3];
+float matchPointRadius;
 bool CONTROL = true;
 
 // Kd tree and shape
@@ -225,8 +228,8 @@ void initParticleListAtRest() {
 
 	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle))));
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + maxMatchpoints) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + maxMatchpoints) * sizeof(Vec3f))));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube-ish shape for ease of access
@@ -293,9 +296,9 @@ void initParticleShape() {
 
 	// update the size of particles
 	Particle* shapeParticles;
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&shapeParticles), ((particleCount + usedParticles + maxMatchpoints) * sizeof(Particle))));
 	Vec3f* newPositions;
-	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + matchpointNumber) * sizeof(Particle))));
+	gpuErrchk(cudaMallocManaged(reinterpret_cast<void**>(&newPositions), ((particleCount + usedParticles + maxMatchpoints) * sizeof(Particle))));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// copy over old information
@@ -350,8 +353,8 @@ void initParticleList() {
 
 	// Allocate new memory
 	gpuErrchk(cudaDeviceSynchronize());
-	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + matchpointNumber) * sizeof(Particle)));
-	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + matchpointNumber) * sizeof(Vec3f)));
+	cudaMallocManaged(reinterpret_cast<void**>(&particleList), ((particleCount + maxMatchpoints) * sizeof(Particle)));
+	cudaMallocManaged(reinterpret_cast<void**>(&particlePositions), ((particleCount + maxMatchpoints) * sizeof(Vec3f)));
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// put them in a cube shape for ease of access
@@ -675,6 +678,33 @@ void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->popMatrix();
 }
 
+// draw matchpoint on the shared pointer
+void drawMatchpoints(shared_ptr<MatrixStack>& MV) {
+	MV->pushMatrix();
+
+	// color particles blue because water
+	glUniform3f(prog->getUniform("kd"), 1.0f, 0.0f, .0f);
+	glUniform3f(prog->getUniform("ka"), 1.0f, 0.0f, .0f);
+	glUniform3f(prog->getUniform("ks"), 0.0f, 0.3f, .7f);
+	glUniform3f(prog->getUniform("lightPos"), 20.0f, 20.0f, -20.0f);
+	MV->scale(scaleStructure);
+
+	// draw each particle
+	for (int i = 0; i < matchpointNumber; i++) {
+		MV->pushMatrix();
+		MV->translate(particleList[particleCount + i].getPosition());
+
+		float radius = particleList[particleCount + i].getRadius();
+		glm::vec3 matchpointScale = glm::vec3(radius, radius, radius);
+		MV->scale(matchpointScale);
+		// calculate blue and green based on particle velocity
+		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
+		lowResSphere->draw(prog);
+		MV->popMatrix();
+	}
+	MV->popMatrix();
+}
+
 // render a frame
 void render()
 {
@@ -703,7 +733,13 @@ void render()
 	glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 
 	// draw particles
-	drawParticles(MV);
+	if (keyToggles[unsigned('c')] % 2 == 0) {
+		drawParticles(MV);
+	}
+	else {
+		drawMatchpoints(MV);
+	}
+	
 
 	// Unbind the program
 	prog->unbind();
@@ -861,9 +897,9 @@ void updateFluid(float time) {
 					}
 
 					// 4. Apply control for each neighbor
-					if (highResSample.numNeighbors == 0) {
+					/*if (highResSample.numNeighbors == 0) {
 						cout << "It has no neighbors" << endl;
-					}
+					}*/
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
 						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], highResSample.getIsMatchPoint());
@@ -938,6 +974,30 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		if (ImGui::BeginCombo("  ", NULL)) {
 			ImGui::SliderFloat("Time Per Step", &TIMESTEP, 0.0f, 0.05f);
 			ImGui::SliderInt("Steps Per Kd-Tree Update", &steps_per_update, 1, 20);
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Add Matchpoint");
+		if (ImGui::BeginCombo("       ", NULL)) {
+			ImGui::InputFloat3("Matchpoint Position", matchPointPosition);
+			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 10.0f);
+			if (ImGui::Button("Add Matchpoint")) {
+				// initialize a particle to act as a matchpoint
+				Particle matchPoint;
+				glm::vec3 mPosition = glm::vec3(matchPointPosition[0], matchPointPosition[1], matchPointPosition[2]);
+				matchPoint.setPosition(mPosition);
+				matchPoint.setRadius(matchPointRadius);
+				matchPoint.setMass(1.0f);
+				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				matchPoint.setIsMatchpoint(true);
+
+				// Add it to the particle list
+				defaultMatchpoints.push_back(matchPoint);
+				particleList[particleCount + matchpointNumber] = matchPoint;
+				matchpointNumber++;
+			}
 			ImGui::EndCombo();
 		}
 

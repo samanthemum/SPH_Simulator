@@ -897,9 +897,9 @@ void updateFluid(float time) {
 					}
 
 					// 4. Apply control for each neighbor
-					if (highResSample.numNeighbors == 0) {
+					/*if (highResSample.numNeighbors == 0) {
 						cout << "It has no neighbors" << endl;
-					}
+					}*/
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
 						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], highResSample.getIsMatchPoint());
@@ -981,7 +981,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		ImGui::Text("Add Matchpoint");
 		if (ImGui::BeginCombo("       ", NULL)) {
 			ImGui::InputFloat3("Matchpoint Position", matchPointPosition);
-			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 2.0f);
+			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 10.0f);
 			if (ImGui::Button("Add Matchpoint")) {
 				// initialize a particle to act as a matchpoint
 				Particle matchPoint;

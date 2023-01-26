@@ -49,7 +49,7 @@ class Kernel {
 			}
 
 			// otherwise
-			float kernelValue = exp(-1 * radius * powf(length(xi.getPosition() - xj.getPosition()), 2.0f));
+			float kernelValue = exp(-1.f * radius * powf(length(xi.getPosition() - xj.getPosition()), 2.0f));
 			return kernelValue;
 		}
 

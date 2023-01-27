@@ -317,8 +317,6 @@ C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D:
   
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/DenseStorage.h(249): warning #20012-D: __device__ annotation is ignored on a function("operator=") that is explicitly defaulted on its first declaration
   
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(942): warning #177-D: variable "index" was declared but never referenced
-  
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/MathFunctions.h(110): warning #20013-D: calling a constexpr __host__ function("real") from a __host__ __device__ function("run") is not allowed. The experimental flag '--expt-relaxed-constexpr' can be used to allow this.
             detected during:
               instantiation of "T Eigen::internal::real_impl<std::complex<T>>::run(const std::complex<T> &) [with T=float]" 
@@ -398,7 +396,7 @@ C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(71): warning #2001
   (235): here
   
   main.cu
-  tmpxft_000079f8_00000000-7_main.cudafe1.cpp
+  tmpxft_000059c0_00000000-7_main.cudafe1.cpp
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
@@ -661,10 +659,10 @@ C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(376): w
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(500): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(542): warning C4018: '<': signed/unsigned mismatch
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(737): warning C4804: '%': unsafe use of type 'bool' in operation
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1103): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1146): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1230): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1247): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1104): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1147): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1231): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1248): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
      Creating library C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.lib and object C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.exp
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\Release\SPH_Simulator.exe

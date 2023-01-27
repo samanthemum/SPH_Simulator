@@ -131,7 +131,7 @@ int matchpointNumber = 10;
 const int maxMatchpoints = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
-const int minIterations = 20;
+const int minIterations = 50;
 float matchPointPosition[3];
 float matchPointRadius;
 bool CONTROL = true;
@@ -517,7 +517,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	// float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
 	float radius = xIndex >= particleCount ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
 
 	// free old neighbors, if there
 	if (x.neighborIndices != nullptr) {
@@ -930,7 +930,6 @@ void updateFluid(float time) {
 						int index = highResSample.neighborIndices[j];
 						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
 						totalError += powf(gravity_kernel_value, 2.0f);
-						cout << "Total error denominator is " << totalError << endl;
 					}
 					cout << "Total error denominator is " << totalError << endl;
 
@@ -940,18 +939,20 @@ void updateFluid(float time) {
 					}*/
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], true);
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+
 						if (gravity_kernel_value / totalError == 0) {
 							cout << "Function has no effect!" << endl;
 						}
 
-						float newDensity = particleList[j].getDensity() + (densityError * (gravity_kernel_value / totalError));
-						glm::vec3 newVelocity = particleList[j].getVelocity() + velocityError * (gravity_kernel_value / totalError);
-						glm::vec3 newCurl = particleList[j].getCurl() + (gravity_kernel_value / totalError) * glm::cross(curlError, highResSample.getPosition() - particleList[i].getPosition());
 
-						particleList[j].setDensity(newDensity);
-						particleList[j].setVelocity(newVelocity);
-						particleList[j].setCurl(newCurl);
+						float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
+						glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+						glm::vec3 newCurl = particleList[index].getCurl() + (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
+
+						particleList[index].setDensity(newDensity);
+						particleList[index].setVelocity(newVelocity);
+						particleList[index].setCurl(newCurl);
 					}
 
 					// update sampled density and error

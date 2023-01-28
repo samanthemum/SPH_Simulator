@@ -921,12 +921,12 @@ void updateFluid(float time) {
 				glm::vec3 curlError = matchpoint.getMass() * (matchpoint.getCurl() - highResSample.getCurl());
 				float absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
 
-				cout << "Match point mass is " << matchpoint.getMass() << endl;
+				/*cout << "Match point mass is " << matchpoint.getMass() << endl;
 
 				cout << "Raw Density error is " << densityError << endl;
 				cout << "Initial Density error is " << absError_density << endl;
 				cout << "Initial Velocity error is " << absError_velocity << endl;
-				cout << "Initial Curl error is " << absError_curl << endl;
+				cout << "Initial Curl error is " << absError_curl << endl;*/
 
 				while (iterations < minIterations && (absError_density > permittedError || absError_velocity > permittedError || absError_curl > permittedError)) {
 					// 3. Calcuate G'(r, x)
@@ -934,9 +934,10 @@ void updateFluid(float time) {
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
 						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+						
 						totalError += powf(gravity_kernel_value, 2.0f);
 					}
-					cout << "Total error denominator is " << totalError << endl;
+					/*cout << "Total error denominator is " << totalError << endl;*/
 
 					// 4. Apply control for each neighbor
 					/*if (highResSample.numNeighbors == 0) {
@@ -962,6 +963,14 @@ void updateFluid(float time) {
 							particleList[index].setCurl(newCurl);
 						}
 					}
+					else {
+						for (int j = 0; j < highResSample.numNeighbors; j++) {
+							int index = highResSample.neighborIndices[j];
+							float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+							/*cout << "gravity value is " << gravity_kernel_value << endl;*/
+						}
+						
+					}
 					
 
 					// update sampled density and error
@@ -982,10 +991,10 @@ void updateFluid(float time) {
 					iterations++;
 				}
 
-				cout << "Raw Density error is " << densityError << endl;
+				/*cout << "Raw Density error is " << densityError << endl;
 				cout << "Final Density error is " << absError_density << endl;
 				cout << "Final Velocity error is " << absError_velocity << endl;
-				cout << "Final Curl error is " << absError_curl << endl;
+				cout << "Final Curl error is " << absError_curl << endl;*/
 			}
 
 			nextKeyframe++;

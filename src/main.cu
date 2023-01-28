@@ -131,7 +131,7 @@ int matchpointNumber = 10;
 const int maxMatchpoints = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
-const int minIterations = 50;
+const int minIterations = 100;
 float matchPointPosition[3];
 float matchPointRadius;
 bool CONTROL = true;
@@ -854,18 +854,23 @@ void updateFluid(float time) {
 
 	// update density
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update surface normal
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update color field laplacian
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update the pressures
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// calculate acceleration
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update positions
 	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
@@ -895,7 +900,7 @@ void updateFluid(float time) {
 				// get high res sample neighbors
 				particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
 				setNeighbors(highResSample, particleCount + i);
-				cout << "Sample has " << highResSample.numNeighbors << endl;
+				// cout << "Sample has " << highResSample.numNeighbors << endl;
 
 				// calculate high res density
 				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
@@ -937,23 +942,27 @@ void updateFluid(float time) {
 					/*if (highResSample.numNeighbors == 0) {
 						cout << "It has no neighbors" << endl;
 					}*/
-					for (int j = 0; j < highResSample.numNeighbors; j++) {
-						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+					if (totalError >= 0.00001f) {
+						for (int j = 0; j < highResSample.numNeighbors; j++) {
+							int index = highResSample.neighborIndices[j];
+							float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
 
-						if (gravity_kernel_value / totalError == 0) {
-							cout << "Function has no effect!" << endl;
+							if (gravity_kernel_value / totalError == 0) {
+								/*cout << "Function has no effect!" << endl*/;
+							}
+
+
+							float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
+							glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+							newVelocity += (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
+							glm::vec3 newCurl = particleList[index].getCurl() + (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
+
+							particleList[index].setDensity(newDensity);
+							particleList[index].setVelocity(newVelocity);
+							particleList[index].setCurl(newCurl);
 						}
-
-
-						float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
-						glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
-						glm::vec3 newCurl = particleList[index].getCurl() + (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
-
-						particleList[index].setDensity(newDensity);
-						particleList[index].setVelocity(newVelocity);
-						particleList[index].setCurl(newCurl);
 					}
+					
 
 					// update sampled density and error
 					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));

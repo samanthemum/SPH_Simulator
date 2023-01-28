@@ -46,10 +46,12 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
 
             float outside_term = particleList[index].getMass() * 1 / particleList[index].getDensity();
             surfaceField += (outside_term * kernel->polyKernelGradient(particleList[threadID], particleList[index]));
+            // TODO: find bug where this flips out with manual matchpoints
             if (surfaceField.x != surfaceField.x) {
-                printf("The threadID is %i\n", threadID);
+                // printf("The threadID is %i\n", threadID);
                 printf("The current neighbor is %i\n", index);
-                printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
+                printf("The current neighbor density is %i\n", particleList[index].getDensity());
+                // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
             }
         }
        

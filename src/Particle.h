@@ -26,6 +26,7 @@ class Particle {
 		// setter functions
 		CUDA_CALLABLE_MEMBER void setPosition(glm::vec3 pos) { this->position = pos; };
 		CUDA_CALLABLE_MEMBER void setVelocity(glm::vec3 v) { this->velocity = v; };
+		CUDA_CALLABLE_MEMBER void setCurl(glm::vec3 v) { this->curl = v; };
 		CUDA_CALLABLE_MEMBER void setAcceleration(glm::vec3 a) { this->acceleration = a; };
 		CUDA_CALLABLE_MEMBER void setSurfaceNormal(glm::vec3 newNormal) { this->surfaceNormal = newNormal; };
 		CUDA_CALLABLE_MEMBER void setColorFieldLaplacian(float newColor) { this->colorFieldLaplacian = newColor; };
@@ -85,6 +86,7 @@ class Particle {
 		// getter functions
 		CUDA_CALLABLE_MEMBER glm::vec3 getPosition() const { return position; };
 		CUDA_CALLABLE_MEMBER glm::vec3 getVelocity() const { return velocity; };
+		CUDA_CALLABLE_MEMBER glm::vec3 getCurl() const { return curl; };
 		CUDA_CALLABLE_MEMBER glm::vec3 getAcceleration() const { return acceleration; };
 		CUDA_CALLABLE_MEMBER glm::vec3 getSurfaceNormal() const { return surfaceNormal; }
 		CUDA_CALLABLE_MEMBER float getColorFieldLaplacian() const { return colorFieldLaplacian; }
@@ -103,6 +105,7 @@ class Particle {
 	private:
 		glm::vec3 position;
 		glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::vec3 curl = glm::vec3(0.f, 0.f, 0.f);
 		glm::vec3 acceleration;
 		glm::vec3 surfaceNormal;
 		float colorFieldLaplacian;

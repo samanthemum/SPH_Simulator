@@ -131,7 +131,7 @@ int matchpointNumber = 10;
 const int maxMatchpoints = 50;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
-const int minIterations = 10;
+const int minIterations = 100;
 float matchPointPosition[3];
 float matchPointRadius;
 bool CONTROL = true;
@@ -514,9 +514,10 @@ void initMatchPoints() {
 void setNeighbors(Particle& x, int xIndex) {
 
 	// Get all neighbors within a radius
-	float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	// float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
+	float radius = xIndex >= particleCount ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(2 * radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
 
 	// free old neighbors, if there
 	if (x.neighborIndices != nullptr) {
@@ -758,26 +759,43 @@ float sampleDensityForMatchpoint(const Particle x) {
 	float normalizer = 0;
 	for (int j = 0; j < x.numNeighbors; j++) {
 		int index = x.neighborIndices[j];
-		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
-		normalizer += (kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
+		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], true));
+		normalizer += (kernel->samplingKernel(x, particleList[index], true));
 	}
 
 	return sample / normalizer;
 }
 
-// samples the velocity around a given matchpoint
+// samples the velocity (direction) around a given matchpoint
 // uses the same kernel from the original Keyser pape
 glm::vec3 sampleVelocityForMatchpoint(const Particle x) {
 	glm::vec3 sample = glm::vec3(0.f, 0.f, 0.f);
 	float normalizer = 0;
 	for (int j = 0; j < x.numNeighbors; j++) {
 		int index = x.neighborIndices[j];
-		sample += (particleList[index].getVelocity() * kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
-		normalizer += (kernel->samplingKernel(x, particleList[index], x.getIsMatchPoint()));
+		sample += (particleList[index].getVelocity() * kernel->samplingKernel(x, particleList[index], true));
+		normalizer += (kernel->samplingKernel(x, particleList[index], true));
 	}
 
 	return sample / normalizer;
 }
+
+// samples the velocity (curl) around a given matchpoint
+// uses the same kernel from the original Keyser pape
+glm::vec3 sampleCurlForMatchpoint(const Particle x) {
+	glm::vec3 sample = glm::vec3(0.f, 0.f, 0.f);
+	float normalizer = 0;
+	for (int j = 0; j < x.numNeighbors; j++) {
+		int index = x.neighborIndices[j];
+		glm::vec3 velocity_direction = particleList[index].getVelocity() * kernel->samplingKernel(x, particleList[index], true);
+		glm::vec3 cross_product = glm::cross(velocity_direction, particleList[index].getPosition() - x.getPosition());
+		sample += cross_product;
+		normalizer += (kernel->samplingKernel(x, particleList[index], true));
+	}
+
+	return sample / normalizer;
+}
+
 
 // set neighbors for all particles within the given indices
 void setNeighborsForParticles(int start_index, int end_index) {
@@ -804,6 +822,9 @@ void updateMatchPoints(float time) {
 
 		// calculate velocity for matchpoint using the sampling method
 		defaultMatchpoints.at(i).setVelocity(sampleVelocityForMatchpoint(defaultMatchpoints.at(i)));
+
+		// calculate curl for matchpoint using the sampling method
+		defaultMatchpoints.at(i).setCurl(sampleCurlForMatchpoint(defaultMatchpoints.at(i)));
 
 		// add the match point to the keyframe
 		k.matchpoints.push_back(defaultMatchpoints.at(i));
@@ -833,18 +854,106 @@ void updateFluid(float time) {
 
 	// update density
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
+
+	//if (!recording && CONTROL) {
+	//	if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
+	//		// loop through matchpoints
+
+	//		for (int i = 0; i < matchpointNumber; i++) {
+	//			int iterations = 0;
+	//			Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
+
+	//			// 1. Sample high resolution model at point
+	//			Particle highResSample;
+	//			highResSample.setPosition(keyframes.at(nextKeyframe).matchpoints.at(i).getPosition());
+	//			highResSample.setRadius(keyframes.at(nextKeyframe).matchpoints.at(i).getRadius());
+	//			highResSample.setMass(keyframes.at(nextKeyframe).matchpoints.at(i).getMass());
+	//			highResSample.setIsMatchpoint(true);
+
+	//			// get high res sample neighbors
+	//			particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
+	//			setNeighbors(highResSample, particleCount + i);
+	//			// cout << "Sample has " << highResSample.numNeighbors << endl;
+
+	//			// calculate high res density
+	//			highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+	//			// 2. Calculate error between high and low res value
+	//			float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+	//			float absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+
+
+	//			/*cout << "Match point mass is " << matchpoint.getMass() << endl;
+
+	//			cout << "Raw Density error is " << densityError << endl;
+	//			cout << "Initial Density error is " << absError_density << endl;
+	//			cout << "Initial Velocity error is " << absError_velocity << endl;
+	//			cout << "Initial Curl error is " << absError_curl << endl;*/
+
+	//			while (iterations < minIterations && (absError_density > permittedError)) {
+	//				// 3. Calcuate G'(r, x)
+	//				float totalError = 0;
+	//				for (int j = 0; j < highResSample.numNeighbors; j++) {
+	//					int index = highResSample.neighborIndices[j];
+	//					float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+
+	//					totalError += powf(gravity_kernel_value, 2.0f);
+	//				}
+
+	//				// 4. Apply control for each neighbor
+	//				/*if (highResSample.numNeighbors == 0) {
+	//					cout << "It has no neighbors" << endl;
+	//				}*/
+	//				if (totalError >= 0.00001f) {
+	//					for (int j = 0; j < highResSample.numNeighbors; j++) {
+	//						int index = highResSample.neighborIndices[j];
+	//						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+
+	//						if (gravity_kernel_value / totalError == 0) {
+	//							/*cout << "Function has no effect!" << endl*/;
+	//						}
+
+
+	//						float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
+	//						particleList[index].setDensity(newDensity);
+	//					}
+	//				}
+
+
+	//				// update sampled density and error
+	//				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+
+	//				// update error
+	//				densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
+	//				absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
+
+	//				iterations++;
+	//			}
+
+	//			/*cout << "Raw Density error is " << densityError << endl;
+	//			cout << "Final Density error is " << absError_density << endl;
+	//			cout << "Final Velocity error is " << absError_velocity << endl;
+	//			cout << "Final Curl error is " << absError_curl << endl;*/
+	//		}
+	//	}
+	//}
 
 	// update surface normal
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update color field laplacian
 	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update the pressures
 	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// calculate acceleration
 	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
+	gpuErrchk(cudaDeviceSynchronize());
 
 	// update positions
 	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
@@ -869,10 +978,12 @@ void updateFluid(float time) {
 				highResSample.setPosition(keyframes.at(nextKeyframe).matchpoints.at(i).getPosition());
 				highResSample.setRadius(keyframes.at(nextKeyframe).matchpoints.at(i).getRadius());
 				highResSample.setMass(keyframes.at(nextKeyframe).matchpoints.at(i).getMass());
+				highResSample.setIsMatchpoint(true);
 
 				// get high res sample neighbors
 				particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
 				setNeighbors(highResSample, particleCount + i);
+				// cout << "Sample has " << highResSample.numNeighbors << endl;
 
 				// calculate high res density
 				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
@@ -880,50 +991,95 @@ void updateFluid(float time) {
 				// calculate high res velocity
 				highResSample.setVelocity(sampleVelocityForMatchpoint(highResSample));
 
+				// calculate high res curl
+				highResSample.setCurl(sampleCurlForMatchpoint(highResSample));
+
 				// 2. Calculate error between high and low res value
 				float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
 				float absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
 				glm::vec3 velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
-				float absError_velocity = (matchpoint.getVelocity() - highResSample.getVelocity()).length() / matchpoint.getVelocity().length();
+				float absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
 
-				while (iterations < minIterations && (absError_density > permittedError || absError_velocity > permittedError)) {
+				glm::vec3 curlError = matchpoint.getMass() * (matchpoint.getCurl() - highResSample.getCurl());
+				float absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
+
+				/*cout << "Match point mass is " << matchpoint.getMass() << endl;*/
+
+				/*cout << "Raw Density error is " << densityError << endl;
+				cout << "Sample Density is " << highResSample.getDensity() << endl;
+				cout << "Matchpoint Density is " << matchpoint.getDensity() << endl;
+				cout << "Initial Density error is " << absError_density << endl;
+				cout << "Initial Velocity error is " << absError_velocity << endl;
+				cout << "Initial Curl error is " << absError_curl << endl;*/
+
+				while (absError_velocity > permittedError) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], highResSample.getIsMatchPoint());
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+						
 						totalError += powf(gravity_kernel_value, 2.0f);
 					}
+					/*cout << "Total error denominator is " << totalError << endl;*/
 
 					// 4. Apply control for each neighbor
 					/*if (highResSample.numNeighbors == 0) {
 						cout << "It has no neighbors" << endl;
 					}*/
-					for (int j = 0; j < highResSample.numNeighbors; j++) {
-						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[j], highResSample.getIsMatchPoint());
+					if (totalError >= 0.00001f) {
+						for (int j = 0; j < highResSample.numNeighbors; j++) {
+							int index = highResSample.neighborIndices[j];
+							float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
 
-						float newDensity = particleList[j].getDensity() + densityError * (gravity_kernel_value / totalError);
-						glm::vec3 newVelocity = particleList[j].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+							if (gravity_kernel_value / totalError == 0) {
+								/*cout << "Function has no effect!" << endl*/;
+							}
 
-						particleList[j].setDensity(newDensity);
-						particleList[j].setVelocity(newVelocity);
+
+							float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
+							glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+							newVelocity += (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
+							glm::vec3 newCurl = particleList[index].getCurl() + (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
+
+							particleList[index].setDensity(newDensity);
+							particleList[index].setVelocity(newVelocity);
+							particleList[index].setCurl(newCurl);
+						}
 					}
+					else {
+						for (int j = 0; j < highResSample.numNeighbors; j++) {
+							int index = highResSample.neighborIndices[j];
+							float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+							cout << "gravity value is " << gravity_kernel_value << endl;
+						}
+						
+					}
+					
 
 					// update sampled density and error
 					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
 					highResSample.setVelocity(sampleVelocityForMatchpoint(highResSample));
+					highResSample.setCurl(sampleCurlForMatchpoint(highResSample));
 
 					// update error
 					densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
 					absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
 					velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
-					absError_velocity = (matchpoint.getVelocity() - highResSample.getVelocity()).length() / matchpoint.getVelocity().length();
+					absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
+
+					curlError = matchpoint.getMass() * (matchpoint.getCurl() - highResSample.getCurl());
+					absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
 
 					iterations++;
 				}
+
+				/*cout << "Raw Density error is " << densityError << endl;
+				cout << "Final Density error is " << absError_density << endl;
+				cout << "Final Velocity error is " << absError_velocity << endl;
+				cout << "Final Curl error is " << absError_curl << endl;*/
 			}
 
 			nextKeyframe++;

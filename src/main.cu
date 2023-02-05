@@ -128,7 +128,7 @@ struct Keyframe {
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
 int matchpointNumber = 10;
-const int maxMatchpoints = 50;
+const int maxMatchpoints = 10000;
 unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 const int minIterations = 100;
@@ -478,8 +478,8 @@ void initKdTree() {
 	}
 }
 
-// initialize the match points
-void initMatchPoints() {
+// initialize the match points in a uniform, random pattern
+void initMatchPoints_Random() {
 
 	// clear frames and old matchpoints
 	keyframes.clear();
@@ -507,6 +507,43 @@ void initMatchPoints() {
 		// Add it to the particle list
 		defaultMatchpoints.push_back(matchPoint);
 		particleList[particleCount + i] = matchPoint;
+	}
+}
+
+// initialize the matchpoints in a half grid
+void initMatchPoints_HalfGrid() {
+	// clear frames and old matchpoints
+	keyframes.clear();
+	defaultMatchpoints.clear();
+
+	// create a uniform random distribution
+	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
+	std::default_random_engine generator;
+
+	matchpointNumber = 0;
+	// x direction
+	for (int i = 0; i < 10; i++) {
+		// y direction
+		for (int j = 0; j < 30; j++) {
+			// z direction
+			for (int k = 0; k < 20; k++) {
+				Particle matchPoint;
+				glm::vec3 position = glm::vec3(i, j, k);
+				matchPoint.setPosition(position);
+				float radius = .5f;
+				matchPoint.setRadius(radius);
+				matchPoint.setMass(2.0f);
+				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				matchPoint.setIsMatchpoint(true);
+
+				// Add it to the particle list
+				defaultMatchpoints.push_back(matchPoint);
+				particleList[particleCount + matchpointNumber] = matchPoint;
+
+				matchpointNumber++;
+			}
+		}
 	}
 }
 
@@ -538,6 +575,9 @@ void setNeighbors(Particle& x, int xIndex) {
 
 	// set neighbors, ignoring matchpoints and self inclusion
 	x.numNeighbors = numPointsInRadius;
+	if (x.numNeighbors == Particle::maxNeighborsAllowed) {
+		cout << "Too many neighbors!" << endl;
+	}
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && info[i].index < particleCount) {
 			x.neighborIndices[i] = (int)info[i].index;
@@ -641,7 +681,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	initMatchPoints();
+	initMatchPoints_HalfGrid();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -738,6 +778,7 @@ void render()
 		drawParticles(MV);
 	}
 	else {
+		drawParticles(MV);
 		drawMatchpoints(MV);
 	}
 	
@@ -968,7 +1009,6 @@ void updateFluid(float time) {
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
 			// loop through matchpoints
-			
 			for (int i = 0; i < matchpointNumber; i++) {
 				int iterations = 0;
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
@@ -1013,7 +1053,7 @@ void updateFluid(float time) {
 				cout << "Initial Velocity error is " << absError_velocity << endl;
 				cout << "Initial Curl error is " << absError_curl << endl;*/
 
-				while (absError_velocity > permittedError) {
+				while (length(velocityError) > .00001f) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
@@ -1183,7 +1223,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			initMatchPoints();
+			initMatchPoints_HalfGrid();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);

@@ -44,9 +44,9 @@ class Kernel {
 			// if we're less than the max radius, don't do anything
 			float radius = useCustomRadius ? xi.getRadius() : getSmoothingRadius();
 
-			if (length(xi.getPosition() - xj.getPosition()) > radius) {
+			/*if (length(xi.getPosition() - xj.getPosition()) > radius) {
 				return 0;
-			}
+			}*/
 
 			// otherwise
 			float kernelValue = exp(-1.f * radius * powf(length(xi.getPosition() - xj.getPosition()), 2.0f));

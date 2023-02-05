@@ -97,7 +97,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
 
 		// neighbor members
-		static const short maxNeighborsAllowed = 500;
+		static const short maxNeighborsAllowed = 1000;
 		int* neighborIndices = nullptr;
 		int* device_neighborIndices = nullptr;
 		short numNeighbors;

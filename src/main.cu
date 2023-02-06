@@ -499,6 +499,7 @@ void initMatchPoints_Random() {
 		matchPoint.setPosition(particleList[particleIndex].getPosition());
 		float radius = rand() % 3 + 1;
 		matchPoint.setRadius(radius);
+		cout << "Set the radius to " << matchPoint.getRadius() << endl;
 		matchPoint.setMass(1.0f);
 		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
 		particlePositions[particleCount + i] = matchpointPosition;
@@ -681,7 +682,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	initMatchPoints_HalfGrid();
+	initMatchPoints_Random();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -818,6 +819,9 @@ glm::vec3 sampleVelocityForMatchpoint(const Particle x) {
 		normalizer += (kernel->samplingKernel(x, particleList[index], true));
 	}
 
+	if (normalizer == 0) {
+		return sample;
+	}
 	return sample / normalizer;
 }
 
@@ -832,6 +836,10 @@ glm::vec3 sampleCurlForMatchpoint(const Particle x) {
 		glm::vec3 cross_product = glm::cross(velocity_direction, particleList[index].getPosition() - x.getPosition());
 		sample += cross_product;
 		normalizer += (kernel->samplingKernel(x, particleList[index], true));
+	}
+
+	if (normalizer == 0) {
+		return sample;
 	}
 
 	return sample / normalizer;
@@ -859,6 +867,7 @@ void updateMatchPoints(float time) {
 
 		// set new matchpoint position
 		newMatchpoint.setPosition(defaultMatchpoints.at(i).getPosition());
+		newMatchpoint.setRadius(defaultMatchpoints.at(i).getRadius());
 
 		// set the neighbors for match point
 		setNeighbors(newMatchpoint, particleCount + i);
@@ -1012,12 +1021,13 @@ void updateFluid(float time) {
 	else if (CONTROL) {
 		// apply match point control
 		// 0. Figure out if we're at a keyframe time
-		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
+		if (nextKeyframe < keyframes.size() && (abs(keyframes.at(nextKeyframe).time - (timePassed + time)) < .001)) {
 			// loop through matchpoints
-			cout << "Updating match points" << endl;
+			cout << "Updating match points at time = " << (timePassed + time) << " on keyframe " << nextKeyframe << endl;
 			for (int i = 0; i < matchpointNumber; i++) {
 				int iterations = 0;
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
+				
 
 				// 1. Sample high resolution model at point
 				Particle highResSample;
@@ -1045,19 +1055,20 @@ void updateFluid(float time) {
 				float absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
 				glm::vec3 velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
-				float absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
+				// float absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
 
 				glm::vec3 curlError = matchpoint.getMass() * (matchpoint.getCurl() - highResSample.getCurl());
-				float absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
+				// float absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
 
 				/*cout << "Match point mass is " << matchpoint.getMass() << endl;*/
 
-				/*cout << "Raw Density error is " << densityError << endl;
-				cout << "Sample Density is " << highResSample.getDensity() << endl;
-				cout << "Matchpoint Density is " << matchpoint.getDensity() << endl;
-				cout << "Initial Density error is " << absError_density << endl;
-				cout << "Initial Velocity error is " << absError_velocity << endl;
-				cout << "Initial Curl error is " << absError_curl << endl;*/
+				//if (curlError.x != 0 || curlError.y != 0 || curlError.z != 0 || velocityError.x != 0) {
+				//	cout << "Raw Density error is " << densityError << endl;
+				//	cout << "Initial Density error is " << absError_density << endl;
+				//	cout << "Initial Velocity error x is " << velocityError.x << endl;
+				//	cout << "Initial Curl error x is " << curlError.x << endl;
+				//}
+				
 
 				while (length(velocityError) > .00001f) {
 					// 3. Calcuate G'(r, x)
@@ -1114,22 +1125,27 @@ void updateFluid(float time) {
 					absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
 
 					velocityError = matchpoint.getMass() * (matchpoint.getVelocity() - highResSample.getVelocity());
-					absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
+					// absError_velocity = length((matchpoint.getVelocity() - highResSample.getVelocity())) / length(matchpoint.getVelocity());
 
 					curlError = matchpoint.getMass() * (matchpoint.getCurl() - highResSample.getCurl());
-					absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
+					// absError_curl = length((matchpoint.getCurl() - highResSample.getCurl())) / length(matchpoint.getCurl());
 
 					iterations++;
 				}
 
-				/*cout << "Raw Density error is " << densityError << endl;
-				cout << "Final Density error is " << absError_density << endl;
-				cout << "Final Velocity error is " << absError_velocity << endl;
-				cout << "Final Curl error is " << absError_curl << endl;*/
+				/*if (curlError.x != 0 || curlError.y != 0 || curlError.z != 0) {
+					cout << "Raw Density error is " << densityError << endl;
+					cout << "Final Density error is " << absError_density << endl;
+					cout << "Final Velocity error x is " << velocityError.x << endl;
+					cout << "Final Curl error x is " << curlError.x << endl;
+				}*/
 			}
 
 			nextKeyframe++;
 		}
+		/*else {
+		cout << "No key frame found for time " << timePassed + time << ". Next viable keyframe is at time " << keyframes.at(nextKeyframe).time << endl;
+		}*/
 	}
 
 	steps++;
@@ -1229,7 +1245,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			initMatchPoints_HalfGrid();
+			initMatchPoints_Random();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);

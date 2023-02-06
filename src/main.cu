@@ -576,7 +576,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	// set neighbors, ignoring matchpoints and self inclusion
 	x.numNeighbors = numPointsInRadius;
 	if (x.numNeighbors == Particle::maxNeighborsAllowed) {
-		cout << "Too many neighbors!" << endl;
+		cout << xIndex << endl;
 	}
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && info[i].index < particleCount) {
@@ -854,21 +854,26 @@ void updateMatchPoints(float time) {
 
 	// TODO: add the matchpoints to tree and calculate each trait of match point
 	for (int i = 0; i < matchpointNumber; i++) {
+		Particle newMatchpoint;
 		particlePositions[particleCount + i] = Vec3f(defaultMatchpoints.at(i).getPosition().x, defaultMatchpoints.at(i).getPosition().y, defaultMatchpoints.at(i).getPosition().z);
+
+		// set new matchpoint position
+		newMatchpoint.setPosition(defaultMatchpoints.at(i).getPosition());
+
 		// set the neighbors for match point
-		setNeighbors(defaultMatchpoints.at(i), particleCount + i);
+		setNeighbors(newMatchpoint, particleCount + i);
 
 		// calculate density for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(defaultMatchpoints.at(i)));
+		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(newMatchpoint));
 
 		// calculate velocity for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setVelocity(sampleVelocityForMatchpoint(defaultMatchpoints.at(i)));
+		defaultMatchpoints.at(i).setVelocity(sampleVelocityForMatchpoint(newMatchpoint));
 
 		// calculate curl for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setCurl(sampleCurlForMatchpoint(defaultMatchpoints.at(i)));
+		defaultMatchpoints.at(i).setCurl(sampleCurlForMatchpoint(newMatchpoint));
 
 		// add the match point to the keyframe
-		k.matchpoints.push_back(defaultMatchpoints.at(i));
+		k.matchpoints.push_back(newMatchpoint);
 	}
 
 	keyframes.push_back(k);
@@ -1009,6 +1014,7 @@ void updateFluid(float time) {
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
 			// loop through matchpoints
+			cout << "Updating match points" << endl;
 			for (int i = 0; i < matchpointNumber; i++) {
 				int iterations = 0;
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);

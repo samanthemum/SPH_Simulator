@@ -17,6 +17,12 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
             density += (particleList[index].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[index], particleList[threadID].getIsMatchPoint()));
         }
         particleList[threadID].setDensity(density);
+        if (density > 100000 || density <= 0) {
+            // printf("The threadID is %i\n", threadID);
+            printf("The current thread is particle %i\n", threadID);
+            printf("The current neighbor is %i\n", particleList[threadID].getDensity());
+            // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
+        }
     }
 
     
@@ -49,7 +55,7 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
             // TODO: find bug where this flips out with manual matchpoints
             if (surfaceField.x != surfaceField.x) {
                 // printf("The threadID is %i\n", threadID);
-                printf("The current neighbor is %i\n", index);
+                printf("The current neighbor is %i for particle %i\n", index, threadID);
                 printf("The current neighbor density is %i\n", particleList[index].getDensity());
                 // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
             }

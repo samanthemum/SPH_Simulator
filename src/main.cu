@@ -207,7 +207,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 // Frees memory allocated through CUDA functions
 void freeCudaMemory() {
 	if (particleList != nullptr) {
-		for (int i = 0; i < previousParticleCount + matchpointNumber; i++) {
+		for (int i = 0; i < previousParticleCount + maxMatchpoints; i++) {
 			if (particleList[i].neighborIndices != nullptr) {
 				cudaFreeHost(particleList[i].neighborIndices);
 			}
@@ -577,7 +577,7 @@ void setNeighbors(Particle& x, int xIndex) {
 	// set neighbors, ignoring matchpoints and self inclusion
 	x.numNeighbors = numPointsInRadius;
 	if (x.numNeighbors == Particle::maxNeighborsAllowed) {
-		cout << xIndex << endl;
+		/*cout << xIndex << " with radius " << radius << " at particle count " << particleCount << endl;*/
 	}
 	for (int i = 0; i < numPointsInRadius; i++) {
 		if (xIndex != info[i].index && info[i].index < particleCount) {
@@ -682,7 +682,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	initMatchPoints_Random();
+	initMatchPoints_HalfGrid();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -873,13 +873,13 @@ void updateMatchPoints(float time) {
 		setNeighbors(newMatchpoint, particleCount + i);
 
 		// calculate density for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(newMatchpoint));
+		// defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(newMatchpoint));
 
 		// calculate velocity for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setVelocity(sampleVelocityForMatchpoint(newMatchpoint));
+		newMatchpoint.setVelocity(sampleVelocityForMatchpoint(newMatchpoint));
 
 		// calculate curl for matchpoint using the sampling method
-		defaultMatchpoints.at(i).setCurl(sampleCurlForMatchpoint(newMatchpoint));
+		newMatchpoint.setCurl(sampleCurlForMatchpoint(newMatchpoint));
 
 		// add the match point to the keyframe
 		k.matchpoints.push_back(newMatchpoint);
@@ -910,89 +910,11 @@ void updateFluid(float time) {
 	// update density
 	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
-
-	//if (!recording && CONTROL) {
-	//	if (nextKeyframe < keyframes.size() && keyframes.at(nextKeyframe).time == (timePassed + time)) {
-	//		// loop through matchpoints
-
-	//		for (int i = 0; i < matchpointNumber; i++) {
-	//			int iterations = 0;
-	//			Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
-
-	//			// 1. Sample high resolution model at point
-	//			Particle highResSample;
-	//			highResSample.setPosition(keyframes.at(nextKeyframe).matchpoints.at(i).getPosition());
-	//			highResSample.setRadius(keyframes.at(nextKeyframe).matchpoints.at(i).getRadius());
-	//			highResSample.setMass(keyframes.at(nextKeyframe).matchpoints.at(i).getMass());
-	//			highResSample.setIsMatchpoint(true);
-
-	//			// get high res sample neighbors
-	//			particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
-	//			setNeighbors(highResSample, particleCount + i);
-	//			// cout << "Sample has " << highResSample.numNeighbors << endl;
-
-	//			// calculate high res density
-	//			highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
-
-	//			// 2. Calculate error between high and low res value
-	//			float densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
-	//			float absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
-
-
-	//			/*cout << "Match point mass is " << matchpoint.getMass() << endl;
-
-	//			cout << "Raw Density error is " << densityError << endl;
-	//			cout << "Initial Density error is " << absError_density << endl;
-	//			cout << "Initial Velocity error is " << absError_velocity << endl;
-	//			cout << "Initial Curl error is " << absError_curl << endl;*/
-
-	//			while (iterations < minIterations && (absError_density > permittedError)) {
-	//				// 3. Calcuate G'(r, x)
-	//				float totalError = 0;
-	//				for (int j = 0; j < highResSample.numNeighbors; j++) {
-	//					int index = highResSample.neighborIndices[j];
-	//					float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
-
-	//					totalError += powf(gravity_kernel_value, 2.0f);
-	//				}
-
-	//				// 4. Apply control for each neighbor
-	//				/*if (highResSample.numNeighbors == 0) {
-	//					cout << "It has no neighbors" << endl;
-	//				}*/
-	//				if (totalError >= 0.00001f) {
-	//					for (int j = 0; j < highResSample.numNeighbors; j++) {
-	//						int index = highResSample.neighborIndices[j];
-	//						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
-
-	//						if (gravity_kernel_value / totalError == 0) {
-	//							/*cout << "Function has no effect!" << endl*/;
-	//						}
-
-
-	//						float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
-	//						particleList[index].setDensity(newDensity);
-	//					}
-	//				}
-
-
-	//				// update sampled density and error
-	//				highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
-
-	//				// update error
-	//				densityError = matchpoint.getMass() * (matchpoint.getDensity() - highResSample.getDensity());
-	//				absError_density = abs(((matchpoint.getDensity() - highResSample.getDensity()) / matchpoint.getDensity()));
-
-	//				iterations++;
-	//			}
-
-	//			/*cout << "Raw Density error is " << densityError << endl;
-	//			cout << "Final Density error is " << absError_density << endl;
-	//			cout << "Final Velocity error is " << absError_velocity << endl;
-	//			cout << "Final Curl error is " << absError_curl << endl;*/
-	//		}
-	//	}
-	//}
+	/*for (int i = 0; i < particleCount; i++) {
+		if (particleList[i].getDensity() < 0) {
+			cout << "Found bad value on the CPU" << endl;
+		}
+	}*/
 
 	// update surface normal
 	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
@@ -1015,7 +937,7 @@ void updateFluid(float time) {
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// do key frame stuff
-	if (!recording) {
+	if (!recording && CONTROL) {
 		updateMatchPoints(time);
 	}
 	else if (CONTROL) {
@@ -1070,7 +992,7 @@ void updateFluid(float time) {
 				//}
 				
 
-				while (length(velocityError) > .00001f) {
+				while (length(velocityError) > .00001f && length(curlError) > .00001f) {
 					// 3. Calcuate G'(r, x)
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
@@ -1095,14 +1017,14 @@ void updateFluid(float time) {
 							}
 
 
-							float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
+							// float newDensity = particleList[index].getDensity() + (densityError * (gravity_kernel_value / totalError));
 							glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
 							newVelocity += (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
 							glm::vec3 newCurl = particleList[index].getCurl() + (gravity_kernel_value / totalError) * glm::cross(velocityError, particleList[index].getPosition() - highResSample.getPosition());
 
-							particleList[index].setDensity(newDensity);
+							// particleList[index].setDensity(newDensity);
 							particleList[index].setVelocity(newVelocity);
-							particleList[index].setCurl(newCurl);
+							// particleList[index].setCurl(newCurl);
 						}
 					}
 					else {
@@ -1116,7 +1038,7 @@ void updateFluid(float time) {
 					
 
 					// update sampled density and error
-					highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
+					// highResSample.setDensity(sampleDensityForMatchpoint(highResSample));
 					highResSample.setVelocity(sampleVelocityForMatchpoint(highResSample));
 					highResSample.setCurl(sampleCurlForMatchpoint(highResSample));
 
@@ -1245,7 +1167,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			initMatchPoints_Random();
+			initMatchPoints_HalfGrid();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);

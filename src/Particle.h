@@ -35,6 +35,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER void setMass(float m) { this->mass = m; };
 		CUDA_CALLABLE_MEMBER void setRadius(float r) { this->radius = r; }
 		CUDA_CALLABLE_MEMBER void setIsMatchpoint(bool newMatchPointVal) { this->isMatchPoint = newMatchPointVal; }
+		CUDA_CALLABLE_MEMBER void setNeighborhoodTooSparse(bool val) { this->matchpointNeighborhoodTooSparse = val; }
 
 		// determine whether a particle will collide with a given plan from going to newPos from position
 		CUDA_CALLABLE_MEMBER static bool willCollideWithPlane(glm::vec3 position, glm::vec3 newPos, float radius, const Plane& p) {
@@ -95,6 +96,7 @@ class Particle {
 		CUDA_CALLABLE_MEMBER float getMass() const { return mass; };
 		CUDA_CALLABLE_MEMBER float getRadius() const { return radius; }
 		CUDA_CALLABLE_MEMBER bool getIsMatchPoint() const { return isMatchPoint; }
+		CUDA_CALLABLE_MEMBER bool getIsNeighborhoodTooSparse() const { return matchpointNeighborhoodTooSparse; }
 
 		// neighbor members
 		static const short maxNeighborsAllowed = 1000;
@@ -113,6 +115,7 @@ class Particle {
 		float mass;
 		float radius;
 		float pressure;
+		bool matchpointNeighborhoodTooSparse = false;
 		bool isMatchPoint = false;
 };
 #endif

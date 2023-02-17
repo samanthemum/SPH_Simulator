@@ -15,14 +15,18 @@ __global__ void setDensitiesForParticles(Particle* particleList, int particleCou
         for (int j = 0; j < particleList[threadID].numNeighbors; j++) {
             int index = particleList[threadID].device_neighborIndices[j];
             density += (particleList[index].getMass() * kernel->polyKernelFunction(particleList[threadID], particleList[index], particleList[threadID].getIsMatchPoint()));
+
+            // Uncomment for debug information :)
+            if (density != density) {
+                printf("Density: the current thread is particle %i\n", threadID);
+                printf("Density: the current neighbor is %i\n", index);
+                printf("Density: the particle velocity was %f %f %f \n", particleList[index].getVelocity().x, particleList[index].getVelocity().y, particleList[index].getVelocity().z);
+                printf("Density: the particle position was %f %f %f \n", particleList[index].getPosition().x, particleList[index].getPosition().y, particleList[index].getPosition().z);
+                // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
+            }
         }
         particleList[threadID].setDensity(density);
-        if (density > 100000 || density <= 0) {
-            // printf("The threadID is %i\n", threadID);
-            printf("The current thread is particle %i\n", threadID);
-            printf("The current neighbor is %i\n", particleList[threadID].getDensity());
-            // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
-        }
+        
     }
 
     
@@ -55,8 +59,8 @@ __global__ void surfaceNormalField(Particle* particleList, int particleCount, Ke
             // TODO: find bug where this flips out with manual matchpoints
             if (surfaceField.x != surfaceField.x) {
                 // printf("The threadID is %i\n", threadID);
-                printf("The current neighbor is %i for particle %i\n", index, threadID);
-                printf("The current neighbor density is %i\n", particleList[index].getDensity());
+                /*printf("The current neighbor is %i for particle %i\n", index, threadID);
+                printf("The current neighbor density is %f\n", particleList[index].getDensity());*/
                 // printf("The current neighbor is a matchpoint %i\n", particleList[index].getIsMatchPoint());
             }
         }
@@ -223,8 +227,21 @@ __global__ void updatePositionsAndVelocities(Particle* particleList, cy::Vec3f* 
             }
         }
 
+        if (newVelocity.x != newVelocity.x) {
+            glm::vec3 pressureForce = pressureGradient(threadID, particleList, kernel);
+
+            printf("Velocity: the current thread is particle %i\n", threadID);
+            printf("Velocity: the particle pressure force was %f %f %f \n", pressureForce.x, pressureForce.y, pressureForce.z);
+            printf("Velocity: the particle acceleration was %f %f %f \n", particleList[threadID].getAcceleration().x, particleList[threadID].getAcceleration().y, particleList[threadID].getAcceleration().z);
+            printf("Velocity: the particle velocity was %f %f %f \n", particleList[threadID].getVelocity().x, particleList[threadID].getVelocity().y, particleList[threadID].getVelocity().z);
+            printf("Velocity: the particle position was %f %f %f \n", particleList[threadID].getPosition().x, particleList[threadID].getPosition().y, particleList[threadID].getPosition().z);
+        }
+
         particleList[threadID].setVelocity(newVelocity);
         particleList[threadID].setPosition(newPosition);
+
+        
+        
 
         particlePositions[threadID].x = newPosition.x;
         particlePositions[threadID].y = newPosition.y;

@@ -34,6 +34,11 @@ class Kernel {
 				return 0;
 			}
 
+			// if somehow two particles have the exact same position, run
+			/*if (length(xi.getPosition() - xj.getPosition()) == 0.0f) {
+				return 0;
+			}*/
+
 			// otherwise
 			float outsideTerm = 315.0f / (M_PI * powf(radius, 9.0f) * 64.0f);
 			float insideTerm = powf(powf(radius, 2.0f) - powf(length(xi.getPosition() - xj.getPosition()), 2.0f), 3.0f);
@@ -77,6 +82,10 @@ class Kernel {
 				return 0;
 			}
 
+			if (length(xi.getPosition() - xj.getPosition()) == 0.0f) {
+				return 0;
+			}
+
 			// otherwise
 			glm::vec3 r = xi.getPosition() - xj.getPosition();
 			float outsideTerm = 3.0f * 315.0f * length(r) * length(r) / (M_PI * powf(getSmoothingRadius(), 9.0f) * 8.0f);
@@ -89,6 +98,10 @@ class Kernel {
 		CUDA_CALLABLE_MEMBER float viscosityKernelLaplacian(const Particle& xi, const Particle& xj) {
 			// if we're less than the max radius, don't do anything
 			if (length(xi.getPosition() - xj.getPosition()) > getSmoothingRadius()) {
+				return 0;
+			}
+
+			if (length(xi.getPosition() - xj.getPosition()) == 0.0f) {
 				return 0;
 			}
 

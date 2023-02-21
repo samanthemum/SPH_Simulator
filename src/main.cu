@@ -139,6 +139,8 @@ unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 const int minIterations = 100;
 float matchPointPosition[3];
+float minGridCoordinate[3];
+float maxGridCoordinate[3];
 float matchPointRadius;
 bool CONTROL = true;
 
@@ -596,8 +598,6 @@ void addMatchPoints_CustomGrid(glm::vec3 minCoord, glm::vec3 maxCoord, float rad
 	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
 	std::default_random_engine generator;
 
-	matchpointNumber = 0;
-
 	float width = maxCoord.x - minCoord.x;
 	float height = maxCoord.y - minCoord.y;
 	float depth = maxCoord.z - minCoord.z;
@@ -619,7 +619,6 @@ void addMatchPoints_CustomGrid(glm::vec3 minCoord, glm::vec3 maxCoord, float rad
 				position.z = minCoord.z + (2 * radius) * k;
 
 				matchPoint.setPosition(position);
-				float radius = 1.0f;
 				matchPoint.setRadius(radius);
 				matchPoint.setMass(2.0f);
 				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
@@ -1305,7 +1304,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 	// hides the GUI if space is pressed
 	if (!keyToggles[(unsigned)' ']) {
 
-		ImGui::SetNextWindowSize(ImVec2(840, 600));
+		ImGui::SetNextWindowSize(ImVec2(840, 700));
 		ImGui::Begin("Control Window");
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text("Press space to hide window\n");
@@ -1359,6 +1358,22 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				defaultMatchpoints.push_back(matchPoint);
 				particleList[particleCount + matchpointNumber] = matchPoint;
 				matchpointNumber++;
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Add Matchpoint Grid");
+		if (ImGui::BeginCombo("        ", NULL)) {
+			ImGui::InputFloat3("Min Grid Coord", minGridCoordinate);
+			ImGui::InputFloat3("Max Grid Coord", maxGridCoordinate);
+			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 10.0f);
+			if (ImGui::Button("Add Grid")) {
+				// initialize a particle to act as a matchpoint
+				glm::vec3 minCoord = glm::vec3(minGridCoordinate[0], minGridCoordinate[1], minGridCoordinate[2]);
+				glm::vec3 maxCoord = glm::vec3(maxGridCoordinate[0], maxGridCoordinate[1], maxGridCoordinate[2]);
+
+				addMatchPoints_CustomGrid(minCoord, maxCoord, matchPointRadius);
 			}
 			ImGui::EndCombo();
 		}

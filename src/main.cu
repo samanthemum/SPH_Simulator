@@ -139,6 +139,8 @@ unsigned int nextKeyframe = 0;
 const float permittedError = .01f;
 const int minIterations = 100;
 float matchPointPosition[3];
+float minGridCoordinate[3];
+float maxGridCoordinate[3];
 float matchPointRadius;
 bool CONTROL = true;
 
@@ -591,6 +593,48 @@ void initMatchPoints_HalfGrid_LargeRadii() {
 	}
 }
 
+// matchpoint custom grid
+void addMatchPoints_CustomGrid(glm::vec3 minCoord, glm::vec3 maxCoord, float radius) {
+	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
+	std::default_random_engine generator;
+
+	float width = maxCoord.x - minCoord.x;
+	float height = maxCoord.y - minCoord.y;
+	float depth = maxCoord.z - minCoord.z;
+
+	int particlesInXDirection = width / (radius * 2);
+	int particleInYDirection = height / (radius * 2);
+	int particleInZDirection = depth / (radius * 2);
+
+	// x direction
+	for (int i = 0; i < particlesInXDirection; i++) {
+		// y direction
+		for (int j = 0; j < particleInYDirection; j++) {
+			// z direction
+			for (int k = 0; k < particleInZDirection; k++) {
+				Particle matchPoint;
+				glm::vec3 position;
+				position.x = minCoord.x + (2 * radius) * i;
+				position.y = minCoord.y + (2 * radius) * j;
+				position.z = minCoord.z + (2 * radius) * k;
+
+				matchPoint.setPosition(position);
+				matchPoint.setRadius(radius);
+				matchPoint.setMass(2.0f);
+				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
+				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				matchPoint.setIsMatchpoint(true);
+
+				// Add it to the particle list
+				defaultMatchpoints.push_back(matchPoint);
+				particleList[particleCount + matchpointNumber] = matchPoint;
+
+				matchpointNumber++;
+			}
+		}
+	}
+}
+
 // Set the neighbors for a particle
 void setNeighbors(Particle& x, int xIndex) {
 
@@ -852,7 +896,7 @@ float sampleDensityForMatchpoint(const Particle x) {
 }
 
 // samples the velocity (direction) around a given matchpoint
-// uses the same kernel from the original Keyser pape
+// uses the same kernel from the original Keyser paper
 glm::vec3 sampleVelocityForMatchpoint(Particle& x) {
 	glm::vec3 sample = glm::vec3(0.f, 0.f, 0.f);
 
@@ -1260,7 +1304,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 	// hides the GUI if space is pressed
 	if (!keyToggles[(unsigned)' ']) {
 
-		ImGui::SetNextWindowSize(ImVec2(840, 600));
+		ImGui::SetNextWindowSize(ImVec2(840, 700));
 		ImGui::Begin("Control Window");
 		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text("Press space to hide window\n");
@@ -1314,6 +1358,22 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				defaultMatchpoints.push_back(matchPoint);
 				particleList[particleCount + matchpointNumber] = matchPoint;
 				matchpointNumber++;
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Add Matchpoint Grid");
+		if (ImGui::BeginCombo("        ", NULL)) {
+			ImGui::InputFloat3("Min Grid Coord", minGridCoordinate);
+			ImGui::InputFloat3("Max Grid Coord", maxGridCoordinate);
+			ImGui::SliderFloat("Matchpoint Radius", &matchPointRadius, 0.0f, 10.0f);
+			if (ImGui::Button("Add Grid")) {
+				// initialize a particle to act as a matchpoint
+				glm::vec3 minCoord = glm::vec3(minGridCoordinate[0], minGridCoordinate[1], minGridCoordinate[2]);
+				glm::vec3 maxCoord = glm::vec3(maxGridCoordinate[0], maxGridCoordinate[1], maxGridCoordinate[2]);
+
+				addMatchPoints_CustomGrid(minCoord, maxCoord, matchPointRadius);
 			}
 			ImGui::EndCombo();
 		}

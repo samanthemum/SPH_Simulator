@@ -143,7 +143,7 @@ float minGridCoordinate[3];
 float maxGridCoordinate[3];
 float matchPointRadius;
 bool CONTROL = true;
-bool KEYFRAME_BLENDING = true;
+bool KEYFRAME_BLENDING = false;
 
 // Kd tree and shape
 int steps = 0;

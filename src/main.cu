@@ -133,7 +133,7 @@ struct Keyframe {
 };
 vector<Keyframe> keyframes;
 vector<Particle> defaultMatchpoints;
-int matchpointNumber = 10;
+int matchpointNumber = 0;
 const int maxMatchpoints = 10000;
 unsigned int nextKeyframe = 0;
 const float permittedError = .0001f;
@@ -143,7 +143,7 @@ float minGridCoordinate[3];
 float maxGridCoordinate[3];
 float matchPointRadius;
 bool CONTROL = true;
-bool KEYFRAME_BLENDING = false;
+bool KEYFRAME_BLENDING = true;
 
 // Kd tree and shape
 int steps = 0;
@@ -168,6 +168,7 @@ bool recording = false;
 bool recording_low_res = false;
 float timePassed = 0.0f;
 float end_time = 0.0f;
+float originalTimestep = TIMESTEP;
 
 // Debug
 bool DEBUG_MODE = false;
@@ -776,7 +777,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	initMatchPoints_Random();
+	// initMatchPoints_Random();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -1056,7 +1057,7 @@ void updateFluid(float time) {
 		updateMatchPoints(time);
 	}
 	else if (CONTROL) {
-		// apply match point control
+		// apply match point controlt
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && (abs(keyframes.at(nextKeyframe).time - (timePassed + time)) < .001)) {
 			// loop through matchpoints
@@ -1398,7 +1399,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			initMatchPoints_Random();
+			// initMatchPoints_Random();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
@@ -1422,6 +1423,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
+			originalTimestep = TIMESTEP;
 			TIMESTEP = .0125f;
 			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
@@ -1465,6 +1467,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
 			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
 			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
+			originalTimestep = TIMESTEP;
 			TIMESTEP = .0125f;
 			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
@@ -1587,8 +1590,13 @@ int main(int argc, char** argv)
 			glfwSwapBuffers(window);
 
 			if (recording || recording_low_res) {
-				glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-				fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
+
+				// ensure that the keyframe number matches
+				if (fmod(timePassed, originalTimestep) < .001f || abs((fmod(timePassed, originalTimestep) - originalTimestep)) <= .001f) {
+					glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+					fwrite(buffer, sizeof(int) * width * height, 1, ffmpeg);
+				}
+
 			}
 		}
 		// Poll for and process events.

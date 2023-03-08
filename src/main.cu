@@ -777,7 +777,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	// initMatchPoints_Random();
+	initMatchPoints_HalfGrid_SmallRadii();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -1399,7 +1399,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			// initMatchPoints_Random();
+			initMatchPoints_HalfGrid_SmallRadii();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);

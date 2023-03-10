@@ -46,6 +46,12 @@
 #include <cuda_runtime_api.h>
 #include "cuda_kernel.cuh"
 
+// Timing
+#include <iostream>
+#include <ctime>
+#include <ratio>
+#include <chrono>
+
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
 {
@@ -169,6 +175,9 @@ bool recording_low_res = false;
 float timePassed = 0.0f;
 float end_time = 0.0f;
 float originalTimestep = TIMESTEP;
+
+std::chrono::high_resolution_clock::time_point start_clock_time;
+std::chrono::high_resolution_clock::time_point end_clock_time;
 
 // Debug
 bool DEBUG_MODE = false;
@@ -1061,7 +1070,6 @@ void updateFluid(float time) {
 		// 0. Figure out if we're at a keyframe time
 		if (nextKeyframe < keyframes.size() && (abs(keyframes.at(nextKeyframe).time - (timePassed + time)) < .001)) {
 			// loop through matchpoints
-			cout << "Updating match points at time = " << (timePassed + time) << " on keyframe " << nextKeyframe << endl;
 			for (int i = 0; i < matchpointNumber; i++) {
 				int iterations = 0;
 				Particle matchpoint = keyframes.at(nextKeyframe).matchpoints.at(i);
@@ -1173,7 +1181,6 @@ void updateFluid(float time) {
 
 		else if(nextKeyframe < keyframes.size() && KEYFRAME_BLENDING) {
 		    float percent = 1 / ((keyframes.at(nextKeyframe).time - (timePassed)) / time);
-			cout << "No key frame found for time " << timePassed + time << ". Attempting to blend frames at " << percent << "." << endl;
 	
 			for (int i = 0; i < matchpointNumber; i++) {
 				int iterations = 0;
@@ -1377,6 +1384,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 		if (ImGui::Button(buttonText.c_str())) {
 			isPaused = !isPaused;
 			if (buttonText.compare("Play") == 0) {
+				start_clock_time = std::chrono::high_resolution_clock::now();
 				buttonText = "Pause";
 			}
 			else {
@@ -1409,6 +1417,9 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			isPaused = true;
 			cudaDeviceSynchronize();
 			recording = true;
+
+			end_clock_time = chrono::high_resolution_clock::now();
+			cout << "Low resolution simulation took " << chrono::duration_cast<chrono::duration<double>>(end_clock_time - start_clock_time).count() << endl;
 
 			end_time = timePassed;
 			timePassed = 0.0f;
@@ -1444,6 +1455,7 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			isPaused = false;
 			cout << "Number of keyframes: " << keyframes.size() << endl;
 			cout << "Recording... please be patient :)" << endl;
+			start_clock_time = chrono::high_resolution_clock::now();
 			// density_constant = DENSITY_0_GUESS / averageDensity;
 			// DENSITY_0_GUESS = averageDensity;
 			keyToggles[(unsigned)' '] = true;
@@ -1583,6 +1595,8 @@ int main(int argc, char** argv)
 			renderGui(isPaused, buttonText);
 			if (recording && timePassed > end_time) {
 				cout << "Recording finished" << endl;
+				end_clock_time = chrono::high_resolution_clock::now();
+				cout << "Recording simulation took " << chrono::duration_cast<chrono::duration<double>>(end_clock_time - start_clock_time).count() << endl;
 				break;
 			}
 

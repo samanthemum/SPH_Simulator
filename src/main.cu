@@ -72,7 +72,7 @@ enum class Scene {
 	SPLASH,
 	DROP
 };
-Scene selected_scene = Scene::SPLASH;
+Scene selected_scene = Scene::DAM_BREAK;
 
 GLFWwindow* window; // Main application window
 string RESOURCE_DIR = "..\\resources\\"; // Where the resources are loaded from
@@ -148,8 +148,8 @@ float matchPointPosition[3];
 float minGridCoordinate[3];
 float maxGridCoordinate[3];
 float matchPointRadius;
-bool CONTROL = true;
-bool KEYFRAME_BLENDING = true;
+bool CONTROL = false;
+bool KEYFRAME_BLENDING = false;
 
 // Kd tree and shape
 int steps = 0;
@@ -176,8 +176,10 @@ float timePassed = 0.0f;
 float end_time = 0.0f;
 float originalTimestep = TIMESTEP;
 
+// Timing information (profiling)
 std::chrono::high_resolution_clock::time_point start_clock_time;
 std::chrono::high_resolution_clock::time_point end_clock_time;
+float desired_end_simulation_time = -1.0f;
 
 // Debug
 bool DEBUG_MODE = false;
@@ -197,8 +199,23 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static void char_callback(GLFWwindow* window, unsigned int key)
 {
 	keyToggles[key] = !keyToggles[key];
-	if ((unsigned)key == 'd') {
+	if ((unsigned)key == 'q') {
 		DEBUG_MODE = true;
+	}
+
+	// add a more standard moving system
+	if ((unsigned)key == 'a') {
+		cameraRotations -= (.1f * glm::vec2(1.0f, 0.0f));
+	}
+	else if ((unsigned)key == 'd') {
+		cameraRotations += (.1f * glm::vec2(1.0f, 0.0f));
+	}
+
+	if ((unsigned)key == 'w') {
+		cameraRotations -= (.1f * glm::vec2(0.0f, 1.0f));
+	}
+	else if ((unsigned)key == 's') {
+		cameraRotations += (.1f * glm::vec2(0.0f, 1.0f));
 	}
 }
 
@@ -786,7 +803,7 @@ static void init()
 	}
 
 	// initialize matchpoints
-	initMatchPoints_HalfGrid_SmallRadii();
+	// initMatchPoints_HalfGrid_SmallRadii();
 
 	// start kd tree and set neighbors
 	initKdTree();
@@ -1296,6 +1313,57 @@ void updateFluid(float time) {
 	steps++;
 }
 
+// record in high resolution
+void recordInHighResolution(bool& isPaused) {
+	isPaused = true;
+	cudaDeviceSynchronize();
+	recording = true;
+
+	end_clock_time = chrono::high_resolution_clock::now();
+	cout << "Low resolution simulation took " << chrono::duration_cast<chrono::duration<double>>(end_clock_time - start_clock_time).count() << endl;
+
+	end_time = timePassed;
+	cout << "Simulation time of low res was " << end_time << "seconds." << endl;
+
+	timePassed = 0.0f;
+	kdTree = nullptr;
+	previousParticleCount = particleCount;
+	particleCount = HIGH_RES_COUNT;
+	particleForShape = HIGH_RES_COUNT_SHAPE;
+	SMOOTHING_RADIUS = HIGH_RES_RADIUS;
+	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
+	initAverageMass();
+	MAX_RADIUS = HIGH_RES_RADIUS;
+	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+	scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
+	PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
+	originalTimestep = TIMESTEP;
+	TIMESTEP = .0125f;
+	// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
+
+	if (selected_scene == Scene::DAM_BREAK) {
+		initSceneDamBreak();
+	}
+	else if (selected_scene == Scene::SPLASH) {
+		initSceneSplash();
+	}
+	else {
+		initSceneOriginal();
+	}
+	cout << "Updated particle count is " << particleCount << endl;
+	initKdTree();
+	for (int i = 0; i < particleCount; i++) {
+		setNeighbors(particleList[i], i);
+	}
+	isPaused = false;
+	cout << "Number of keyframes: " << keyframes.size() << endl;
+	cout << "Recording... please be patient :)" << endl;
+	start_clock_time = chrono::high_resolution_clock::now();
+	// density_constant = DENSITY_0_GUESS / averageDensity;
+	// DENSITY_0_GUESS = averageDensity;
+	keyToggles[(unsigned)' '] = true;
+}
+
 // render the GUI
 void renderGui(bool& isPaused, std::string& buttonText) {
 	// Create GUI
@@ -1407,58 +1475,14 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			else {
 				initSceneOriginal();
 			}
-			initMatchPoints_HalfGrid_SmallRadii();
+			// initMatchPoints_HalfGrid_SmallRadii();
 			initKdTree();
 			for (int i = 0; i < particleCount; i++) {
 				setNeighbors(particleList[i], i);
 			}
 		}
 		if (ImGui::Button("Record in High Resolution")) {
-			isPaused = true;
-			cudaDeviceSynchronize();
-			recording = true;
-
-			end_clock_time = chrono::high_resolution_clock::now();
-			cout << "Low resolution simulation took " << chrono::duration_cast<chrono::duration<double>>(end_clock_time - start_clock_time).count() << endl;
-
-			end_time = timePassed;
-			timePassed = 0.0f;
-			kdTree = nullptr;
-			previousParticleCount = particleCount;
-			particleCount = HIGH_RES_COUNT;
-			particleForShape = HIGH_RES_COUNT_SHAPE;
-			SMOOTHING_RADIUS = HIGH_RES_RADIUS;
-			kernel->setSmoothingRadius(SMOOTHING_RADIUS);
-			initAverageMass();
-			MAX_RADIUS = HIGH_RES_RADIUS;
-			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
-			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
-			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
-			originalTimestep = TIMESTEP;
-			TIMESTEP = .0125f;
-			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
-
-			if (selected_scene == Scene::DAM_BREAK) {
-				initSceneDamBreak();
-			}
-			else if (selected_scene == Scene::SPLASH) {
-				initSceneSplash();
-			}
-			else {
-				initSceneOriginal();
-			}
-			cout << "Updated particle count is " << particleCount << endl;
-			initKdTree();
-			for (int i = 0; i < particleCount; i++) {
-				setNeighbors(particleList[i], i);
-			}
-			isPaused = false;
-			cout << "Number of keyframes: " << keyframes.size() << endl;
-			cout << "Recording... please be patient :)" << endl;
-			start_clock_time = chrono::high_resolution_clock::now();
-			// density_constant = DENSITY_0_GUESS / averageDensity;
-			// DENSITY_0_GUESS = averageDensity;
-			keyToggles[(unsigned)' '] = true;
+			recordInHighResolution(isPaused);
 		}
 		if (ImGui::Button("Record in Mid Resolution")) {
 			cudaDeviceSynchronize();
@@ -1587,6 +1611,10 @@ int main(int argc, char** argv)
 				if (timePassed >= 6 && numSurfaces == 6 && selected_scene == Scene::DAM_BREAK) {
 					cout << "Release the kracken!" << endl;
 					numSurfaces = 5;
+				}
+
+				if (!recording && desired_end_simulation_time > 0.0f && fabs(timePassed - desired_end_simulation_time) <= .001f) {
+					recordInHighResolution(isPaused);
 				}
 				GLSL::checkError(GET_FILE_LINE);
 			}

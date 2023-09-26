@@ -7,9 +7,6 @@
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\MatrixStack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Program.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Shape.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,9 +43,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\MatrixStack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Plane.h">
@@ -116,6 +110,7 @@
     <CustomBuild Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Scene.cuh" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\phong_frag.glsl" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\phong_vert.glsl" />
     <None Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\resources\simple_frag.glsl" />
@@ -133,8 +128,17 @@
     <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Program.cpp">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h">
+      <Filter>Header Files</Filter>
+    </CudaCompile>
     <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh" />
     <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Scene.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>

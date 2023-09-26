@@ -28,6 +28,8 @@
 #include "Shape.h"
 #include "Plane.h"
 
+#include "Scene.cuh"
+
 // GUI Creation
 #include "imgui-master/imgui.h"
 #include "imgui-master/backends/imgui_impl_glfw.h"
@@ -66,13 +68,8 @@ using namespace std;
 using cy::Vec3f;
 
 // Scene information
-enum class Scene {
-	DEFAULT,
-	DAM_BREAK,
-	SPLASH,
-	DROP
-};
-Scene selected_scene = Scene::DAM_BREAK;
+Scene* mainScene;
+SceneType selected_scene = SceneType::DAM_BREAK;
 
 GLFWwindow* window; // Main application window
 string RESOURCE_DIR = "..\\resources\\"; // Where the resources are loaded from
@@ -513,10 +510,12 @@ void initSceneDrop() {
 void initKdTree() {
 	if (!kdTree) {
 		cout << "Making new kd tree!" << endl;
-		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(particleCount + matchpointNumber, particlePositions);
+		cudaDeviceSynchronize();
+		kdTree = make_shared<cy::PointCloud<Vec3f, float, 3>>(mainScene->getParticleCount() + matchpointNumber, mainScene->getParticlePositions());
 	}
 	else {
-		kdTree->Build(particleCount + matchpointNumber, particlePositions);
+		cudaDeviceSynchronize();
+		kdTree->Build(mainScene->getParticleCount() + matchpointNumber, mainScene->getParticlePositions());
 	}
 }
 
@@ -538,18 +537,18 @@ void initMatchPoints_Random() {
 
 		// initialize a particle to act as a matchpoint
 		Particle matchPoint;
-		matchPoint.setPosition(particleList[particleIndex].getPosition());
+		matchPoint.setPosition(mainScene->getParticleList()[particleIndex].getPosition());
 		float radius = rand() % 3 + 1;
 		matchPoint.setRadius(radius);
 		cout << "Set the radius to " << matchPoint.getRadius() << endl;
 		matchPoint.setMass(1.0f);
 		Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
-		particlePositions[particleCount + i] = matchpointPosition;
+		mainScene->getParticlePositions()[mainScene->getParticleCount() + i] = matchpointPosition;
 		matchPoint.setIsMatchpoint(true);
 
 		// Add it to the particle list
 		defaultMatchpoints.push_back(matchPoint);
-		particleList[particleCount + i] = matchPoint;
+		mainScene->getParticleList()[mainScene->getParticleCount() + i] = matchPoint;
 	}
 }
 
@@ -560,7 +559,7 @@ void initMatchPoints_HalfGrid_SmallRadii() {
 	defaultMatchpoints.clear();
 
 	// create a uniform random distribution
-	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
+	std::uniform_int_distribution<int> distribution(0, (mainScene->getParticleCount() - 1));
 	std::default_random_engine generator;
 
 	matchpointNumber = 0;
@@ -577,12 +576,12 @@ void initMatchPoints_HalfGrid_SmallRadii() {
 				matchPoint.setRadius(radius);
 				matchPoint.setMass(2.0f);
 				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
-				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				mainScene->getParticlePositions()[particleCount + matchpointNumber] = matchpointPosition;
 				matchPoint.setIsMatchpoint(true);
 
 				// Add it to the particle list
 				defaultMatchpoints.push_back(matchPoint);
-				particleList[particleCount + matchpointNumber] = matchPoint;
+				mainScene->getParticleList()[particleCount + matchpointNumber] = matchPoint;
 
 				matchpointNumber++;
 			}
@@ -597,7 +596,7 @@ void initMatchPoints_HalfGrid_LargeRadii() {
 	defaultMatchpoints.clear();
 
 	// create a uniform random distribution
-	std::uniform_int_distribution<int> distribution(0, (particleCount - 1));
+	std::uniform_int_distribution<int> distribution(0, (mainScene->getParticleCount() - 1));
 	std::default_random_engine generator;
 
 	matchpointNumber = 0;
@@ -614,12 +613,12 @@ void initMatchPoints_HalfGrid_LargeRadii() {
 				matchPoint.setRadius(radius);
 				matchPoint.setMass(2.0f);
 				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
-				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				mainScene->getParticlePositions()[mainScene->getParticleCount() + matchpointNumber] = matchpointPosition;
 				matchPoint.setIsMatchpoint(true);
 
 				// Add it to the particle list
 				defaultMatchpoints.push_back(matchPoint);
-				particleList[particleCount + matchpointNumber] = matchPoint;
+				mainScene->getParticleList()[mainScene->getParticleCount() + matchpointNumber] = matchPoint;
 
 				matchpointNumber++;
 			}
@@ -656,12 +655,12 @@ void addMatchPoints_CustomGrid(glm::vec3 minCoord, glm::vec3 maxCoord, float rad
 				matchPoint.setRadius(radius);
 				matchPoint.setMass(2.0f);
 				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
-				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				mainScene->getParticlePositions()[mainScene->getParticleCount() + matchpointNumber] = matchpointPosition;
 				matchPoint.setIsMatchpoint(true);
 
 				// Add it to the particle list
 				defaultMatchpoints.push_back(matchPoint);
-				particleList[particleCount + matchpointNumber] = matchPoint;
+				mainScene->getParticleList()[mainScene->getParticleCount() + matchpointNumber] = matchPoint;
 
 				matchpointNumber++;
 			}
@@ -674,12 +673,13 @@ void setNeighbors(Particle& x, int xIndex) {
 
 	// Get all neighbors within a radius
 	// float radius = x.getIsMatchPoint() ? x.getRadius() : MAX_RADIUS;
-	float radius = xIndex >= particleCount ? x.getRadius() : MAX_RADIUS;
+	float radius = xIndex >= mainScene->getParticleCount() ? x.getRadius() : MAX_RADIUS;
 	cy::PointCloud<Vec3f, float, 3>::PointInfo* info = new cy::PointCloud<Vec3f, float, 3>::PointInfo[Particle::maxNeighborsAllowed];
-	int numPointsInRadius = kdTree->GetPoints(particlePositions[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
+	int numPointsInRadius = kdTree->GetPoints(mainScene->getParticlePositions()[xIndex], sqrt(radius), Particle::maxNeighborsAllowed, info);
 
 	// free old neighbors, if there
 	if (x.neighborIndices != nullptr) {
+		gpuErrchk(cudaDeviceSynchronize());
 		gpuErrchk(cudaFreeHost(x.neighborIndices));
 		gpuErrchk(cudaDeviceSynchronize());
 	}
@@ -698,10 +698,10 @@ void setNeighbors(Particle& x, int xIndex) {
 	// set neighbors, ignoring matchpoints and self inclusion
 	x.numNeighbors = numPointsInRadius;
 	if (x.numNeighbors == Particle::maxNeighborsAllowed) {
-		cout << xIndex << " with radius " << radius << " at particle count " << particleCount << endl;
+		cout << xIndex << " with radius " << radius << " at particle count " << mainScene->getParticleCount() << endl;
 	}
 	for (int i = 0; i < numPointsInRadius; i++) {
-		if (xIndex != info[i].index && info[i].index < particleCount) {
+		if (xIndex != info[i].index && info[i].index < mainScene->getParticleCount()) {
 			x.neighborIndices[i] = (int)info[i].index;
 		}
 		else {
@@ -716,28 +716,43 @@ void setNeighbors(Particle& x, int xIndex) {
 // calculates the average mass for a particle at rest
 void initAverageMass() {
 	// use the at rest distribution and setup tree
-	initParticleListAtRest();
+	Scene::SceneCreationArgument testSceneArgs;
+	testSceneArgs.type = SceneType::DAM_BREAK;
+	testSceneArgs.particleCount = particleCount;
+	testSceneArgs.particleScale = scaleParticles.x;
+	testSceneArgs.maxMatchpoints = 0;
+	testSceneArgs.maxRadius = MAX_RADIUS;
+	testSceneArgs.resolutionScale = resolutionConstant;
+	testSceneArgs.shape = nullptr;
+	testSceneArgs.sphereRadius = 0;
+	mainScene = new Scene(testSceneArgs);
+
+	//initParticleListAtRest();
+	cout << "Created new scene" << endl;
 	initKdTree();
-	for (int i = 0; i < particleCount; i++) {
-		setNeighbors(particleList[i], i);
+	for (int i = 0; i < mainScene->getParticleCount(); i++) {
+		setNeighbors(mainScene->getParticleList()[i], i);
 	}
 
 	// Calculate the mass it takes for each particle to be at approximately the rest density
 	float averageMass = 0.0f;
-	for (int i = 0; i < particleCount; i++) {
-		Particle xi = particleList[i];
+	for (int i = 0; i < mainScene->getParticleCount(); i++) {
+		Particle xi = mainScene->getParticleList()[i];
 		float thisKernel = kernel->polyKernelFunction(xi, xi, false);
 		float kernelSum = 0.f;
 		for (int j = 0; j < xi.numNeighbors; j++) {
-			kernelSum += kernel->polyKernelFunction(xi, particleList[xi.neighborIndices[j]], false);
+			kernelSum += kernel->polyKernelFunction(xi, mainScene->getParticleList()[xi.neighborIndices[j]], false);
 		}
-		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / particleCount);
+		averageMass += (DENSITY_0_GUESS / (thisKernel + kernelSum) / mainScene->getParticleCount());
 	}
 
 	// set the average mass
 	cout << "Finished calculating average mass" << endl;
 	MASS = averageMass;
 	cout << "The average mass was " << MASS << endl;
+
+	// delete the main scene
+	delete mainScene;
 }
 
 // initializes everything required before simulation start
@@ -788,7 +803,18 @@ static void init()
 
 	// initialize particles and tree
 	keyframes.clear();
-	switch (selected_scene) {
+	Scene::SceneCreationArgument sceneArgs;
+	sceneArgs.maxMatchpoints = maxMatchpoints;
+	sceneArgs.maxRadius = MAX_RADIUS;
+	sceneArgs.particleCount = particleCount;
+	sceneArgs.particleScale = scaleParticles.x;
+	sceneArgs.shape = lowResSphere;
+	sceneArgs.resolutionScale = resolutionConstant;
+	sceneArgs.sphereRadius = 5.0;
+	sceneArgs.type = selected_scene;
+	cout << "Sending information to main scene" << endl;
+	mainScene = new Scene(sceneArgs);
+	/*switch (selected_scene) {
 	case Scene::DAM_BREAK:
 		initSceneDamBreak();
 		break;
@@ -800,15 +826,15 @@ static void init()
 		break;
 	default:
 		initSceneOriginal();
-	}
+	}*/
 
 	// initialize matchpoints
-	// initMatchPoints_HalfGrid_SmallRadii();
+	initMatchPoints_HalfGrid_SmallRadii();
 
 	// start kd tree and set neighbors
 	initKdTree();
-	for (int i = 0; i < particleCount; i++) {
-		setNeighbors(particleList[i], i);
+	for (int i = 0; i < mainScene->getParticleCount(); i++) {
+		setNeighbors(mainScene->getParticleList()[i], i);
 	}
 
 	// If there were any OpenGL errors, this will print something.
@@ -829,11 +855,11 @@ void drawParticles(shared_ptr<MatrixStack>& MV) {
 	MV->scale(scaleStructure);
 
 	// draw each particle
-	for (int i = 0; i < particleCount; i++) {
+	for (int i = 0; i < mainScene->getParticleCount(); i++) {
 		MV->pushMatrix();
-		MV->translate(particleList[i].getPosition());
+		MV->translate(mainScene->getParticleList()[i].getPosition());
+		// TODO: change this later
 		MV->scale(scaleParticles);
-		// calculate blue and green based on particle velocity
 		glUniformMatrix4fv(prog->getUniform("MV"), 1, GL_FALSE, glm::value_ptr(MV->topMatrix()));
 		lowResSphere->draw(prog);
 		MV->popMatrix();
@@ -855,9 +881,9 @@ void drawMatchpoints(shared_ptr<MatrixStack>& MV) {
 	// draw each particle
 	for (int i = 0; i < matchpointNumber; i++) {
 		MV->pushMatrix();
-		MV->translate(particleList[particleCount + i].getPosition());
+		MV->translate(mainScene->getParticleList()[mainScene->getParticleCount() + i].getPosition());
 
-		float radius = particleList[particleCount + i].getRadius();
+		float radius = mainScene->getParticleList()[mainScene->getParticleCount() + i].getRadius();
 		glm::vec3 matchpointScale = glm::vec3(radius, radius, radius);
 		MV->scale(matchpointScale);
 		// calculate blue and green based on particle velocity
@@ -917,17 +943,17 @@ void render()
 
 // samples the density around a given matchpoint
 // uses the kernel from the original Keyser paper
-float sampleDensityForMatchpoint(const Particle x) {
-	float sample = 0;
-	float normalizer = 0;
-	for (int j = 0; j < x.numNeighbors; j++) {
-		int index = x.neighborIndices[j];
-		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], true));
-		normalizer += (kernel->samplingKernel(x, particleList[index], true));
-	}
-
-	return sample / normalizer;
-}
+//float sampleDensityForMatchpoint(const Particle x) {
+//	float sample = 0;
+//	float normalizer = 0;
+//	for (int j = 0; j < x.numNeighbors; j++) {
+//		int index = x.neighborIndices[j];
+//		sample += (particleList[index].getDensity() * kernel->samplingKernel(x, particleList[index], true));
+//		normalizer += (kernel->samplingKernel(x, particleList[index], true));
+//	}
+//
+//	return sample / normalizer;
+//}
 
 // samples the velocity (direction) around a given matchpoint
 // uses the same kernel from the original Keyser paper
@@ -938,12 +964,12 @@ glm::vec3 sampleVelocityForMatchpoint(Particle& x) {
 	float maxWeight = 0.f;
 	for (int j = 0; j < x.numNeighbors; j++) {
 		int index = x.neighborIndices[j];
-		float weight = kernel->samplingKernel(x, particleList[index], true);
+		float weight = kernel->samplingKernel(x, mainScene->getParticleList()[index], true);
 		if (weight > maxWeight) {
 			maxWeight = weight;
 		}
-		sample += (particleList[index].getVelocity() * weight);
-		normalizer += (kernel->samplingKernel(x, particleList[index], true));
+		sample += (mainScene->getParticleList()[index].getVelocity() * weight);
+		normalizer += (kernel->samplingKernel(x, mainScene->getParticleList()[index], true));
 	}
 
 	if (normalizer == 0.f) {
@@ -968,12 +994,12 @@ glm::vec3 sampleCurlForMatchpoint(Particle& x) {
 	float maxWeight = 0;
 	for (int j = 0; j < x.numNeighbors; j++) {
 		int index = x.neighborIndices[j];
-		float weight = kernel->samplingKernel(x, particleList[index], true);
+		float weight = kernel->samplingKernel(x, mainScene->getParticleList()[index], true);
 		if (weight > maxWeight) {
 			maxWeight = weight;
 		}
-		glm::vec3 velocity_direction = particleList[index].getVelocity() * weight;
-		glm::vec3 cross_product =  glm::cross(velocity_direction, particleList[index].getPosition() - x.getPosition());
+		glm::vec3 velocity_direction = mainScene->getParticleList()[index].getVelocity() * weight;
+		glm::vec3 cross_product =  glm::cross(velocity_direction, mainScene->getParticleList()[index].getPosition() - x.getPosition());
 		sample += cross_product;
 		normalizer += weight;
 	}
@@ -995,7 +1021,7 @@ glm::vec3 sampleCurlForMatchpoint(Particle& x) {
 // set neighbors for all particles within the given indices
 void setNeighborsForParticles(int start_index, int end_index) {
 	for (int i = start_index; i < end_index; i++) {
-		setNeighbors(particleList[i], i);
+		setNeighbors(mainScene->getParticleList()[i], i);
 	}
 }
 
@@ -1009,7 +1035,7 @@ void updateMatchPoints(float time) {
 	// TODO: add the matchpoints to tree and calculate each trait of match point
 	for (int i = 0; i < matchpointNumber; i++) {
 		Particle newMatchpoint;
-		particlePositions[particleCount + i] = Vec3f(defaultMatchpoints.at(i).getPosition().x, defaultMatchpoints.at(i).getPosition().y, defaultMatchpoints.at(i).getPosition().z);
+		mainScene->getParticlePositions()[mainScene->getParticleCount() + i] = Vec3f(defaultMatchpoints.at(i).getPosition().x, defaultMatchpoints.at(i).getPosition().y, defaultMatchpoints.at(i).getPosition().z);
 
 		// set new matchpoint position
 		newMatchpoint.setPosition(defaultMatchpoints.at(i).getPosition());
@@ -1017,7 +1043,7 @@ void updateMatchPoints(float time) {
 		newMatchpoint.setMass(1.0f);
 
 		// set the neighbors for match point
-		setNeighbors(newMatchpoint, particleCount + i);
+		setNeighbors(newMatchpoint, mainScene->getParticleCount() + i);
 
 		// calculate density for matchpoint using the sampling method
 		// defaultMatchpoints.at(i).setDensity(sampleDensityForMatchpoint(newMatchpoint));
@@ -1036,7 +1062,7 @@ void updateMatchPoints(float time) {
 }
 
 void updateFluid(float time) {
-
+	PARTICLES_PER_THREAD = mainScene->getParticleCount() / N_THREADS;
 	// update the kd tree
 	gpuErrchk(cudaDeviceSynchronize());
 	if (steps == steps_per_update) {
@@ -1055,27 +1081,27 @@ void updateFluid(float time) {
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update density
-	setDensitiesForParticles_CUDA(particleList, particleCount, kernel);
+	setDensitiesForParticles_CUDA(mainScene->getParticleList(), mainScene->getParticleCount(), kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update surface normal
-	setSurfaceNormalFieldForParticles_CUDA(particleList, particleCount, kernel);
+	setSurfaceNormalFieldForParticles_CUDA(mainScene->getParticleList(), mainScene->getParticleCount(), kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update color field laplacian
-	setColorFieldLaplaciansForParticles_CUDA(particleList, particleCount, kernel);
+	setColorFieldLaplaciansForParticles_CUDA(mainScene->getParticleList(), mainScene->getParticleCount(), kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update the pressures
-	setPressuresForParticles_CUDA(particleList, particleCount, STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
+	setPressuresForParticles_CUDA(mainScene->getParticleList(), mainScene->getParticleCount(), STIFFNESS_PARAM, DENSITY_0_GUESS, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// calculate acceleration
-	setAccelerationsForParticles_CUDA(particleList, particleCount, TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
+	setAccelerationsForParticles_CUDA(mainScene->getParticleList(), mainScene->getParticleCount(), TENSION_ALPHA, TENSION_THRESHOLD, VISCOSITY, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// update positions
-	updatePositionsAndVelocities_CUDA(particleList, particlePositions, particleCount, time, surfaces, numSurfaces, ELASTICITY, FRICTION, kernel);
+	updatePositionsAndVelocities_CUDA(mainScene->getParticleList(), mainScene->getParticlePositions(), mainScene->getParticleCount(), time, mainScene->getSurfaces(), mainScene->getSurfaceCount(), ELASTICITY, FRICTION, kernel);
 	gpuErrchk(cudaDeviceSynchronize());
 
 	// do key frame stuff
@@ -1100,8 +1126,8 @@ void updateFluid(float time) {
 				highResSample.setIsMatchpoint(true);
 
 				// get high res sample neighbors
-				particlePositions[particleCount + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
-				setNeighbors(highResSample, particleCount + i);
+				mainScene->getParticlePositions()[mainScene->getParticleCount() + i] = Vec3f(highResSample.getPosition().x, highResSample.getPosition().y, highResSample.getPosition().z);
+				setNeighbors(highResSample, mainScene->getParticleCount() + i);
 				// cout << "Sample has " << highResSample.numNeighbors << endl;
 
 				// calculate high res density
@@ -1137,7 +1163,7 @@ void updateFluid(float time) {
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, mainScene->getParticleList()[index], true);
 						
 						totalError += powf(gravity_kernel_value, 2.0f);
 					}
@@ -1151,16 +1177,16 @@ void updateFluid(float time) {
 					bool errorTooSmall = false;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 							int index = highResSample.neighborIndices[j];
-							float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+							float gravity_kernel_value = kernel->samplingKernel(highResSample, mainScene->getParticleList()[index], true);
 
-							glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+							glm::vec3 newVelocity = mainScene->getParticleList()[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
 
 							if (length(curlError) > permittedError) {
-								newVelocity += ((gravity_kernel_value / totalError) * glm::cross(velocityError, highResSample.getPosition() - particleList[index].getPosition()));
+								newVelocity += ((gravity_kernel_value / totalError) * glm::cross(velocityError, highResSample.getPosition() - mainScene->getParticleList()[index].getPosition()));
 							}
 
 							if (!errorTooSmall) {
-								particleList[index].setVelocity(newVelocity);
+								mainScene->getParticleList()[index].setVelocity(newVelocity);
 							}
 					}
 
@@ -1252,7 +1278,7 @@ void updateFluid(float time) {
 					float totalError = 0;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, mainScene->getParticleList()[index], true);
 
 						totalError += powf(gravity_kernel_value, 2.0f);
 					}
@@ -1266,16 +1292,16 @@ void updateFluid(float time) {
 					bool errorTooSmall = false;
 					for (int j = 0; j < highResSample.numNeighbors; j++) {
 						int index = highResSample.neighborIndices[j];
-						float gravity_kernel_value = kernel->samplingKernel(highResSample, particleList[index], true);
+						float gravity_kernel_value = kernel->samplingKernel(highResSample, mainScene->getParticleList()[index], true);
 
-						glm::vec3 newVelocity = particleList[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
+						glm::vec3 newVelocity = mainScene->getParticleList()[index].getVelocity() + velocityError * (gravity_kernel_value / totalError);
 
 						if (length(curlError) > permittedError) {
-							newVelocity += ((gravity_kernel_value / totalError) * glm::cross(velocityError, highResSample.getPosition() - particleList[index].getPosition()));
+							newVelocity += ((gravity_kernel_value / totalError) * glm::cross(velocityError, highResSample.getPosition() - mainScene->getParticleList()[index].getPosition()));
 						}
 
 						if (!errorTooSmall) {
-							particleList[index].setVelocity(newVelocity);
+							mainScene->getParticleList()[index].setVelocity(newVelocity);
 						}
 					}
 
@@ -1327,11 +1353,13 @@ void recordInHighResolution(bool& isPaused) {
 
 	timePassed = 0.0f;
 	kdTree = nullptr;
-	previousParticleCount = particleCount;
+	previousParticleCount = mainScene->getParticleCount();
 	particleCount = HIGH_RES_COUNT;
 	particleForShape = HIGH_RES_COUNT_SHAPE;
 	SMOOTHING_RADIUS = HIGH_RES_RADIUS;
 	kernel->setSmoothingRadius(SMOOTHING_RADIUS);
+	// delete the old scene
+	delete mainScene;
 	initAverageMass();
 	MAX_RADIUS = HIGH_RES_RADIUS;
 	float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
@@ -1341,19 +1369,22 @@ void recordInHighResolution(bool& isPaused) {
 	TIMESTEP = .0125f;
 	// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
-	if (selected_scene == Scene::DAM_BREAK) {
-		initSceneDamBreak();
-	}
-	else if (selected_scene == Scene::SPLASH) {
-		initSceneSplash();
-	}
-	else {
-		initSceneOriginal();
-	}
-	cout << "Updated particle count is " << particleCount << endl;
+	Scene::SceneCreationArgument sceneArgs;
+	sceneArgs.maxMatchpoints = maxMatchpoints;
+	sceneArgs.maxMatchpoints = MAX_RADIUS;
+	sceneArgs.particleCount = particleCount;
+	sceneArgs.particleScale = scaleParticles.x;
+	sceneArgs.resolutionScale = resolutionConstant;
+	sceneArgs.shape = lowResSphere;
+	sceneArgs.sphereRadius = 5.0f;
+	sceneArgs.type = selected_scene;
+	
+	mainScene = new Scene(sceneArgs);
+
+	cout << "Updated particle count is " << mainScene->getParticleCount() << endl;
 	initKdTree();
-	for (int i = 0; i < particleCount; i++) {
-		setNeighbors(particleList[i], i);
+	for (int i = 0; i < mainScene->getParticleCount(); i++) {
+		setNeighbors(mainScene->getParticleList()[i], i);
 	}
 	isPaused = false;
 	cout << "Number of keyframes: " << keyframes.size() << endl;
@@ -1421,12 +1452,12 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 				matchPoint.setRadius(matchPointRadius);
 				matchPoint.setMass(1.0f);
 				Vec3f matchpointPosition = Vec3f(matchPoint.getPosition().x, matchPoint.getPosition().y, matchPoint.getPosition().z);
-				particlePositions[particleCount + matchpointNumber] = matchpointPosition;
+				mainScene->getParticlePositions()[mainScene->getParticleCount() + matchpointNumber] = matchpointPosition;
 				matchPoint.setIsMatchpoint(true);
 
 				// Add it to the particle list
 				defaultMatchpoints.push_back(matchPoint);
-				particleList[particleCount + matchpointNumber] = matchPoint;
+				mainScene->getParticleList()[mainScene->getParticleCount() + matchpointNumber] = matchPoint;
 				matchpointNumber++;
 			}
 			ImGui::EndCombo();
@@ -1460,73 +1491,75 @@ void renderGui(bool& isPaused, std::string& buttonText) {
 			}
 		}
 		if (ImGui::Button("Reset")) {
-			buttonText = "Play";
-			isPaused = true;
-			timePassed = 0.0f;
-			previousParticleCount = particleCount;
-			particleCount = LOW_RES_COUNT;
-			keyframes.clear();
-			if (selected_scene == Scene::DAM_BREAK) {
-				initSceneDamBreak();
-			}
-			else if (selected_scene == Scene::SPLASH) {
-				initSceneSplash();
-			}
-			else {
-				initSceneOriginal();
-			}
-			// initMatchPoints_HalfGrid_SmallRadii();
-			initKdTree();
-			for (int i = 0; i < particleCount; i++) {
-				setNeighbors(particleList[i], i);
-			}
+			// TODO: this
+			//buttonText = "Play";
+			//isPaused = true;
+			//timePassed = 0.0f;
+			//previousParticleCount = particleCount;
+			//particleCount = LOW_RES_COUNT;
+			//keyframes.clear();
+			//if (selected_scene == Scene::DAM_BREAK) {
+			//	initSceneDamBreak();
+			//}
+			//else if (selected_scene == Scene::SPLASH) {
+			//	initSceneSplash();
+			//}
+			//else {
+			//	initSceneOriginal();
+			//}
+			//// initMatchPoints_HalfGrid_SmallRadii();
+			//initKdTree();
+			//for (int i = 0; i < particleCount; i++) {
+			//	setNeighbors(particleList[i], i);
+			//}
 		}
 		if (ImGui::Button("Record in High Resolution")) {
 			recordInHighResolution(isPaused);
 		}
 		if (ImGui::Button("Record in Mid Resolution")) {
-			cudaDeviceSynchronize();
-			isPaused = true;
-			recording = true;
+			// TODO: Support this
+			//cudaDeviceSynchronize();
+			//isPaused = true;
+			//recording = true;
 
-			end_time = timePassed;
-			timePassed = 0.0f;
-			// FIXME: leftover particles after switch
-			kdTree = nullptr;
-			previousParticleCount = particleCount;
-			particleCount = MID_RES_COUNT;
-			particleForShape = MID_RES_COUNT_SHAPE;
-			SMOOTHING_RADIUS = MID_RES_RADIUS;
-			kernel->setSmoothingRadius(SMOOTHING_RADIUS);
-			initAverageMass();
-			MAX_RADIUS = MID_RES_RADIUS;
-			float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
-			scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
-			PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
-			originalTimestep = TIMESTEP;
-			TIMESTEP = .0125f;
-			// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
+			//end_time = timePassed;
+			//timePassed = 0.0f;
+			//// FIXME: leftover particles after switch
+			//kdTree = nullptr;
+			//previousParticleCount = particleCount;
+			//particleCount = MID_RES_COUNT;
+			//particleForShape = MID_RES_COUNT_SHAPE;
+			//SMOOTHING_RADIUS = MID_RES_RADIUS;
+			//kernel->setSmoothingRadius(SMOOTHING_RADIUS);
+			//initAverageMass();
+			//MAX_RADIUS = MID_RES_RADIUS;
+			//float scaleFactor = (powf(resolutionConstant, (1.f / 3.f)) / powf(particleCount, (1.f / 3.f)));
+			//scaleParticles = glm::vec3(.5f * (scaleFactor), .5f * (scaleFactor), .5f * (scaleFactor));
+			//PARTICLES_PER_THREAD = HIGH_RES_COUNT / N_THREADS;
+			//originalTimestep = TIMESTEP;
+			//TIMESTEP = .0125f;
+			//// DENSITY_0_GUESS = DENSITY_0_GUESS / scaleFactor;
 
-			if (selected_scene == Scene::DAM_BREAK) {
-				initSceneDamBreak();
-			}
-			else if (selected_scene == Scene::SPLASH) {
-				initSceneSplash();
-			}
-			else {
-				initSceneOriginal();
-			}
-			cout << "Updated particle count is " << particleCount << endl;
-			initKdTree();
-			for (int i = 0; i < particleCount; i++) {
-				setNeighbors(particleList[i], i);
-			}
-			isPaused = false;
+			//if (selected_scene == Scene::DAM_BREAK) {
+			//	initSceneDamBreak();
+			//}
+			//else if (selected_scene == Scene::SPLASH) {
+			//	initSceneSplash();
+			//}
+			//else {
+			//	initSceneOriginal();
+			//}
+			//cout << "Updated particle count is " << particleCount << endl;
+			//initKdTree();
+			//for (int i = 0; i < particleCount; i++) {
+			//	setNeighbors(particleList[i], i);
+			//}
+			//isPaused = false;
 
-			cout << "Recording... please be patient :)" << endl;
-			// density_constant = DENSITY_0_GUESS / averageDensity;
-			// DENSITY_0_GUESS = averageDensity;
-			keyToggles[(unsigned)' '] = true;
+			//cout << "Recording... please be patient :)" << endl;
+			//// density_constant = DENSITY_0_GUESS / averageDensity;
+			//// DENSITY_0_GUESS = averageDensity;
+			//keyToggles[(unsigned)' '] = true;
 		}
 		if (ImGui::Button("Record in Low Resolution")) {
 			recording_low_res = true;
@@ -1581,9 +1614,9 @@ int main(int argc, char** argv)
 	// initialize guess density;
 
 	// set neighbors for all particles
-	for (int i = 0; i < particleCount; i++) {
+	/*for (int i = 0; i < particleCount; i++) {
 		setNeighbors(particleList[i], i);
-	}
+	}*/
 
 	float timeStart = glfwGetTime();
 
@@ -1608,7 +1641,7 @@ int main(int argc, char** argv)
 				// Render scene.
 				timePassed += (TIMESTEP);
 				totalTime += timePassed;
-				if (timePassed >= 6 && numSurfaces == 6 && selected_scene == Scene::DAM_BREAK) {
+				if (timePassed >= 6 && numSurfaces == 6 && selected_scene == SceneType::DAM_BREAK) {
 					cout << "Release the kracken!" << endl;
 					numSurfaces = 5;
 				}
@@ -1653,7 +1686,10 @@ int main(int argc, char** argv)
 	_pclose(ffmpeg);
 
 	// clean up memory
-	cudaFree(particleList);
+	//cudaFree(particleList);
+	if (mainScene) {
+		delete mainScene;
+	}
 	cudaFree(kernel);
 	cudaFree(surfaces);
 

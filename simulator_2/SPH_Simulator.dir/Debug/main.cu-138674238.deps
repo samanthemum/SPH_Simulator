@@ -626,6 +626,7 @@ C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include\vector_function
 C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.0\include\vector_types.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\surfaceSampler.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\Leaven\lib\src\volumeSampler.h
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cuda_kernel.cuh
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyBVH.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyCore.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\cyPointCloud.h
@@ -641,4 +642,5 @@ C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\MatrixStack.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Particle.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Plane.h
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Program.h
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Scene.cuh
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Shape.h

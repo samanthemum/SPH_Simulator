@@ -14,6 +14,9 @@ c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\x64\rel
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\x64\release\main.cu.obj
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\x64\release\cuda_kernel.cuh.obj
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\cmakefiles\generate.stamp
+c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\release\sph_simulator.exe
+c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\release\sph_simulator.lib
+c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\release\sph_simulator.exp
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\cuda_kernel.cu.cache
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\cuda_kernel.cuh.cache
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\main.cu.cache
@@ -32,3 +35,4 @@ c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_sim
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\sph_simulator.tlog\link.command.1.tlog
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\sph_simulator.tlog\link.read.1.tlog
 c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\sph_simulator.tlog\link.write.1.tlog
+c:\users\sam hallam\desktop\csce 491\simulator\sph_simulator\simulator_2\sph_simulator.dir\release\sph_simulator.tlog\sph_simulator.write.1u.tlog

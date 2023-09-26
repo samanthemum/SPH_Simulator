@@ -396,7 +396,7 @@ C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/arch/CUDA/Complex.h(71): warning #2001
   (235): here
   
   main.cu
-  tmpxft_00006440_00000000-7_main.cudafe1.cpp
+  tmpxft_00007338_00000000-7_main.cudafe1.cpp
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(77): warning C4068: unknown pragma 'diag_suppress'
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(79): warning C4068: unknown pragma 'diag_suppress'
 C:\eigen-3.4.0\eigen-3.4.0\Eigen\src/Core/util/DisableStupidWarnings.h(81): warning C4068: unknown pragma 'diag_suppress'
@@ -632,41 +632,40 @@ C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(172): 
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(178): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(199): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\Kernel.h(202): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(233): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(237): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(234): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(238): warning C4244: '=': conversion from 'double' to 'T', possible loss of data
           with
           [
               T=float
           ]
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(271): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(273): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(275): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(275): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(277): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(279): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(297): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(300): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(330): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(349): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(397): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(398): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(409): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(410): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(411): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(535): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(632): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(633): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(634): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(697): warning C4018: '<': signed/unsigned mismatch
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(892): warning C4804: '%': unsafe use of type 'bool' in operation
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1330): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1496): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1581): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1598): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets(2068,5): warning : The referenced project 'C:\Users\Sam Hallam\Desktop\CSCE450\A5\build\ZERO_CHECK.vcxproj' does not exist.
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(281): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(283): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(301): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(304): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(334): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(353): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(401): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(402): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(413): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(414): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(415): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(541): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(638): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(639): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(640): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(704): warning C4018: '<': signed/unsigned mismatch
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(925): warning C4804: '%': unsafe use of type 'bool' in operation
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1365): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1374): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1621): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\src\main.cu(1638): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
      Creating library C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.lib and object C:/Users/Sam Hallam/Desktop/CSCE 491/Simulator/SPH_Simulator/simulator_2/Release/SPH_Simulator.exp
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   SPH_Simulator.vcxproj -> C:\Users\Sam Hallam\Desktop\CSCE 491\Simulator\SPH_Simulator\simulator_2\Release\SPH_Simulator.exe
